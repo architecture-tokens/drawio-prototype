@@ -5,10 +5,15 @@ export type LayoutNode = {
   y: number;
   width: number;
   height: number;
-  parentId?: string;
+  parentId: string | null;
 };
-export type LayoutEdge = { id: string; waypoints?: Point[] };
-export type Layout = { version: '0.1'; nodes: LayoutNode[]; edges: LayoutEdge[] };
+export type LayoutEdge = { id: string; waypoints: Point[] };
+export type Layout = {
+  version: '0.1';
+  canvas: { width: number; height: number };
+  nodes: LayoutNode[];
+  edges: LayoutEdge[];
+};
 export type Diagnostic = {
   severity: 'error' | 'warning';
   code: string;
@@ -20,7 +25,11 @@ export type Diagnostic = {
   layer?: string;
 };
 export type Report = { valid: boolean; diagnostics: Diagnostic[] };
-export type Planner = {
-  plan(input: unknown, schema: object, repairErrors?: string[]): Promise<unknown>;
+export type PlannerRequest = {
+  architecture: unknown;
+  schema: object;
+  previousLayout?: unknown;
+  errors?: Array<Pick<Diagnostic, 'code' | 'message'>>;
 };
+export type Planner = { plan(request: PlannerRequest): Promise<unknown> };
 export type RunResult = { exitCode: number; stdout: string; stderr: string };

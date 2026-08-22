@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { renderDrawio, writeAtomic } from './drawio.js';
 import { validateLayout } from './layout.js';
-import { defaultLayoutSchema, OpenAIPlanner } from './planner.js';
+import { defaultLayoutSchema, OpenAIPlanner, resolveModel } from './planner.js';
 import type { Planner, Report, RunResult } from './types.js';
 import { loadAndValidate } from './validate.js';
 
@@ -85,32 +85,34 @@ export async function run(argv: string[], planner?: Planner): Promise<RunResult>
           : 'Validation passed.\n',
       stderr: '',
     };
-  const activePlanner =
-    planner ??
-    new OpenAIPlanner(options.aiModel ?? process.env.ARCHTOKENS_OPENAI_MODEL ?? 'gpt-5.6');
+  const activePlanner = planner ?? new OpenAIPlanner(resolveModel(options.aiModel));
   let layout: unknown;
   try {
-    layout = await activePlanner.plan(loaded.normalized, defaultLayoutSchema);
-  } catch (cause) {
+    layout = await activePlanner.plan({
+      architecture: loaded.normalized,
+      schema: defaultLayoutSchema,
+    });
+  } catch {
     return {
       exitCode: 3,
       stdout: '',
-      stderr: `AI provider error: ${cause instanceof Error ? cause.message : 'unknown provider failure'}\n`,
+      stderr: 'AI provider error.\n',
     };
   }
   let layoutReport = validateLayout(layout, loaded.model);
   if (!layoutReport.valid) {
     try {
-      layout = await activePlanner.plan(
-        loaded.normalized,
-        defaultLayoutSchema,
-        layoutReport.diagnostics.map((d) => `${d.code}: ${d.message}`),
-      );
-    } catch (cause) {
+      layout = await activePlanner.plan({
+        architecture: loaded.normalized,
+        schema: defaultLayoutSchema,
+        previousLayout: layout,
+        errors: layoutReport.diagnostics.map(({ code, message }) => ({ code, message })),
+      });
+    } catch {
       return {
         exitCode: 3,
         stdout: '',
-        stderr: `AI provider error: ${cause instanceof Error ? cause.message : 'unknown provider failure'}\n`,
+        stderr: 'AI provider error.\n',
       };
     }
     layoutReport = validateLayout(layout, loaded.model);

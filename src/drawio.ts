@@ -40,7 +40,7 @@ export function renderDrawio(model: any, layout: Layout): string {
   }
   for (const relationship of relationships) {
     const edge = edges.get(relationship.id)!;
-    const points = edge.waypoints?.length
+    const points = edge.waypoints.length
       ? `<Array as="points">${edge.waypoints.map((point) => `<mxPoint x="${point.x}" y="${point.y}"/>`).join('')}</Array>`
       : '';
     cells.push(

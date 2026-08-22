@@ -1,32 +1,45 @@
 import OpenAI from 'openai';
 import { layoutSchema } from './layout.js';
-import type { Planner } from './types.js';
+import type { Planner, PlannerRequest } from './types.js';
 
-/** The sole live-provider boundary; callers inject Planner in tests. */
+export type OpenAIResponsesClient = {
+  responses: { create(payload: unknown): Promise<{ output_text?: string | null }> };
+};
+export type OpenAIClientFactory = (apiKey: string) => OpenAIResponsesClient;
+const defaultFactory: OpenAIClientFactory = (apiKey) =>
+  new OpenAI({ apiKey }) as unknown as OpenAIResponsesClient;
+
+/** The sole live-provider boundary; tests supply a tiny Responses client factory. */
 export class OpenAIPlanner implements Planner {
   constructor(
     private readonly model: string,
     private readonly apiKey = process.env.OPENAI_API_KEY,
+    private readonly clientFactory: OpenAIClientFactory = defaultFactory,
   ) {}
 
-  async plan(input: unknown, schema: object, repairErrors?: string[]): Promise<unknown> {
+  async plan(request: PlannerRequest): Promise<unknown> {
     if (!this.apiKey) throw new Error('OPENAI_API_KEY is required to generate a layout');
-    const client = new OpenAI({ apiKey: this.apiKey });
-    const request = repairErrors
-      ? { task: 'Repair the layout. Return only JSON matching the schema.', errors: repairErrors }
+    const repair = request.previousLayout !== undefined;
+    const input = repair
+      ? {
+          task: 'Repair the layout. Return only JSON matching the schema.',
+          architecture: request.architecture,
+          previousLayout: request.previousLayout,
+          errors: request.errors ?? [],
+        }
       : {
           task: 'Place all architecture components and relationships. Return only JSON matching the schema.',
-          architecture: input,
+          architecture: request.architecture,
         };
-    const response = await client.responses.create({
+    const response = await this.clientFactory(this.apiKey).responses.create({
       model: this.model,
-      input: JSON.stringify(request),
+      input: JSON.stringify(input),
       text: {
         format: {
           type: 'json_schema',
           name: 'architecture_layout',
           strict: true,
-          schema: schema as Record<string, unknown>,
+          schema: request.schema as Record<string, unknown>,
         },
       },
     });
@@ -39,3 +52,5 @@ export class OpenAIPlanner implements Planner {
   }
 }
 export const defaultLayoutSchema = layoutSchema;
+export const resolveModel = (aiModel?: string, environment = process.env): string =>
+  aiModel ?? environment.ARCHTOKENS_OPENAI_MODEL ?? 'gpt-5.6';
