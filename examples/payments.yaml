@@ -1,0 +1,24 @@
+kind: architecture-model
+id: payments
+libraries: [core@0.1.0, security@0.1.0, environment@0.1.0, lifecycle@0.1.0]
+components:
+  - {
+      id: api,
+      type: core:component.service,
+      tokens: [{ token: environment:environment.production }],
+      metadata: { label: 'API <gateway>' },
+    }
+  - id: ledger
+    type: core:component.database
+    configuration: { engine: postgres }
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: security:security.encryption.at-rest, value: { algorithm: aes-256 } },
+      ]
+relationships:
+  - id: api-ledger
+    type: core:relationship.call.sync
+    from: api
+    to: ledger
+    tokens: [{ token: security:security.encryption.in-transit }]

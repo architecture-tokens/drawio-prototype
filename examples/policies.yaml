@@ -1,0 +1,12 @@
+kind: policy-set
+id: production-security
+policies:
+  - id: production-database-encryption
+    description: Production database encryption.
+    severity: error
+    target: component
+    where:
+      { all: [{ type: core:component.database }, { hasToken: environment:environment.production }] }
+    assert: { hasToken: security:security.encryption.at-rest }
+    message: Production database requires encryption at rest.
+    remediation: Add security:security.encryption.at-rest.

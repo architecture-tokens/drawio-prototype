@@ -1,0 +1,6 @@
+kind: architecture-model
+id: local-example
+libraries: [core@0.1.0, local@0.1.0]
+components:
+  - { id: gateway, type: local:local.component.gateway, tokens: [] }
+relationships: []

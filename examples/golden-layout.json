@@ -1,0 +1,9 @@
+{
+  "version": "0.1",
+  "canvas": { "width": 600, "height": 240 },
+  "nodes": [
+    { "id": "api", "x": 40, "y": 40, "width": 160, "height": 80, "parentId": null },
+    { "id": "ledger", "x": 320, "y": 40, "width": 160, "height": 80, "parentId": null }
+  ],
+  "edges": [{ "id": "api-ledger", "waypoints": [{ "x": 260, "y": 80 }] }]
+}
