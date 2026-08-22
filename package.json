@@ -1,0 +1,43 @@
+{
+  "name": "@architecture-tokens/drawio-prototype",
+  "version": "0.1.0",
+  "description": "Validated Architecture Tokens to editable draw.io CLI prototype",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "archtokens": "./dist/cli.js"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "examples"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@architecture-tokens/spec": "git+https://github.com/architecture-tokens/spec.git#50729a0912e190979a122e1c2b31fdf3c367f2e5",
+    "@xmldom/xmldom": "^0.9.8",
+    "ajv": "8.20.0",
+    "openai": "^6.17.0",
+    "yaml": "^2.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "prettier": "^3.7.4",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.47.0",
+    "vitest": "^4.0.15"
+  }
+}

@@ -1,0 +1,10 @@
+kind: token-library
+namespace: local
+domains: [local]
+version: 0.1.0
+name: Local Example
+tokens:
+  - id: local.component.gateway
+    kind: component-type
+    name: Gateway
+    description: A local gateway type.
