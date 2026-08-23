@@ -29,10 +29,10 @@ are graph nodes):
 - **Selenium Namespace**: `Selenium Hub (Replication Controller)` ->
   `Hub Service` fans out to two Firefox worker pools --
   `Firefox Nodes (Attribute Name)` and `Firefox Nodes (Replication
-  Controller)` -- which both feed `Frontend Service`.
+Controller)` -- which both feed `Frontend Service`.
 - **Web App Namespace**: `Frontend Service` -> `UI Servers (Replication
-  Controller)` -> `Backend Service` <- `Backend Servers (Replication
-  Controller)`.
+Controller)` -> `Backend Service` <- `Backend Servers (Replication
+Controller)`.
 - Both namespaces sit inside a "Google Cloud Platform" boundary; the Tester
   is drawn outside it.
 
@@ -81,7 +81,7 @@ source, with a `sourceLabelNote` explaining the oddity rather than silently
 ### Fidelity note: `backend-servers-rc` has no incoming edge
 
 In the source, `Backend Servers (Replication Controller)` only has an
-*outgoing* edge into `Backend Service` -- nothing feeds it, unlike its
+_outgoing_ edge into `Backend Service` -- nothing feeds it, unlike its
 structural mirror `Firefox Nodes (Replication Controller)`, which is fed by
 `Hub Service`. This is a genuine asymmetry in the source data (9 edges
 total, none targeting that node), not a modeling omission here; preserved
@@ -105,7 +105,7 @@ the layout contract's `parentId` is left `null` for every node (flat) since
 (`src/layout.ts`'s `validateLayout`), and no separate namespace/platform
 components exist to be a legal parent.
 
-The *visual* nesting the brief calls for ("cluster/zone groupings become
+The _visual_ nesting the brief calls for ("cluster/zone groupings become
 nested containers, B9/B10") is still delivered -- at the `final.svg` layer,
 where the platform and the two namespace boxes are drawn as background
 rectangles computed directly from the bounding box of their member nodes'
@@ -145,10 +145,10 @@ cropping the rendered PNG.
 ## Gates
 
 - `node dist/cli.js validate examples/showcase/4-kubernetes/model.yaml
-  --library examples/showcase/4-kubernetes/tokens.yaml` -> exit 0 (see
+--library examples/showcase/4-kubernetes/tokens.yaml` -> exit 0 (see
   `validate.txt`).
 - `node tools/offline-generate.mjs examples/showcase/4-kubernetes/model.yaml
-  examples/showcase/4-kubernetes/layout.json --out
-  examples/showcase/4-kubernetes/out.drawio --library
-  examples/showcase/4-kubernetes/tokens.yaml` -> exit 0, first try, no
+examples/showcase/4-kubernetes/layout.json --out
+examples/showcase/4-kubernetes/out.drawio --library
+examples/showcase/4-kubernetes/tokens.yaml` -> exit 0, first try, no
   repair triggered (see `generate.txt`).

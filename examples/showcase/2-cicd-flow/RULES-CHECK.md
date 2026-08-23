@@ -50,78 +50,78 @@ this genre is exactly the case both connector buckets (1-3/11 orthogonal-only,
 ## Boxes
 
 B1. Quantized height, shared width — PASS. All 9 job boxes: 130x60
-    (padding 19 + line-height 22 + padding 19 = 60, single title line).
+(padding 19 + line-height 22 + padding 19 = 60, single title line).
 B2. One uniform gap — PASS. One vertical gap (24, between stacked branch
-    jobs in every lane) and one horizontal gap (40, used both between a
-    lane's entry-job and branch-job columns AND between lanes) — a single
-    value per axis, not mixed.
+jobs in every lane) and one horizontal gap (40, used both between a
+lane's entry-job and branch-job columns AND between lanes) — a single
+value per axis, not mixed.
 B3. Shared grid; connected boxes aligned on the connector's axis — PASS.
-    All 3 stage containers share y=40, h=212. build_a (y-centre 110) and
-    test (y-centre 152) are NOT on the same row — but that's rule 11's
-    prescribed resolution, not a B3 miss: two source rows (build_a,
-    build_b) converge on one target row, so "both boxes on the same row"
-    is structurally impossible for either individual pair. The merged
-    trunk's final segment is what actually needs to be straight, and it
-    is: it targets the next stage's entry-job row exactly (y=152, the
-    same row build/test/deploy all share by B9's in-lane centring), so
-    the one line that actually enters the target box arrives dead
-    straight and perpendicular.
+All 3 stage containers share y=40, h=212. build_a (y-centre 110) and
+test (y-centre 152) are NOT on the same row — but that's rule 11's
+prescribed resolution, not a B3 miss: two source rows (build_a,
+build_b) converge on one target row, so "both boxes on the same row"
+is structurally impossible for either individual pair. The merged
+trunk's final segment is what actually needs to be straight, and it
+is: it targets the next stage's entry-job row exactly (y=152, the
+same row build/test/deploy all share by B9's in-lane centring), so
+the one line that actually enters the target box arrives dead
+straight and perpendicular.
 B4. One uniform border weight — PASS. Every box (container and job alike)
-    is `stroke-width="2"`; no exceptions.
+is `stroke-width="2"`; no exceptions.
 B5. Floating labels never overlap a box — N/A. No floating labels/pills
-    exist; the only text is box titles living inside their own box.
+exist; the only text is box titles living inside their own box.
 B6. Consistent internal layout (badge/title/body/action) — N/A. Every box
-    carries a single centered title only (T3); there is no badge/body/
-    action sub-layout to keep consistent.
+carries a single centered title only (T3); there is no badge/body/
+action sub-layout to keep consistent.
 B7. Shared text margins, even padding — PASS. Title-only boxes are
-    centered (T3), so there's no left-margin rule to apply; padding is
-    even on all sides by construction (B1's height formula, symmetric
-    width fit).
+centered (T3), so there's no left-margin rule to apply; padding is
+even on all sides by construction (B1's height formula, symmetric
+width fit).
 B8. Compress empty space — PASS. Horizontal gap between lanes was
-    tightened from an initial 90 to the shared 40 (matching B2's "one
-    horizontal gap" requirement) once discovered — canvas shrank from
-    1328x292 to 1228x292 with no loss of legibility.
+tightened from an initial 90 to the shared 40 (matching B2's "one
+horizontal gap" requirement) once discovered — canvas shrank from
+1328x292 to 1228x292 with no loss of legibility.
 B9. Centre nested boxes in their container, equal margins — PASS. Each
-    lane's content block (300 wide) sits inside its 356-wide container
-    with 28px on both left and right (equal); this is the constrained/
-    centred axis since lanes are arranged as columns.
+lane's content block (300 wide) sits inside its 356-wide container
+with 28px on both left and right (equal); this is the constrained/
+centred axis since lanes are arranged as columns.
 B10. Nested box never overlaps its container's border — PASS. 28px clear
-    margin on every side between a job box's stroke and its container's
-    stroke (verified in the rendered PNG, not just the numbers).
+margin on every side between a job box's stroke and its container's
+stroke (verified in the rendered PNG, not just the numbers).
 
 ## Colors
 
 C1. One documented semantic palette in the source — PASS. Comment block
-    at the top of final.svg documents all 3 stage colors (border/bg-lane/
-    bg-job/text) and states the C2 "colored by destination" convention.
+at the top of final.svg documents all 3 stage colors (border/bg-lane/
+bg-job/text) and states the C2 "colored by destination" convention.
 C2. Color by meaning, arrows included, colored by destination — PASS.
-    Every job box is colored by its own stage; every connector is colored
-    by the stage its target belongs to (a stage-transition arrow is the
-    destination stage's color for its entire length, not a gradient).
+Every job box is colored by its own stage; every connector is colored
+by the stage its target belongs to (a stage-transition arrow is the
+destination stage's color for its entire length, not a gradient).
 C3. Neutral/ink reserved for meaningless content — PASS (by absence).
-    Every element in this diagram carries stage meaning, so no neutral
-    color is defined or needed — documented explicitly in the C1 comment
-    rather than left ambiguous.
+Every element in this diagram carries stage meaning, so no neutral
+color is defined or needed — documented explicitly in the C1 comment
+rather than left ambiguous.
 C4. Judge by palette membership, not by contrast — PASS. The only
-    same-color-as-neighbour case (a build-colored fan-out arrow sitting
-    right next to the build-colored container border) is intentional:
-    same documented semantic (build), not an invented near-duplicate.
+same-color-as-neighbour case (a build-colored fan-out arrow sitting
+right next to the build-colored container border) is intentional:
+same documented semantic (build), not an invented near-duplicate.
 C5. Documented meaning stays in sync with usage — PASS. All 3 colors are
-    used exactly as documented (stage identity, no broader/narrower use
-    than the C1 comment states).
+used exactly as documented (stage identity, no broader/narrower use
+than the C1 comment states).
 
 ## Text
 
 T1. No text overlaps other text — PASS. Stage titles sit in their own
-    title band above the job boxes; job titles sit centered in boxes with
-    24px+ clearance to every neighbour; verified visually in final.png.
+title band above the job boxes; job titles sit centered in boxes with
+24px+ clearance to every neighbour; verified visually in final.png.
 T2. Text stays inside its box, no overflow — PASS. Longest label
-    (`deploy_a`/`deploy_b`, 8 chars) fits well inside 130px width at
-    15px/500-weight; verified visually.
+(`deploy_a`/`deploy_b`, 8 chars) fits well inside 130px width at
+15px/500-weight; verified visually.
 T3. Center title-only text; left-align when there's body content — PASS.
-    Every box in this diagram is title-only, so every label is centered
-    both horizontally and vertically (`text-anchor="middle"`,
-    `dominant-baseline="central"`).
+Every box in this diagram is title-only, so every label is centered
+both horizontally and vertically (`text-anchor="middle"`,
+`dominant-baseline="central"`).
 
 ## Verification
 

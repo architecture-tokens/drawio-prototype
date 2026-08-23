@@ -18,7 +18,7 @@
     `final.svg`, and the rendered `.png`/`.drawio` outputs in this
     directory) is itself redistributable only under CC-BY-SA-4.0 or a
     compatible license — it is NOT relicensed under this repository's
-    Apache-2.0 terms. Anyone reusing the *content* of this specific
+    Apache-2.0 terms. Anyone reusing the _content_ of this specific
     example (not the surrounding tool) must carry the same
     attribution + share-alike terms forward.
   - The mermaid source used the substitute GitLab source instead of
@@ -38,7 +38,7 @@ two parallel jobs both feed into (trigger) the next stage's entry job.
 
 `model.yaml` uses **12 components** and **19 relationships** — more than
 the source's raw 9 nodes / 10 edges, because the model also captures the
-grouping the source shows *visually* (the three `subgraph ... end` blocks)
+grouping the source shows _visually_ (the three `subgraph ... end` blocks)
 as first-class semantic structure rather than dropping it:
 
 - **9 job components** (`build`, `build_a`, `build_b`, `test`, `test_a`,
@@ -115,7 +115,7 @@ is present in `model.yaml`, `layout.json`, and `final.svg`.
 - `node dist/cli.js validate model.yaml --library tokens.yaml` → **exit 0**
   (`validate.txt`).
 - `node tools/offline-generate.mjs model.yaml layout.json --out out.drawio
-  --library tokens.yaml` → **exit 0, first try, no repair** (`generate.txt`).
+--library tokens.yaml` → **exit 0, first try, no repair** (`generate.txt`).
 
 See `RULES-CHECK.md` for the full diagram-rules.md compliance pass:
 **26 PASS, 4 N/A, 0 FAIL.**

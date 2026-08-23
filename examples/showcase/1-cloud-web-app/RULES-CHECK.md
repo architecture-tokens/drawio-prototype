@@ -44,7 +44,7 @@ violations were found and fixed during that process (see below).
     PASS for both real convergence points: the 4 web instances into
     `app-elb`, and the 4 app instances into `rds-master` — each renders as
     4 risers -> 1 shared horizontal bus -> 1 trunk -> 1 arrowhead. The
-    *diverging* fans (`web-elb`->4 instances, `app-elb`->4 instances) are
+    _diverging_ fans (`web-elb`->4 instances, `app-elb`->4 instances) are
     correctly left as 4 separate arrowheads since rule 11 only mandates
     merging on convergence, not divergence.
 12. **Edge label never struck by its line.** PASS, after a fix: the first
@@ -57,72 +57,72 @@ violations were found and fixed during that process (see below).
 ## Boxes
 
 B1. **Quantized height, shared width per peer group.** PASS. All 15 leaf
-    boxes share one size (140x60, single-line centered title). Both ASG
-    containers share one formula-derived size (740x120 = 30 top pad + 60
-    child row + 30 bottom pad).
+boxes share one size (140x60, single-line centered title). Both ASG
+containers share one formula-derived size (740x120 = 30 top pad + 60
+child row + 30 bottom pad).
 B2. **One uniform gap.** PASS. 40 used for every gap in the diagram: row
-    spacing, lane spacing, sibling-instance spacing, and the `User`/
-    `Route 53` pair — checked exhaustively, no other value appears.
+spacing, lane spacing, sibling-instance spacing, and the `User`/
+`Route 53` pair — checked exhaustively, no other value appears.
 B3. **Shared grid; connector-axis alignment.** PASS. Both ASG's four child
-    columns sit at the identical x-positions (250/430/610/790), so `Web N`
-    and `App N` line up vertically tier-to-tier. `Web ELB`/`App ELB` and
-    the RDS pair share one grid center (x=590 and x=500/610 respectively).
+columns sit at the identical x-positions (250/430/610/790), so `Web N`
+and `App N` line up vertically tier-to-tier. `Web ELB`/`App ELB` and
+the RDS pair share one grid center (x=590 and x=500/610 respectively).
 B4. **Uniform border weight.** PASS. Every box (leaf, container, legend
-    swatch) uses `stroke-width="2.5"` — confirmed by grep, no stray value.
+swatch) uses `stroke-width="2.5"` — confirmed by grep, no stray value.
 B5. **Labels never overlap a box.** PASS, after the same two label fixes
-    as connector rule 12.
+as connector rule 12.
 B6. **Consistent internal layout.** PASS. Every leaf box = centered
-    title only (no badge, no body). Both containers = left-aligned title
-    above a child row, applied identically to both.
+title only (no badge, no body). Both containers = left-aligned title
+above a child row, applied identically to both.
 B7. **Shared text margins, even padding.** PASS. Leaf box text is centered
-    with equal padding on all sides; both container titles sit at the same
-    8px left inset from their box's left edge.
+with equal padding on all sides; both container titles sit at the same
+8px left inset from their box's left edge.
 B8. **Compress empty space.** PASS. Containers are sized to their true
-    content (120, not the earlier 140 that left 20px of dead padding once
-    the title moved outside); canvas trimmed to 780 tall to match. The
-    CDN/storage lane (3 boxes, ends y=400) is shorter than the compute
-    lane (continues to y=720) — inherent to the two paths having different
-    hop counts (the source diagram has this same asymmetry), not padding.
+content (120, not the earlier 140 that left 20px of dead padding once
+the title moved outside); canvas trimmed to 780 tall to match. The
+CDN/storage lane (3 boxes, ends y=400) is shorter than the compute
+lane (continues to y=720) — inherent to the two paths having different
+hop counts (the source diagram has this same asymmetry), not padding.
 B9. **Nested box centered, equal margins.** PASS. Both axes checked for
-    both containers: horizontal margin 30/30 (250-220 vs 960-930),
-    vertical margin 30/30 (270-240 vs 360-330; same pattern for app-asg).
+both containers: horizontal margin 30/30 (250-220 vs 960-930),
+vertical margin 30/30 (270-240 vs 360-330; same pattern for app-asg).
 B10. **Nested box never touches container border.** PASS. 30px clearance
-     on every side for all 8 compute-instance boxes inside their ASG.
+on every side for all 8 compute-instance boxes inside their ASG.
 
 ## Colors
 
 C1. **One documented palette in a comment block.** PASS. Six-domain table
-    (actor/ingress/routing/compute/storage/database) at the top of
-    `final.svg`, each with border/fill/text/light-on-dark tints.
+(actor/ingress/routing/compute/storage/database) at the top of
+`final.svg`, each with border/fill/text/light-on-dark tints.
 C2. **Color by meaning; arrow = destination's domain.** PASS, checked
-    every one of the 22 connectors against its destination component's
-    domain color (e.g. `app-instance->rds-master` is blue/database because
-    it leads into the database, not orange for its compute-domain source).
+every one of the 22 connectors against its destination component's
+domain color (e.g. `app-instance->rds-master` is blue/database because
+it leads into the database, not orange for its compute-domain source).
 C3. **Neutral only for raw/no-meaning content.** PASS. `#4B5563` (neutral
-    grey) is used only for the legend's meta captions ("Legend", the two
-    footnote lines) — never on a diagram element.
+grey) is used only for the legend's meta captions ("Legend", the two
+footnote lines) — never on a diagram element.
 C4. **Judge by palette membership, not mere visual contrast.** PASS.
-    Routing (amber `#B7791F`) and compute (orange `#C2410C`) are visually
-    adjacent hues but documented as two distinct, intentional domains
-    (traffic distribution vs. execution) — not an accidental near-clash.
+Routing (amber `#B7791F`) and compute (orange `#C2410C`) are visually
+adjacent hues but documented as two distinct, intentional domains
+(traffic distribution vs. execution) — not an accidental near-clash.
 C5. **Documented meaning matches usage.** PASS, checked each domain's
-    palette description against every element actually painted with it.
+palette description against every element actually painted with it.
 
 ## Text
 
 T1. **No text overlaps.** PASS, after the same connector-rule-12 fixes
-    (which were simultaneously T1 violations) plus one more: the ASG
-    container title originally sat inside the top padding at the same
-    y-band as the fan-out bus, striking through "Autoscaling" — moved the
-    title above the bus entirely (y=214/y=474, both above the y=220/y=480
-    bus lines) so it's vertically clear regardless of horizontal extent.
+(which were simultaneously T1 violations) plus one more: the ASG
+container title originally sat inside the top padding at the same
+y-band as the fan-out bus, striking through "Autoscaling" — moved the
+title above the bus entirely (y=214/y=474, both above the y=220/y=480
+bus lines) so it's vertically clear regardless of horizontal extent.
 T2. **Text stays within box padding.** PASS. Longest leaf label ("Amazon
-    Route 53", 16 chars) fits inside the 140px box with visible margin at
-    13px Arial; verified visually in the render, no clipping/overflow.
+Route 53", 16 chars) fits inside the 140px box with visible margin at
+13px Arial; verified visually in the render, no clipping/overflow.
 T3. **Title-only centered; body-content left-aligned.** PASS. All 15 leaf
-    boxes are title-only -> centered (T3's default). Both ASG containers
-    have body content (their 4 children) -> title left-aligned, not
-    centered.
+boxes are title-only -> centered (T3's default). Both ASG containers
+have body content (their 4 children) -> title left-aligned, not
+centered.
 
 ## Verification
 

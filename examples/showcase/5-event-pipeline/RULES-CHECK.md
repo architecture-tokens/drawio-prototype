@@ -43,46 +43,46 @@ orthogonal-only 1-3/11), all ten Box rules, all five Color rules, and all three 
 ## Boxes
 
 B1. PASS — height = top/bottom padding (20 each) + 1 line x line-height (20) = 60, applied
-    identically to all 6 boxes (all single-line titles). Width = 140, uniform across all 6 boxes as
-    one peer group, sized to the longest label ("Producer"/"Consumer", 8 chars) plus equal
-    left/right padding (~38px each side at font-size 14).
+identically to all 6 boxes (all single-line titles). Width = 140, uniform across all 6 boxes as
+one peer group, sized to the longest label ("Producer"/"Consumer", 8 chars) plus equal
+left/right padding (~38px each side at font-size 14).
 B2. PASS — one horizontal gap (80) used between every column pair (Producer-message,
-    message-Channel, Channel-Consumers); one vertical gap (40) used between every pair of stacked
-    Consumer boxes. Each axis uses a single value throughout, never mixed.
+message-Channel, Channel-Consumers); one vertical gap (40) used between every pair of stacked
+Consumer boxes. Each axis uses a single value throughout, never mixed.
 B3. PASS — Producer, message, Channel and consumer-b all share centre-y=170, so their connectors
-    run dead straight; consumer-a and consumer-c are the trunk's branch endpoints (rule 11), still
-    grid-snapped to the same column and the same 40px vertical rhythm as consumer-b.
+run dead straight; consumer-a and consumer-c are the trunk's branch endpoints (rule 11), still
+grid-snapped to the same column and the same 40px vertical rhythm as consumer-b.
 B4. PASS — every box border is `stroke-width="1.5"`, uniformly, with no per-box variation.
 B5. N/A — no floating labels/pills/callouts exist in this diagram.
 B6. PASS — all 6 boxes use the identical internal layout: one centered title, nothing else (no
-    badge/body/action-hint slots exist to be inconsistent about).
+badge/body/action-hint slots exist to be inconsistent about).
 B7. PASS — text is centered per T3 with equal padding on all sides (box sized to the height/width
-    formula above), so margins are uniform by construction.
+formula above), so margins are uniform by construction.
 B8. PASS — canvas is 880x340, sized to content plus a uniform 40px margin on every side; no padded
-    voids.
+voids.
 B9. N/A — no nested/contained boxes; the model has no containment (see README).
 B10. N/A — same reason as B9.
 
 ## Colors
 
 C1. PASS — one semantic palette (producer/message/channel/consumer) documented in the `<!-- -->`
-    comment block at the top of final.svg, with border/background/text tints for each.
+comment block at the top of final.svg, with border/background/text tints for each.
 C2. PASS — every box is colored by its role; every connector is colored by its **destination**
-    (producer-message = message-grey, message-channel = channel-violet, channel-consumer-* =
-    consumer-green), and each arrowhead inherits its line's color via `fill="context-stroke"`.
+(producer-message = message-grey, message-channel = channel-violet, channel-consumer-* =
+consumer-green), and each arrowhead inherits its line's color via `fill="context-stroke"`.
 C3. PASS — `message` (the in-flight payload, no state of its own) uses neutral grey per C3, the
-    only element in the diagram that is genuinely "raw data" rather than a role/actor.
+only element in the diagram that is genuinely "raw data" rather than a role/actor.
 C4. PASS — Channel's violet sits next to Consumer's green in the layout, but both are correct
-    per their own documented meaning, not an accidental off-palette clash.
+per their own documented meaning, not an accidental off-palette clash.
 C5. PASS — each color is used for exactly the role documented in the C1 comment block; no drift.
 
 ## Text
 
 T1. PASS — no text elements overlap (verified in final.png at 2x).
 T2. PASS — "Producer"/"Consumer" (longest labels) fit inside their 140-wide boxes with clear
-    padding on all sides; no clipping or border-touching.
+padding on all sides; no clipping or border-touching.
 T3. PASS — all 6 nodes are title-only (no body content), so all are centered both horizontally and
-    vertically per T3.
+vertically per T3.
 
 ## Verification
 

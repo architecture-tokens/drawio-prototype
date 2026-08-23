@@ -131,18 +131,18 @@ Customer, Database, etc.). `layout.json`/`final.svg` instead:
 
 ## Files
 
-| File | Contents |
-| --- | --- |
-| `source.mmd` / `source.png` | Original mermaid C4Container source and its render |
-| `tokens.yaml` | Local `c4@0.1.0` token library (boundary, external marker, async/delivers/readwrite/notifies relationship types) |
-| `model.yaml` | Architecture Tokens semantic model — 9 components, 10 relationships |
-| `validate.txt` | `node dist/cli.js validate` output (exit 0) |
-| `layout.json` | Layout contract v0.1 — hand-authored grid layout (see "What the layout improved") |
-| `generate.txt` | `node tools/offline-generate.mjs` output (exit 0, first try, no repair) |
-| `out.drawio` | Generated draw.io XML |
-| `final.svg` | Hand-authored SVG applying diagram-rules.md in full |
-| `final.png` | 2x-scale headless-Chrome render of `final.svg`, visually verified |
-| `RULES-CHECK.md` | Rule-by-rule compliance checklist (30 PASS, 2 N/A, 0 FAIL) |
+| File                        | Contents                                                                                                         |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `source.mmd` / `source.png` | Original mermaid C4Container source and its render                                                               |
+| `tokens.yaml`               | Local `c4@0.1.0` token library (boundary, external marker, async/delivers/readwrite/notifies relationship types) |
+| `model.yaml`                | Architecture Tokens semantic model — 9 components, 10 relationships                                              |
+| `validate.txt`              | `node dist/cli.js validate` output (exit 0)                                                                      |
+| `layout.json`               | Layout contract v0.1 — hand-authored grid layout (see "What the layout improved")                                |
+| `generate.txt`              | `node tools/offline-generate.mjs` output (exit 0, first try, no repair)                                          |
+| `out.drawio`                | Generated draw.io XML                                                                                            |
+| `final.svg`                 | Hand-authored SVG applying diagram-rules.md in full                                                              |
+| `final.png`                 | 2x-scale headless-Chrome render of `final.svg`, visually verified                                                |
+| `RULES-CHECK.md`            | Rule-by-rule compliance checklist (30 PASS, 2 N/A, 0 FAIL)                                                       |
 
 ## Iteration log (verification step)
 

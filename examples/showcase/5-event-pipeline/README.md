@@ -63,7 +63,7 @@ regardless of this example's content.
   destination, one shared arrowhead). This diagram has the mirror-image shape — one source
   (Channel), three destinations (the Consumers) — so a literal one-arrowhead merge is impossible
   (each consumer must show its own incoming arrow). Instead, the merge happens on the shared
-  *exit* side: all three `channel-consumer-*` edges leave Channel from the exact same point and
+  _exit_ side: all three `channel-consumer-*` edges leave Channel from the exact same point and
   travel the identical first segment (`620,170` -> `660,170`), so the three overdrawn strokes read
   as one trunk line, splitting into three individually-arrowheaded branches only at the bus point
   (x=660) where they must diverge to reach distinct boxes. This is called out in detail, rule by

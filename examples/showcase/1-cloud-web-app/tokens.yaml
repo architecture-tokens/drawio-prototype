@@ -58,4 +58,8 @@ tokens:
       grouping — see README.md).
     appliesTo: { elementKinds: [component] }
     valueSchema:
-      { type: object, required: [zoneCount], properties: { zoneCount: { type: integer, minimum: 2 } } }
+      {
+        type: object,
+        required: [zoneCount],
+        properties: { zoneCount: { type: integer, minimum: 2 } },
+      }

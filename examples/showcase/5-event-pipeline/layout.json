@@ -12,8 +12,20 @@
   "edges": [
     { "id": "producer-message", "waypoints": [{ "x": 220, "y": 170 }] },
     { "id": "message-channel", "waypoints": [{ "x": 440, "y": 170 }] },
-    { "id": "channel-consumer-a", "waypoints": [{ "x": 660, "y": 170 }, { "x": 660, "y": 70 }] },
+    {
+      "id": "channel-consumer-a",
+      "waypoints": [
+        { "x": 660, "y": 170 },
+        { "x": 660, "y": 70 }
+      ]
+    },
     { "id": "channel-consumer-b", "waypoints": [{ "x": 660, "y": 170 }] },
-    { "id": "channel-consumer-c", "waypoints": [{ "x": 660, "y": 170 }, { "x": 660, "y": 270 }] }
+    {
+      "id": "channel-consumer-c",
+      "waypoints": [
+        { "x": 660, "y": 170 },
+        { "x": 660, "y": 270 }
+      ]
+    }
   ]
 }

@@ -32,7 +32,7 @@ Colors C1-C5, Text T1-T3.
    through the open gap between columns, verified by crop
    (`crop_fanout.png`, `crop_merge2.png`) not to graze any box outline they
    don't connect to. Two edges necessarily cross the platform/namespace
-   container *boundary* lines perpendicular (Tester->Selenium Hub RC; the
+   container _boundary_ lines perpendicular (Tester->Selenium Hub RC; the
    inter-namespace merge into Frontend Service) -- that is a deliberate
    boundary crossing, not grazing a box the edge doesn't connect to.
 8. **Uniform arrowhead size, decoupled from stroke width.** PASS -- one
@@ -127,7 +127,7 @@ Colors C1-C5, Text T1-T3.
   network=teal, actor=purple); every arrow is colored by the domain of
   the node it enters (verified against the model: e.g.
   `hub-service-to-firefox-attribute` targets a `workload.
-  replication-controller` -> blue; `firefox-attribute-to-frontend`
+replication-controller` -> blue; `firefox-attribute-to-frontend`
   targets a `network.service` -> teal), producing the alternating
   blue/teal chain documented in the palette comment.
 - **C3 Neutral for absence of meaning, not habit.** PASS -- the platform

@@ -34,7 +34,7 @@ The semantic model (`model.yaml`) captures **19 components / 22
 relationships**: `18 icons − 1 (padlock, consolidated into a security
 token) + 2 (the Auto Scaling boxes, promoted from decoration to real
 container components) = 19`. Every node and edge of the source is
-represented *except* the consolidations below, which are decorative or
+represented _except_ the consolidations below, which are decorative or
 structurally inexpressible in the layout-contract v0.1 schema (see
 "Flattening & simplification decisions"). 19 is well above the task's
 minimum-10 floor.
@@ -117,7 +117,7 @@ origin + relative child offset), not generated through `drawio.ts`.
    restating what their enclosing box already means. Their meaning
    survives in the container titles ("Web/App Tier Autoscaling Group (×2
    AZ)") and in this README. The 6th text vertex, "Cross-AZ Replication",
-   is *not* dropped — it's the source's own edge-label cell for the RDS
+   is _not_ dropped — it's the source's own edge-label cell for the RDS
    replication edge, and it is carried into the model as
    `rds-master-rds-slave`'s `metadata.label`.
 
@@ -129,15 +129,15 @@ origin + relative child offset), not generated through `drawio.ts`.
    applied directly to those two edges — a more semantically correct
    representation of "this traffic is HTTPS" than a decorative
    intermediate node, and a better fit for what the Architecture Tokens
-   spec is *for* (carrying meaning as tokens, not as icons). No token was
+   spec is _for_ (carrying meaning as tokens, not as icons). No token was
    invented for the `user->route53` edge, since the source doesn't route
    that edge through the padlock either.
 
 3. **Flattened the crossing Availability-Zone x Autoscaling-Group
-   grouping.** The source draws 2 Availability Zone boxes (as *columns*,
-   x=225-450 and x=525-750) crossing 2 Auto Scaling boxes (as *rows*,
+   grouping.** The source draws 2 Availability Zone boxes (as _columns_,
+   x=225-450 and x=525-750) crossing 2 Auto Scaling boxes (as _rows_,
    y=319-394 and y=600-675) — each M3/M4 instance belongs to both an AZ
-   *and* an Auto Scaling group simultaneously, a genuine 2-D/crossing
+   _and_ an Auto Scaling group simultaneously, a genuine 2-D/crossing
    containment. The layout contract v0.1 only supports one `parentId` per
    node (a tree, not a lattice), so both dimensions can't be represented
    as containment at once.
@@ -147,6 +147,6 @@ origin + relative child offset), not generated through `drawio.ts`.
    because it's the concrete AWS resource actually operating the
    instances. Represented the Availability-Zone dimension instead as an
    applied token — `infra:deployment.multi-az` with `value: {zoneCount:
-   2}` — on each ASG component, and surfaced it in the container's visual
+2}` — on each ASG component, and surfaced it in the container's visual
    title ("×2 AZ") so the redundancy fact isn't lost, just relocated from
    a second containment axis to metadata.
