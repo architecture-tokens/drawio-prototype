@@ -1,0 +1,61 @@
+kind: token-library
+namespace: infra
+domains: [component, relationship, deployment]
+version: 0.1.0
+name: Infra (cloud-web-app showcase)
+description: >
+  Component and relationship types for cloud infrastructure concepts the
+  source AWS SaaS reference diagram needs that the built-in core library does
+  not model (core only defines database/service/external-actor components and
+  call.sync/data.read/belongs.to relationships). Also carries the multi-AZ
+  deployment marker used to flatten the source's crossing Availability-Zone
+  grouping (see model.yaml / README.md for why).
+tokens:
+  - id: component.dns
+    kind: component-type
+    name: DNS Service
+    description: Domain-name resolution / routing entry point (e.g. Amazon Route 53).
+  - id: component.cdn
+    kind: component-type
+    name: CDN
+    description: Content-delivery-network edge cache in front of origin content.
+  - id: component.load-balancer
+    kind: component-type
+    name: Load Balancer
+    description: Distributes inbound traffic across a pool of compute instances.
+  - id: component.object-storage
+    kind: component-type
+    name: Object Storage
+    description: Durable blob/object storage bucket.
+  - id: component.static-assets
+    kind: component-type
+    name: Static Assets
+    description: >
+      A named collection of static files (images, scripts, styles) served
+      through a CDN, distinct from the object-storage bucket that persists it.
+  - id: component.compute-instance
+    kind: component-type
+    name: Compute Instance
+    description: A single virtual-machine instance managed by an autoscaling group.
+  - id: component.autoscaling-group
+    kind: component-type
+    name: Autoscaling Group
+    description: A managed pool of homogeneous compute instances that scales with demand.
+  - id: relationship.routes-to
+    kind: relationship-type
+    name: Routes To
+    description: A load balancer distributing inbound traffic to a pool member.
+  - id: relationship.replicates-to
+    kind: relationship-type
+    name: Replicates To
+    description: Data replication from a primary store to a standby/replica.
+  - id: deployment.multi-az
+    kind: applied
+    name: Multi-AZ
+    description: >
+      Component is deployed redundantly across multiple cloud availability
+      zones (flattened from the source diagram's crossing AZ x autoscaling
+      grouping — see README.md).
+    appliesTo: { elementKinds: [component] }
+    valueSchema:
+      { type: object, required: [zoneCount], properties: { zoneCount: { type: integer, minimum: 2 } } }

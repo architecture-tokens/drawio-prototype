@@ -1,0 +1,214 @@
+kind: architecture-model
+id: cloud-web-app
+name: AWS SaaS 3-tier web application
+libraries: [core@0.1.0, security@0.1.0, environment@0.1.0, infra@0.1.0]
+components:
+  # --- Ingress ---
+  - id: user
+    type: core:component.external-actor
+    tokens: []
+    metadata: { label: User }
+  - id: route53
+    type: infra:component.dns
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'Amazon Route 53' }
+  - id: web-elb
+    type: infra:component.load-balancer
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'Web ELB' }
+
+  # --- CDN / static-content path ---
+  - id: cdn
+    type: infra:component.cdn
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: CloudFront }
+  - id: static-assets
+    type: infra:component.static-assets
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'Static Assets' }
+  - id: s3
+    type: infra:component.object-storage
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'Amazon S3' }
+
+  # --- Web tier ---
+  - id: web-asg
+    type: infra:component.autoscaling-group
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:deployment.multi-az, value: { zoneCount: 2 } },
+      ]
+    metadata: { label: 'Web Tier Autoscaling Group' }
+  - id: web-instance-1
+    type: infra:component.compute-instance
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'Web 1' }
+  - id: web-instance-2
+    type: infra:component.compute-instance
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'Web 2' }
+  - id: web-instance-3
+    type: infra:component.compute-instance
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'Web 3' }
+  - id: web-instance-4
+    type: infra:component.compute-instance
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'Web 4' }
+
+  # --- App tier ---
+  - id: app-elb
+    type: infra:component.load-balancer
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'App ELB' }
+  - id: app-asg
+    type: infra:component.autoscaling-group
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:deployment.multi-az, value: { zoneCount: 2 } },
+      ]
+    metadata: { label: 'App Tier Autoscaling Group' }
+  - id: app-instance-1
+    type: infra:component.compute-instance
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'App 1' }
+  - id: app-instance-2
+    type: infra:component.compute-instance
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'App 2' }
+  - id: app-instance-3
+    type: infra:component.compute-instance
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'App 3' }
+  - id: app-instance-4
+    type: infra:component.compute-instance
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'App 4' }
+
+  # --- Data tier ---
+  - id: rds-master
+    type: core:component.database
+    configuration: { engine: amazon-rds }
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'RDS Master' }
+  - id: rds-slave
+    type: core:component.database
+    configuration: { engine: amazon-rds }
+    tokens: [{ token: environment:environment.production }]
+    metadata: { label: 'RDS Slave' }
+
+relationships:
+  - id: user-route53
+    type: core:relationship.call.sync
+    from: user
+    to: route53
+    tokens: []
+    metadata: { label: 'DNS lookup' }
+  - id: user-cdn
+    type: core:relationship.call.sync
+    from: user
+    to: cdn
+    tokens: [{ token: security:security.encryption.in-transit }]
+  - id: user-web-elb
+    type: core:relationship.call.sync
+    from: user
+    to: web-elb
+    tokens: [{ token: security:security.encryption.in-transit }]
+  - id: cdn-static-assets
+    type: core:relationship.data.read
+    from: cdn
+    to: static-assets
+    tokens: []
+  - id: static-assets-s3
+    type: core:relationship.data.read
+    from: static-assets
+    to: s3
+    tokens: []
+  - id: web-elb-web-instance-1
+    type: infra:relationship.routes-to
+    from: web-elb
+    to: web-instance-1
+    tokens: []
+  - id: web-elb-web-instance-2
+    type: infra:relationship.routes-to
+    from: web-elb
+    to: web-instance-2
+    tokens: []
+  - id: web-elb-web-instance-3
+    type: infra:relationship.routes-to
+    from: web-elb
+    to: web-instance-3
+    tokens: []
+  - id: web-elb-web-instance-4
+    type: infra:relationship.routes-to
+    from: web-elb
+    to: web-instance-4
+    tokens: []
+  - id: web-instance-1-app-elb
+    type: core:relationship.call.sync
+    from: web-instance-1
+    to: app-elb
+    tokens: []
+  - id: web-instance-2-app-elb
+    type: core:relationship.call.sync
+    from: web-instance-2
+    to: app-elb
+    tokens: []
+  - id: web-instance-3-app-elb
+    type: core:relationship.call.sync
+    from: web-instance-3
+    to: app-elb
+    tokens: []
+  - id: web-instance-4-app-elb
+    type: core:relationship.call.sync
+    from: web-instance-4
+    to: app-elb
+    tokens: []
+  - id: app-elb-app-instance-1
+    type: infra:relationship.routes-to
+    from: app-elb
+    to: app-instance-1
+    tokens: []
+  - id: app-elb-app-instance-2
+    type: infra:relationship.routes-to
+    from: app-elb
+    to: app-instance-2
+    tokens: []
+  - id: app-elb-app-instance-3
+    type: infra:relationship.routes-to
+    from: app-elb
+    to: app-instance-3
+    tokens: []
+  - id: app-elb-app-instance-4
+    type: infra:relationship.routes-to
+    from: app-elb
+    to: app-instance-4
+    tokens: []
+  - id: app-instance-1-rds-master
+    type: core:relationship.call.sync
+    from: app-instance-1
+    to: rds-master
+    tokens: []
+  - id: app-instance-2-rds-master
+    type: core:relationship.call.sync
+    from: app-instance-2
+    to: rds-master
+    tokens: []
+  - id: app-instance-3-rds-master
+    type: core:relationship.call.sync
+    from: app-instance-3
+    to: rds-master
+    tokens: []
+  - id: app-instance-4-rds-master
+    type: core:relationship.call.sync
+    from: app-instance-4
+    to: rds-master
+    tokens: []
+  - id: rds-master-rds-slave
+    type: infra:relationship.replicates-to
+    from: rds-master
+    to: rds-slave
+    tokens: []
+    metadata: { label: 'Cross-AZ Replication' }
