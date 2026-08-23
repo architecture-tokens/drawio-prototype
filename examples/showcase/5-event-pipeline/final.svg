@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  Semantic palette (C1) — event-pipeline (AsyncAPI Channel concept)
+
+  producer  (origin / where data enters the system)
+    border #3b5bdb  background #edf2ff  text #1c3fa8
+
+  message   (raw data in flight — neutral per C3: no state, just a payload)
+    border #868e96  background #f1f3f5  text #495057
+
+  channel   (messaging infrastructure — the broker topic/queue)
+    border #7048e8  background #f3f0ff  text #5f3dc4
+
+  consumer  (destination / where data is delivered)
+    border #2f9e44  background #ebfbee  text #2b8a3e
+
+  Connectors are colored by their DESTINATION (C2): the producer->message
+  edge is message-grey, the message->channel edge is channel-violet, and
+  all three channel->consumer edges are consumer-green. Each edge's line
+  and its own arrowhead share one color; the arrowhead inherits the line's
+  stroke via fill="context-stroke" so only ONE <marker> def exists for the
+  whole diagram (rule 7/9) instead of one per palette color.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" width="880" height="340" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="context-stroke"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="880" height="340" fill="#ffffff"/>
+
+  <!-- Connectors (drawn under the boxes so arrowheads land exactly on the box edge) -->
+  <g fill="none" stroke-width="1">
+    <!-- producer -> message : destination = message (grey) -->
+    <polyline points="180,170 260,170" stroke="#868e96" marker-end="url(#arrow)"/>
+
+    <!-- message -> channel : destination = channel (violet) -->
+    <polyline points="400,170 480,170" stroke="#7048e8" marker-end="url(#arrow)"/>
+
+    <!-- channel -> consumer-a/b/c : destination = consumer (green).
+         Rule 11 showcase: this is the fan-OUT mirror of "converging edges
+         merge into one trunk" — one source (channel) reaching three
+         distinct destinations can't share a single arrowhead (each
+         consumer needs its own), but the three edges share one exit point
+         and one trunk segment (620,170)->(660,170) instead of leaving
+         channel's right face as three near-parallel near-duplicate lines.
+         They only diverge at the bus point x=660, where each peels off
+         toward its own consumer. The first segment of all three polylines
+         below is byte-identical, so the overdrawn strokes read as one
+         trunk line up to the split. -->
+    <polyline points="620,170 660,170 660,70 700,70" stroke="#2f9e44" marker-end="url(#arrow)"/>
+    <polyline points="620,170 660,170 700,170" stroke="#2f9e44" marker-end="url(#arrow)"/>
+    <polyline points="620,170 660,170 660,270 700,270" stroke="#2f9e44" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- Boxes -->
+  <g font-size="14" text-anchor="middle" dominant-baseline="middle">
+    <g>
+      <rect x="40" y="140" width="140" height="60" rx="8" fill="#edf2ff" stroke="#3b5bdb" stroke-width="1.5"/>
+      <text x="110" y="171" fill="#1c3fa8">Producer</text>
+    </g>
+    <g>
+      <rect x="260" y="140" width="140" height="60" rx="8" fill="#f1f3f5" stroke="#868e96" stroke-width="1.5"/>
+      <text x="330" y="171" fill="#495057">message</text>
+    </g>
+    <g>
+      <rect x="480" y="140" width="140" height="60" rx="8" fill="#f3f0ff" stroke="#7048e8" stroke-width="1.5"/>
+      <text x="550" y="171" fill="#5f3dc4">Channel</text>
+    </g>
+    <g>
+      <rect x="700" y="40" width="140" height="60" rx="8" fill="#ebfbee" stroke="#2f9e44" stroke-width="1.5"/>
+      <text x="770" y="71" fill="#2b8a3e">Consumer</text>
+    </g>
+    <g>
+      <rect x="700" y="140" width="140" height="60" rx="8" fill="#ebfbee" stroke="#2f9e44" stroke-width="1.5"/>
+      <text x="770" y="171" fill="#2b8a3e">Consumer</text>
+    </g>
+    <g>
+      <rect x="700" y="240" width="140" height="60" rx="8" fill="#ebfbee" stroke="#2f9e44" stroke-width="1.5"/>
+      <text x="770" y="271" fill="#2b8a3e">Consumer</text>
+    </g>
+  </g>
+</svg>
