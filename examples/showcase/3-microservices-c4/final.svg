@@ -15,6 +15,12 @@
   only from this palette. Arrowheads: url(#arrow-navy|gray|blue), same geometry/size, fill
   matches destination color (rule 7's "one marker def" as one canonical size/shape, three
   color fills to satisfy C2).
+
+  Ink tints (C1): a few text-only elements read slightly lighter than their box border for
+  legibility on white — #1f2430 (the diagram title, generic neutral ink, no domain), #3a4048
+  (the boundary's own caption/[Boundary] label, a tint of its #7a828e border), and #40454f
+  (gray-domain edge-label text, a tint of #3d4250 used only where full-strength gray border
+  color would read too heavy at 12px).
 -->
   <defs>
     <marker id="arrow-navy" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse">

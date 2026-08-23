@@ -17,6 +17,9 @@ this palette; arrows are colored by the domain they lead INTO (C2).
                Kubernetes namespace boundary (k8s:topology.namespace), nested one level inside platform.
   CHROME     bg #2B3440  text #FFFFFF
              Title bar: UI chrome, not diagram data (C3 fallback, no semantic applies).
+  SUBTEXT    text #7C8AA5 (neutral, C3, no border/bg)
+             Secondary caption under each workload title ("Kubernetes Engine"), muted so it
+             reads as annotation rather than the WORKLOAD-blue title above it.
 
 Arrow color = destination-node semantic (C2): an arrow entering a WORKLOAD node is
 WORKLOAD-blue; an arrow entering a NETWORK node is NETWORK-teal. This produces the

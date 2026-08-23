@@ -12,6 +12,7 @@
   compute    | autoscaling groups + instances (execution)| #C2410C | #FCEBE0  | #8A2F09 | #FFFFFF
   storage    | object storage + static content (durable) | #15803D | #E7F6EC  | #0F5C2E | #FFFFFF
   database   | RDS master/slave (structured persistence) | #1D4ED8 | #E7EDFC  | #15359E | #FFFFFF
+  neutral    | legend meta captions only (C3 fallback, no diagram meaning) | —       | —        | #4B5563 | —
 -->
 <defs>
   <marker id="arrow-actor" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
