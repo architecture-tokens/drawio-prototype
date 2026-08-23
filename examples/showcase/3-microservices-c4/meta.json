@@ -1,0 +1,12 @@
+{
+  "url": "https://raw.githubusercontent.com/mermaid-js/mermaid/develop/packages/mermaid/src/docs/syntax/c4.md",
+  "repo": "mermaid-js/mermaid",
+  "license": "MIT",
+  "fetched": "2026-08-24T06:34:00Z",
+  "title": "C4Container diagram - Container diagram for Internet Banking System",
+  "genre": "microservices-c4",
+  "format": "mermaid",
+  "node_count_estimate": 8,
+  "edge_count_estimate": 11,
+  "notes": "Canonical C4Container example from the official mermaid docs (docs/syntax/c4.md), itself adapted from the well-known Structurizr/C4-model 'Internet Banking System' reference example, expressed in mermaid's C4 syntax (PlantUML-compatible). Nodes: Customer, E-Mail System, Mainframe Banking System, Single-Page App, Mobile App, Web Application, Database, API Application. 11 Rel()/Rel_Back() relationships, all directed."
+}

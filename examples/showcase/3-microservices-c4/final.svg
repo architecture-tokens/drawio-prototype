@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1700 1108" width="1700" height="1108">
+<!--
+  Semantic palette (rule C1) for this C4 container diagram:
+
+  navy  #123a63 (border #0b2745) - Person: the human actor (Customer). Text/arrows white/navy.
+  gray  #5b6472 (border #3d4250) - Externally maintained system or container (C4 "_Ext":
+        E-Mail System, Mainframe Banking System, Mobile App, API Application) - maintained
+        by a separate team, per the c4:component.external applied token in model.yaml.
+  blue  #1d4fc4 (border #123a8f) - Internal container owned by this system (Single-Page App,
+        Web Application, Database).
+  boundary (no fill, border #7a828e dashed) - a C4 system/container boundary grouping
+        (c4:component.boundary): "Internet Banking".
+
+  Every box, its text, and every arrow entering it (C2: arrow colored by destination) draws
+  only from this palette. Arrowheads: url(#arrow-navy|gray|blue), same geometry/size, fill
+  matches destination color (rule 7's "one marker def" as one canonical size/shape, three
+  color fills to satisfy C2).
+-->
+  <defs>
+    <marker id="arrow-navy" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#0b2745"/>
+    </marker>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#3d4250"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#123a8f"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="1700" height="1108" fill="#ffffff"/>
+
+  <text x="850.0" y="48" text-anchor="middle" font-size="20" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#1f2430">Container diagram for Internet Banking System</text>
+
+  <g id="boundary">
+  <rect x="360" y="300" width="980" height="768"
+    fill="none" stroke="#7a828e" stroke-width="2.5" stroke-dasharray="10 7" rx="4" ry="4"/>
+  <text x="580" y="334" font-size="17" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#3a4048">Internet Banking</text>
+  <text x="580" y="356" font-size="12" font-style="italic" font-family="Helvetica, Arial, sans-serif" fill="#3a4048">[Boundary]</text>
+  </g>
+
+  <g id="edges">
+  <polyline points="720,199 530,199 530,452" fill="none" stroke="#123a8f" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <g>
+    <rect x="591.9" y="201.0" width="56.2" height="36" fill="#ffffff" opacity="0.92"/>
+    <text x="620" y="213" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#1d4fc4">Uses</text>
+    <text x="620" y="228" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#1d4fc4">[HTTPS]</text>
+    </g>
+  <polyline points="850,240 850,432" fill="none" stroke="#123a8f" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <g>
+    <rect x="860.0" y="308.0" width="56.2" height="36" fill="#ffffff" opacity="0.92"/>
+    <text x="864" y="320" text-anchor="start" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#1d4fc4">Uses</text>
+    <text x="864" y="335" text-anchor="start" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#1d4fc4">[HTTPS]</text>
+    </g>
+  <polyline points="980,184 1170,184 1170,432" fill="none" stroke="#3d4250" stroke-width="2" marker-end="url(#arrow-gray)"/>
+  <g>
+    <rect x="1056.8" y="160.0" width="36.4" height="21" fill="#ffffff" opacity="0.92"/>
+    <text x="1075" y="172" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#40454f">Uses</text>
+    </g>
+  <polyline points="660,518 720,518" fill="none" stroke="#123a8f" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <g>
+    <rect x="658.6" y="494.0" width="62.8" height="21" fill="#ffffff" opacity="0.92"/>
+    <text x="690" y="506" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#1d4fc4">Delivers</text>
+    </g>
+  <polyline points="850,604 850,664" fill="none" stroke="#3d4250" stroke-width="2" marker-end="url(#arrow-gray)"/>
+  <polyline points="1170,604 1170,624 850,624" fill="none" stroke="#3d4250" stroke-width="2"/>
+  <g>
+    <rect x="860.0" y="624.0" width="89.2" height="36" fill="#ffffff" opacity="0.92"/>
+    <text x="864" y="636" text-anchor="start" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#40454f">Uses [async,</text>
+    <text x="864" y="651" text-anchor="start" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#40454f">JSON/HTTPS]</text>
+    </g>
+  <polyline points="850,796 850,856" fill="none" stroke="#123a8f" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <g>
+    <rect x="860.0" y="800.0" width="102.4" height="51" fill="#ffffff" opacity="0.92"/>
+    <text x="864" y="812" text-anchor="start" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#1d4fc4">Reads from and</text>
+    <text x="864" y="827" text-anchor="start" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#1d4fc4">writes to</text>
+    <text x="864" y="842" text-anchor="start" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#1d4fc4">[sync, JDBC]</text>
+    </g>
+  <polyline points="300,169 720,169" fill="none" stroke="#0b2745" stroke-width="2" marker-end="url(#arrow-navy)"/>
+  <g>
+    <rect x="452.2" y="145.0" width="115.6" height="21" fill="#ffffff" opacity="0.92"/>
+    <text x="510" y="157" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#123a63">Sends e-mails to</text>
+    </g>
+  <polyline points="720,730 170,730 170,240" fill="none" stroke="#3d4250" stroke-width="2" marker-end="url(#arrow-gray)"/>
+  <g>
+    <rect x="382.3" y="691.0" width="135.4" height="36" fill="#ffffff" opacity="0.92"/>
+    <text x="450" y="703" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#40454f">Sends e-mails using</text>
+    <text x="450" y="718" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#40454f">[sync, SMTP]</text>
+    </g>
+  <polyline points="980,730 1400,730" fill="none" stroke="#3d4250" stroke-width="2" marker-end="url(#arrow-gray)"/>
+  <g>
+    <rect x="1109.1" y="691.0" width="161.8" height="36" fill="#ffffff" opacity="0.92"/>
+    <text x="1190" y="703" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#40454f">Uses</text>
+    <text x="1190" y="718" text-anchor="middle" font-size="12" font-family="Helvetica, Arial, sans-serif" fill="#40454f">[sync/async, XML/HTTPS]</text>
+    </g>
+  </g>
+
+  <g id="nodes">
+  <g id="email_system">
+    <rect x="40" y="128" width="260" height="112" rx="6" ry="6" fill="#5b6472" stroke="#3d4250" stroke-width="3"/>
+    <text x="56" y="158" font-size="16" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">E-Mail System</text>
+    <text x="56" y="198" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">The internal Microsoft</text>
+    <text x="56" y="218" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Exchange system</text>
+  </g>
+  <g id="customer">
+    <rect x="720" y="128" width="260" height="112" rx="6" ry="6" fill="#123a63" stroke="#0b2745" stroke-width="3"/>
+    <text x="736" y="158" font-size="16" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Customer</text>
+    <text x="736" y="198" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">A customer of the bank, with</text>
+    <text x="736" y="218" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">personal bank accounts</text>
+  </g>
+  <g id="banking_system">
+    <rect x="1400" y="654" width="260" height="152" rx="6" ry="6" fill="#5b6472" stroke="#3d4250" stroke-width="3"/>
+    <text x="1416" y="684" font-size="16" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Mainframe Banking System</text>
+    <text x="1416" y="724" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Stores all of the core</text>
+    <text x="1416" y="744" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">banking information about</text>
+    <text x="1416" y="764" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">customers, accounts,</text>
+    <text x="1416" y="784" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">transactions, etc.</text>
+  </g>
+  <g id="web_app">
+    <rect x="400" y="452" width="260" height="132" rx="6" ry="6" fill="#1d4fc4" stroke="#123a8f" stroke-width="3"/>
+    <text x="416" y="482" font-size="16" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Web Application</text>
+    <text x="416" y="502" font-size="12" font-style="italic" font-family="Helvetica, Arial, sans-serif" fill="#ffffff" opacity="0.92">[Java, Spring MVC]</text>
+    <text x="416" y="542" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Delivers the static content</text>
+    <text x="416" y="562" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">and the Internet banking SPA</text>
+  </g>
+  <g id="spa">
+    <rect x="720" y="432" width="260" height="172" rx="6" ry="6" fill="#1d4fc4" stroke="#123a8f" stroke-width="3"/>
+    <text x="736" y="462" font-size="16" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Single-Page App</text>
+    <text x="736" y="482" font-size="12" font-style="italic" font-family="Helvetica, Arial, sans-serif" fill="#ffffff" opacity="0.92">[JavaScript, Angular]</text>
+    <text x="736" y="522" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Provides all the Internet</text>
+    <text x="736" y="542" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">banking functionality to</text>
+    <text x="736" y="562" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">customers via their web</text>
+    <text x="736" y="582" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">browser</text>
+  </g>
+  <g id="mobile_app">
+    <rect x="1040" y="432" width="260" height="172" rx="6" ry="6" fill="#5b6472" stroke="#3d4250" stroke-width="3"/>
+    <text x="1056" y="462" font-size="16" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Mobile App</text>
+    <text x="1056" y="482" font-size="12" font-style="italic" font-family="Helvetica, Arial, sans-serif" fill="#ffffff" opacity="0.92">[C#, Xamarin]</text>
+    <text x="1056" y="522" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Provides a limited subset of</text>
+    <text x="1056" y="542" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">the Internet banking</text>
+    <text x="1056" y="562" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">functionality to customers</text>
+    <text x="1056" y="582" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">via their mobile device</text>
+  </g>
+  <g id="backend_api">
+    <rect x="720" y="664" width="260" height="132" rx="6" ry="6" fill="#5b6472" stroke="#3d4250" stroke-width="3"/>
+    <text x="736" y="694" font-size="16" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">API Application</text>
+    <text x="736" y="714" font-size="12" font-style="italic" font-family="Helvetica, Arial, sans-serif" fill="#ffffff" opacity="0.92">[Java, Docker Container]</text>
+    <text x="736" y="754" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Provides Internet banking</text>
+    <text x="736" y="774" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">functionality via API</text>
+  </g>
+  <g id="database">
+    <path d="M720,870 A130.0,14 0 0 1 980,870 L980,1014 A130.0,14 0 0 1 720,1014 Z" fill="#1d4fc4" stroke="#123a8f" stroke-width="3"/>
+    <ellipse cx="850.0" cy="870" rx="130.0" ry="14" fill="none" stroke="#123a8f" stroke-width="3"/>
+    <text x="736" y="886" font-size="16" font-weight="700" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Database</text>
+    <text x="736" y="906" font-size="12" font-style="italic" font-family="Helvetica, Arial, sans-serif" fill="#ffffff" opacity="0.92">[SQL Database]</text>
+    <text x="736" y="946" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">Stores user registration</text>
+    <text x="736" y="966" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">information, hashed auth</text>
+    <text x="736" y="986" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">credentials, access logs,</text>
+    <text x="736" y="1006" font-size="12.5" font-family="Helvetica, Arial, sans-serif" fill="#ffffff">etc.</text>
+  </g>
+  </g>
+</svg>

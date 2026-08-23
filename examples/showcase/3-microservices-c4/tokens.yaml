@@ -1,0 +1,54 @@
+kind: token-library
+namespace: c4
+domains: [component, relationship]
+version: 0.1.0
+name: C4 Model
+description: >-
+  Local token library for concepts from Simon Brown's C4 model (the mermaid
+  C4Container syntax used by this example's source.mmd) that the built-in
+  core/security/environment/lifecycle libraries do not cover: a system or
+  container boundary grouping, asynchronous calls, content delivery,
+  combined read/write data access, fire-and-forget notifications, and the
+  C4 "_Ext" externally-maintained marker.
+tokens:
+  - id: component.boundary
+    kind: component-type
+    name: Boundary
+    description: >-
+      A system or container boundary — a logical grouping construct (e.g. C4
+      Container_Boundary) with no independent runtime behavior of its own; it
+      exists only to group the components nested inside it.
+  - id: component.external
+    kind: applied
+    name: Externally Maintained
+    description: >-
+      Marks a component as maintained by a separate team or organization (the
+      C4 "_Ext" suffix, e.g. Container_Ext, System_Ext, ContainerDb_Ext), as
+      distinct from components maintained by the team that owns this model.
+    appliesTo: { elementKinds: [component] }
+  - id: relationship.call.async
+    kind: relationship-type
+    name: Asynchronous Call
+    description: >-
+      An asynchronous request/response call (e.g. async JSON over HTTPS)
+      where the caller does not block on the same connection, as distinct
+      from core:relationship.call.sync.
+  - id: relationship.delivers
+    kind: relationship-type
+    name: Delivers
+    description: >-
+      One component serves or delivers static content/code to another (e.g.
+      a web application serving a compiled single-page-app bundle to a
+      browser), distinct from a request/response call.
+  - id: relationship.data.readwrite
+    kind: relationship-type
+    name: Reads and Writes
+    description: >-
+      Combined read and write data access to a store, as distinct from
+      core:relationship.data.read (read-only).
+  - id: relationship.notifies
+    kind: relationship-type
+    name: Notifies
+    description: >-
+      Sends a fire-and-forget notification to another component or actor
+      (e.g. an outbound email), distinct from a request/response call.

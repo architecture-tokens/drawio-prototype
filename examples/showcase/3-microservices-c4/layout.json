@@ -1,0 +1,147 @@
+{
+  "version": "0.1",
+  "canvas": {
+    "width": 1700,
+    "height": 1108
+  },
+  "nodes": [
+    {
+      "id": "internet_banking",
+      "x": 360,
+      "y": 300,
+      "width": 980,
+      "height": 768,
+      "parentId": null
+    },
+    {
+      "id": "web_app",
+      "x": 400,
+      "y": 452,
+      "width": 260,
+      "height": 132,
+      "parentId": "internet_banking"
+    },
+    {
+      "id": "spa",
+      "x": 720,
+      "y": 432,
+      "width": 260,
+      "height": 172,
+      "parentId": "internet_banking"
+    },
+    {
+      "id": "mobile_app",
+      "x": 1040,
+      "y": 432,
+      "width": 260,
+      "height": 172,
+      "parentId": "internet_banking"
+    },
+    {
+      "id": "backend_api",
+      "x": 720,
+      "y": 664,
+      "width": 260,
+      "height": 132,
+      "parentId": "internet_banking"
+    },
+    {
+      "id": "database",
+      "x": 720,
+      "y": 856,
+      "width": 260,
+      "height": 172,
+      "parentId": "internet_banking"
+    },
+    {
+      "id": "customer",
+      "x": 720,
+      "y": 128,
+      "width": 260,
+      "height": 112,
+      "parentId": null
+    },
+    {
+      "id": "email_system",
+      "x": 40,
+      "y": 128,
+      "width": 260,
+      "height": 112,
+      "parentId": null
+    },
+    {
+      "id": "banking_system",
+      "x": 1400,
+      "y": 654,
+      "width": 260,
+      "height": 152,
+      "parentId": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "customer-web_app",
+      "waypoints": [
+        {
+          "x": 530,
+          "y": 199
+        }
+      ]
+    },
+    {
+      "id": "customer-spa",
+      "waypoints": []
+    },
+    {
+      "id": "customer-mobile_app",
+      "waypoints": [
+        {
+          "x": 1170,
+          "y": 184
+        }
+      ]
+    },
+    {
+      "id": "web_app-spa",
+      "waypoints": []
+    },
+    {
+      "id": "spa-backend_api",
+      "waypoints": []
+    },
+    {
+      "id": "mobile_app-backend_api",
+      "waypoints": [
+        {
+          "x": 1170,
+          "y": 624
+        },
+        {
+          "x": 850,
+          "y": 624
+        }
+      ]
+    },
+    {
+      "id": "backend_api-database",
+      "waypoints": []
+    },
+    {
+      "id": "email_system-customer",
+      "waypoints": []
+    },
+    {
+      "id": "backend_api-email_system",
+      "waypoints": [
+        {
+          "x": 170,
+          "y": 730
+        }
+      ]
+    },
+    {
+      "id": "backend_api-banking_system",
+      "waypoints": []
+    }
+  ]
+}
