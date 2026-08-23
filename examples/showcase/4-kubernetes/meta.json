@@ -1,0 +1,12 @@
+{
+  "url": "https://raw.githubusercontent.com/jgraph/drawio-diagrams/dev/templates/gcp/dev_test_ui_testing_with_kubernetes.xml",
+  "repo": "jgraph/drawio-diagrams",
+  "license": "Apache-2.0",
+  "fetched": "2026-08-24T06:34:00Z",
+  "title": "Architecture: Dev Test > UI Testing with Kubernetes",
+  "genre": "kubernetes",
+  "format": "drawio-xml",
+  "node_count_estimate": 9,
+  "edge_count_estimate": 9,
+  "substitution_note": "kubernetes/community (git tree of 'main', checked recursively) has zero .drawio/.xml diagram files -- it is a docs/policy repo with no diagram assets, so its suggested path 404s at the content level even though the repo exists. Substituted with a bundled GCP-reference-architecture template from jgraph/drawio-diagrams (same repo used for source #1, Apache-2.0), specifically templates/gcp/dev_test_ui_testing_with_kubernetes.xml -- a genuine, uncompressed draw.io XML diagram whose subject is a Kubernetes Engine deployment (Selenium Hub / Firefox Nodes / UI+Backend ReplicationControllers across two namespaces), i.e. still squarely the 'kubernetes' genre. File is raw <mxGraphModel> XML, no decompression needed."
+}

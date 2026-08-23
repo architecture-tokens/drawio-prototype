@@ -1,0 +1,182 @@
+{
+  "version": "0.1",
+  "canvas": {
+    "width": 1806,
+    "height": 528
+  },
+  "nodes": [
+    {
+      "id": "tester",
+      "x": 24,
+      "y": 289,
+      "width": 110,
+      "height": 70,
+      "parentId": null
+    },
+    {
+      "id": "selenium-hub-rc",
+      "x": 234,
+      "y": 272,
+      "width": 232,
+      "height": 104,
+      "parentId": null
+    },
+    {
+      "id": "hub-service",
+      "x": 530,
+      "y": 296,
+      "width": 140,
+      "height": 56,
+      "parentId": null
+    },
+    {
+      "id": "firefox-nodes-attribute",
+      "x": 734,
+      "y": 200,
+      "width": 232,
+      "height": 104,
+      "parentId": null
+    },
+    {
+      "id": "firefox-nodes-rc",
+      "x": 734,
+      "y": 344,
+      "width": 232,
+      "height": 104,
+      "parentId": null
+    },
+    {
+      "id": "frontend-service",
+      "x": 1086,
+      "y": 296,
+      "width": 140,
+      "height": 56,
+      "parentId": null
+    },
+    {
+      "id": "ui-servers-rc",
+      "x": 1290,
+      "y": 200,
+      "width": 232,
+      "height": 104,
+      "parentId": null
+    },
+    {
+      "id": "backend-servers-rc",
+      "x": 1290,
+      "y": 344,
+      "width": 232,
+      "height": 104,
+      "parentId": null
+    },
+    {
+      "id": "backend-service",
+      "x": 1586,
+      "y": 296,
+      "width": 140,
+      "height": 56,
+      "parentId": null
+    }
+  ],
+  "edges": [
+    {
+      "id": "tester-to-selenium-hub",
+      "waypoints": []
+    },
+    {
+      "id": "selenium-hub-to-hub-service",
+      "waypoints": []
+    },
+    {
+      "id": "hub-service-to-firefox-attribute",
+      "waypoints": [
+        {
+          "x": 702,
+          "y": 324
+        },
+        {
+          "x": 702,
+          "y": 252
+        }
+      ]
+    },
+    {
+      "id": "hub-service-to-firefox-rc",
+      "waypoints": [
+        {
+          "x": 702,
+          "y": 324
+        },
+        {
+          "x": 702,
+          "y": 396
+        }
+      ]
+    },
+    {
+      "id": "firefox-attribute-to-frontend",
+      "waypoints": [
+        {
+          "x": 1026,
+          "y": 252
+        },
+        {
+          "x": 1026,
+          "y": 324
+        }
+      ]
+    },
+    {
+      "id": "firefox-rc-to-frontend",
+      "waypoints": [
+        {
+          "x": 1026,
+          "y": 396
+        },
+        {
+          "x": 1026,
+          "y": 324
+        }
+      ]
+    },
+    {
+      "id": "frontend-to-ui-servers",
+      "waypoints": [
+        {
+          "x": 1258,
+          "y": 324
+        },
+        {
+          "x": 1258,
+          "y": 252
+        }
+      ]
+    },
+    {
+      "id": "ui-servers-to-backend-service",
+      "waypoints": [
+        {
+          "x": 1554,
+          "y": 252
+        },
+        {
+          "x": 1554,
+          "y": 324
+        }
+      ]
+    },
+    {
+      "id": "backend-servers-to-backend-service",
+      "waypoints": [
+        {
+          "x": 1554,
+          "y": 396
+        },
+        {
+          "x": 1554,
+          "y": 324
+        }
+      ]
+    }
+  ]
+}

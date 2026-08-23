@@ -1,0 +1,158 @@
+kind: architecture-model
+id: kubernetes-ui-testing
+name: 'Architecture: Dev Test > UI Testing with Kubernetes'
+libraries: [core@0.1.0, environment@0.1.0, k8s@0.1.0]
+components:
+  - id: tester
+    type: core:component.external-actor
+    tokens: []
+    metadata:
+      label: Tester
+      note: Outside the cluster; not deployed into any namespace.
+      sourceIds: ['734']
+
+  - id: selenium-hub-rc
+    type: k8s:workload.replication-controller
+    tokens:
+      - { token: environment:environment.development }
+      - { token: k8s:topology.namespace, value: { name: 'Selenium Namespace' } }
+    metadata:
+      label: 'Selenium Hub (Replication Controller)'
+      platform: Kubernetes Engine
+      sourceIds: ['sPo4FSZVrLmGvF_m1t0P-920', 'sPo4FSZVrLmGvF_m1t0P-921']
+
+  - id: hub-service
+    type: k8s:network.service
+    tokens:
+      - { token: environment:environment.development }
+      - { token: k8s:topology.namespace, value: { name: 'Selenium Namespace' } }
+    metadata:
+      label: Hub Service
+      sourceIds: ['869']
+
+  - id: firefox-nodes-attribute
+    type: k8s:workload.replication-controller
+    tokens:
+      - { token: environment:environment.development }
+      - { token: k8s:topology.namespace, value: { name: 'Selenium Namespace' } }
+    metadata:
+      label: 'Firefox Nodes (Attribute Name)'
+      platform: Kubernetes Engine
+      sourceIds: ['sPo4FSZVrLmGvF_m1t0P-922', 'sPo4FSZVrLmGvF_m1t0P-923']
+      sourceLabelNote: >
+        The source drawio literally reads "(Attribute Name)", parallel to the
+        sibling box's "(Replication Controller)". Preserved verbatim per
+        fidelity to the source; most likely an unedited template placeholder
+        left by the upstream author rather than a documented Kubernetes term.
+
+  - id: firefox-nodes-rc
+    type: k8s:workload.replication-controller
+    tokens:
+      - { token: environment:environment.development }
+      - { token: k8s:topology.namespace, value: { name: 'Selenium Namespace' } }
+    metadata:
+      label: 'Firefox Nodes (Replication Controller)'
+      platform: Kubernetes Engine
+      sourceIds: ['sPo4FSZVrLmGvF_m1t0P-924', 'sPo4FSZVrLmGvF_m1t0P-925']
+
+  - id: frontend-service
+    type: k8s:network.service
+    tokens:
+      - { token: environment:environment.development }
+      - { token: k8s:topology.namespace, value: { name: 'Web App Namespace' } }
+    metadata:
+      label: Frontend Service
+      sourceIds: ['875']
+
+  - id: ui-servers-rc
+    type: k8s:workload.replication-controller
+    tokens:
+      - { token: environment:environment.development }
+      - { token: k8s:topology.namespace, value: { name: 'Web App Namespace' } }
+    metadata:
+      label: 'UI Servers (Replication Controller)'
+      platform: Kubernetes Engine
+      sourceIds: ['sPo4FSZVrLmGvF_m1t0P-926', 'sPo4FSZVrLmGvF_m1t0P-927']
+
+  - id: backend-service
+    type: k8s:network.service
+    tokens:
+      - { token: environment:environment.development }
+      - { token: k8s:topology.namespace, value: { name: 'Web App Namespace' } }
+    metadata:
+      label: Backend Service
+      sourceIds: ['880']
+
+  - id: backend-servers-rc
+    type: k8s:workload.replication-controller
+    tokens:
+      - { token: environment:environment.development }
+      - { token: k8s:topology.namespace, value: { name: 'Web App Namespace' } }
+    metadata:
+      label: 'Backend Servers (Replication Controller)'
+      platform: Kubernetes Engine
+      sourceIds: ['sPo4FSZVrLmGvF_m1t0P-928', 'sPo4FSZVrLmGvF_m1t0P-929']
+
+relationships:
+  - id: tester-to-selenium-hub
+    type: core:relationship.call.sync
+    from: tester
+    to: selenium-hub-rc
+    tokens: []
+    metadata: { sourceIds: ['881'] }
+
+  - id: selenium-hub-to-hub-service
+    type: core:relationship.call.sync
+    from: selenium-hub-rc
+    to: hub-service
+    tokens: []
+    metadata: { sourceIds: ['882'] }
+
+  - id: hub-service-to-firefox-attribute
+    type: core:relationship.call.sync
+    from: hub-service
+    to: firefox-nodes-attribute
+    tokens: []
+    metadata: { sourceIds: ['883'] }
+
+  - id: hub-service-to-firefox-rc
+    type: core:relationship.call.sync
+    from: hub-service
+    to: firefox-nodes-rc
+    tokens: []
+    metadata: { sourceIds: ['884'] }
+
+  - id: firefox-attribute-to-frontend
+    type: core:relationship.call.sync
+    from: firefox-nodes-attribute
+    to: frontend-service
+    tokens: []
+    metadata: { sourceIds: ['886'] }
+
+  - id: firefox-rc-to-frontend
+    type: core:relationship.call.sync
+    from: firefox-nodes-rc
+    to: frontend-service
+    tokens: []
+    metadata: { sourceIds: ['887'] }
+
+  - id: frontend-to-ui-servers
+    type: core:relationship.call.sync
+    from: frontend-service
+    to: ui-servers-rc
+    tokens: []
+    metadata: { sourceIds: ['888'] }
+
+  - id: ui-servers-to-backend-service
+    type: core:relationship.call.sync
+    from: ui-servers-rc
+    to: backend-service
+    tokens: []
+    metadata: { sourceIds: ['889'] }
+
+  - id: backend-servers-to-backend-service
+    type: core:relationship.call.sync
+    from: backend-servers-rc
+    to: backend-service
+    tokens: []
+    metadata: { sourceIds: ['890'] }

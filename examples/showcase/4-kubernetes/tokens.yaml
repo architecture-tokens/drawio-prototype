@@ -1,0 +1,38 @@
+kind: token-library
+namespace: k8s
+domains: [workload, network, topology]
+version: 0.1.0
+name: Kubernetes
+description: >
+  Kubernetes-specific component types and metadata not covered by the core
+  spec: workload objects (pod-managing controllers), the Service networking
+  object that fronts them, and the namespace each component is deployed into.
+  Local to this example (examples/showcase/4-kubernetes).
+tokens:
+  - id: workload.replication-controller
+    kind: component-type
+    name: Replication Controller
+    description: >
+      A Kubernetes ReplicationController that keeps a stable set of pod
+      replicas running (a deployable workload), surfaced in the source
+      diagram as a "Kubernetes Engine" icon.
+  - id: network.service
+    kind: component-type
+    name: Service
+    description: >
+      A Kubernetes Service -- a stable virtual IP/DNS name that load-balances
+      traffic to the pods behind a workload, distinct from the workload
+      itself.
+  - id: topology.namespace
+    kind: applied
+    name: Namespace
+    description: >
+      The Kubernetes namespace the component is deployed into (a logical
+      partition of the cluster). Value carries the namespace's display name
+      as labeled in the source diagram.
+    appliesTo: { elementKinds: [component] }
+    valueSchema:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1 }
