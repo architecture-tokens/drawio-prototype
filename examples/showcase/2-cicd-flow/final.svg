@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1228 292" width="1228" height="292" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<!--
+  Semantic palette (C1) — one color per pipeline stage. An element is
+  colored by the stage it represents (C2); a connector is colored by the
+  stage it leads INTO (its destination), so a stage-transition arrow
+  changes color the instant it crosses into the next stage's lane.
+  There is no neutral/ink color: every node and edge in this diagram
+  carries stage meaning, so C3's neutral fallback is unused here.
+
+    BUILD  (compile / package)      border #3B5BDB  bg-lane #EDF2FF  bg-job #DBE4FF  text #1E2A78
+    TEST   (automated verification) border #E8590C  bg-lane #FFF4E6  bg-job #FFE8CC  text #7A3305
+    DEPLOY (release to environment) border #2F9E44  bg-lane #EBFBEE  bg-job #D3F9D8  text #205029
+-->
+<defs>
+  <marker id="arrow-build" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#3B5BDB"/>
+  </marker>
+  <marker id="arrow-test" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#E8590C"/>
+  </marker>
+  <marker id="arrow-deploy" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#2F9E44"/>
+  </marker>
+</defs>
+
+<rect x="0" y="0" width="1228" height="292" fill="#ffffff"/>
+
+<!-- ===== Stage containers (B9/B10: nested job boxes are centred with equal
+     margins and never touch this border) ===== -->
+<g>
+  <rect x="40" y="40" width="356" height="212" rx="0" fill="#EDF2FF" stroke="#3B5BDB" stroke-width="2"/>
+  <text x="218" y="66" text-anchor="middle" dominant-baseline="central" font-size="18" font-weight="600" fill="#1E2A78">build stage</text>
+
+  <rect x="436" y="40" width="356" height="212" rx="0" fill="#FFF4E6" stroke="#E8590C" stroke-width="2"/>
+  <text x="614" y="66" text-anchor="middle" dominant-baseline="central" font-size="18" font-weight="600" fill="#7A3305">test stage</text>
+
+  <rect x="832" y="40" width="356" height="212" rx="0" fill="#EBFBEE" stroke="#2F9E44" stroke-width="2"/>
+  <text x="1010" y="66" text-anchor="middle" dominant-baseline="central" font-size="18" font-weight="600" fill="#205029">deploy stage</text>
+
+</g>
+
+<!-- ===== Connectors =====
+     Orthogonal polylines only. Uniform stroke-width 1 (rule 8) on every
+     connector, independent of the uniform box border-width 2 (B4).
+     In-stage fan-out (solid): exits distributed evenly along the source's
+     right edge per rule 2 (two different destinations = two different
+     points, not stacked at the midpoint). Cross-stage handoffs (dashed,
+     rule 10 — the dash marks "this triggers the next stage"): the two
+     parallel jobs of one stage converge into ONE trunk with ONE arrowhead
+     on the next stage's entry job, per rule 11. -->
+<g fill="none" stroke-linecap="square">
+  <polyline points="198,142 218,142 218,110 238,110" stroke="#3B5BDB" stroke-width="1" marker-end="url(#arrow-build)"/>
+  <polyline points="198,162 218,162 218,194 238,194" stroke="#3B5BDB" stroke-width="1" marker-end="url(#arrow-build)"/>
+  <polyline points="594,142 614,142 614,110 634,110" stroke="#E8590C" stroke-width="1" marker-end="url(#arrow-test)"/>
+  <polyline points="594,162 614,162 614,194 634,194" stroke="#E8590C" stroke-width="1" marker-end="url(#arrow-test)"/>
+  <polyline points="990,142 1010,142 1010,110 1030,110" stroke="#2F9E44" stroke-width="1" marker-end="url(#arrow-deploy)"/>
+  <polyline points="990,162 1010,162 1010,194 1030,194" stroke="#2F9E44" stroke-width="1" marker-end="url(#arrow-deploy)"/>
+
+  <!-- build -> test stage handoff: two branches merge into one trunk -->
+  <polyline points="368,110 416,110 416,152" stroke="#E8590C" stroke-width="1" stroke-dasharray="6,4"/>
+  <polyline points="368,194 416,194 416,152" stroke="#E8590C" stroke-width="1" stroke-dasharray="6,4"/>
+  <polyline points="416,152 464,152" stroke="#E8590C" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#arrow-test)"/>
+
+  <!-- test -> deploy stage handoff: two branches merge into one trunk -->
+  <polyline points="764,110 812,110 812,152" stroke="#2F9E44" stroke-width="1" stroke-dasharray="6,4"/>
+  <polyline points="764,194 812,194 812,152" stroke="#2F9E44" stroke-width="1" stroke-dasharray="6,4"/>
+  <polyline points="812,152 860,152" stroke="#2F9E44" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#arrow-deploy)"/>
+
+</g>
+
+<!-- ===== Job boxes (B1 quantized height, uniform width/gap/border; T3
+     title-only so text is centered both axes) ===== -->
+<g>
+  <rect x="68" y="122" width="130" height="60" rx="6" fill="#DBE4FF" stroke="#3B5BDB" stroke-width="2"/>
+  <text x="133" y="152" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#1E2A78">build</text>
+
+  <rect x="238" y="80" width="130" height="60" rx="6" fill="#DBE4FF" stroke="#3B5BDB" stroke-width="2"/>
+  <text x="303" y="110" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#1E2A78">build_a</text>
+
+  <rect x="238" y="164" width="130" height="60" rx="6" fill="#DBE4FF" stroke="#3B5BDB" stroke-width="2"/>
+  <text x="303" y="194" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#1E2A78">build_b</text>
+
+  <rect x="464" y="122" width="130" height="60" rx="6" fill="#FFE8CC" stroke="#E8590C" stroke-width="2"/>
+  <text x="529" y="152" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#7A3305">test</text>
+
+  <rect x="634" y="80" width="130" height="60" rx="6" fill="#FFE8CC" stroke="#E8590C" stroke-width="2"/>
+  <text x="699" y="110" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#7A3305">test_a</text>
+
+  <rect x="634" y="164" width="130" height="60" rx="6" fill="#FFE8CC" stroke="#E8590C" stroke-width="2"/>
+  <text x="699" y="194" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#7A3305">test_b</text>
+
+  <rect x="860" y="122" width="130" height="60" rx="6" fill="#D3F9D8" stroke="#2F9E44" stroke-width="2"/>
+  <text x="925" y="152" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#205029">deploy</text>
+
+  <rect x="1030" y="80" width="130" height="60" rx="6" fill="#D3F9D8" stroke="#2F9E44" stroke-width="2"/>
+  <text x="1095" y="110" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#205029">deploy_a</text>
+
+  <rect x="1030" y="164" width="130" height="60" rx="6" fill="#D3F9D8" stroke="#2F9E44" stroke-width="2"/>
+  <text x="1095" y="194" text-anchor="middle" dominant-baseline="central" font-size="15" font-weight="500" fill="#205029">deploy_b</text>
+
+</g>
+</svg>

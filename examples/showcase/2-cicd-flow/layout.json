@@ -1,0 +1,313 @@
+{
+  "version": "0.1",
+  "canvas": {
+    "width": 1228,
+    "height": 292
+  },
+  "nodes": [
+    {
+      "id": "build_stage",
+      "x": 40,
+      "y": 40,
+      "width": 356,
+      "height": 212,
+      "parentId": null
+    },
+    {
+      "id": "build",
+      "x": 68,
+      "y": 122,
+      "width": 130,
+      "height": 60,
+      "parentId": "build_stage"
+    },
+    {
+      "id": "build_a",
+      "x": 238,
+      "y": 80,
+      "width": 130,
+      "height": 60,
+      "parentId": "build_stage"
+    },
+    {
+      "id": "build_b",
+      "x": 238,
+      "y": 164,
+      "width": 130,
+      "height": 60,
+      "parentId": "build_stage"
+    },
+    {
+      "id": "test_stage",
+      "x": 436,
+      "y": 40,
+      "width": 356,
+      "height": 212,
+      "parentId": null
+    },
+    {
+      "id": "test",
+      "x": 464,
+      "y": 122,
+      "width": 130,
+      "height": 60,
+      "parentId": "test_stage"
+    },
+    {
+      "id": "test_a",
+      "x": 634,
+      "y": 80,
+      "width": 130,
+      "height": 60,
+      "parentId": "test_stage"
+    },
+    {
+      "id": "test_b",
+      "x": 634,
+      "y": 164,
+      "width": 130,
+      "height": 60,
+      "parentId": "test_stage"
+    },
+    {
+      "id": "deploy_stage",
+      "x": 832,
+      "y": 40,
+      "width": 356,
+      "height": 212,
+      "parentId": null
+    },
+    {
+      "id": "deploy",
+      "x": 860,
+      "y": 122,
+      "width": 130,
+      "height": 60,
+      "parentId": "deploy_stage"
+    },
+    {
+      "id": "deploy_a",
+      "x": 1030,
+      "y": 80,
+      "width": 130,
+      "height": 60,
+      "parentId": "deploy_stage"
+    },
+    {
+      "id": "deploy_b",
+      "x": 1030,
+      "y": 164,
+      "width": 130,
+      "height": 60,
+      "parentId": "deploy_stage"
+    }
+  ],
+  "edges": [
+    {
+      "id": "build-in-build_stage",
+      "waypoints": []
+    },
+    {
+      "id": "build_a-in-build_stage",
+      "waypoints": []
+    },
+    {
+      "id": "build_b-in-build_stage",
+      "waypoints": []
+    },
+    {
+      "id": "test-in-test_stage",
+      "waypoints": []
+    },
+    {
+      "id": "test_a-in-test_stage",
+      "waypoints": []
+    },
+    {
+      "id": "test_b-in-test_stage",
+      "waypoints": []
+    },
+    {
+      "id": "deploy-in-deploy_stage",
+      "waypoints": []
+    },
+    {
+      "id": "deploy_a-in-deploy_stage",
+      "waypoints": []
+    },
+    {
+      "id": "deploy_b-in-deploy_stage",
+      "waypoints": []
+    },
+    {
+      "id": "build-build_a",
+      "waypoints": [
+        {
+          "x": 198,
+          "y": 142
+        },
+        {
+          "x": 218,
+          "y": 142
+        },
+        {
+          "x": 218,
+          "y": 110
+        }
+      ]
+    },
+    {
+      "id": "build-build_b",
+      "waypoints": [
+        {
+          "x": 198,
+          "y": 162
+        },
+        {
+          "x": 218,
+          "y": 162
+        },
+        {
+          "x": 218,
+          "y": 194
+        }
+      ]
+    },
+    {
+      "id": "test-test_a",
+      "waypoints": [
+        {
+          "x": 594,
+          "y": 142
+        },
+        {
+          "x": 614,
+          "y": 142
+        },
+        {
+          "x": 614,
+          "y": 110
+        }
+      ]
+    },
+    {
+      "id": "test-test_b",
+      "waypoints": [
+        {
+          "x": 594,
+          "y": 162
+        },
+        {
+          "x": 614,
+          "y": 162
+        },
+        {
+          "x": 614,
+          "y": 194
+        }
+      ]
+    },
+    {
+      "id": "deploy-deploy_a",
+      "waypoints": [
+        {
+          "x": 990,
+          "y": 142
+        },
+        {
+          "x": 1010,
+          "y": 142
+        },
+        {
+          "x": 1010,
+          "y": 110
+        }
+      ]
+    },
+    {
+      "id": "deploy-deploy_b",
+      "waypoints": [
+        {
+          "x": 990,
+          "y": 162
+        },
+        {
+          "x": 1010,
+          "y": 162
+        },
+        {
+          "x": 1010,
+          "y": 194
+        }
+      ]
+    },
+    {
+      "id": "build_a-test",
+      "waypoints": [
+        {
+          "x": 368,
+          "y": 110
+        },
+        {
+          "x": 416,
+          "y": 110
+        },
+        {
+          "x": 416,
+          "y": 152
+        }
+      ]
+    },
+    {
+      "id": "build_b-test",
+      "waypoints": [
+        {
+          "x": 368,
+          "y": 194
+        },
+        {
+          "x": 416,
+          "y": 194
+        },
+        {
+          "x": 416,
+          "y": 152
+        }
+      ]
+    },
+    {
+      "id": "test_a-deploy",
+      "waypoints": [
+        {
+          "x": 764,
+          "y": 110
+        },
+        {
+          "x": 812,
+          "y": 110
+        },
+        {
+          "x": 812,
+          "y": 152
+        }
+      ]
+    },
+    {
+      "id": "test_b-deploy",
+      "waypoints": [
+        {
+          "x": 764,
+          "y": 194
+        },
+        {
+          "x": 812,
+          "y": 194
+        },
+        {
+          "x": 812,
+          "y": 152
+        }
+      ]
+    }
+  ]
+}

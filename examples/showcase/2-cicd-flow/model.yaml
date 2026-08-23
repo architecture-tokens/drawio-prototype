@@ -1,0 +1,81 @@
+kind: architecture-model
+id: cicd-flow
+name: GitLab basic pipeline (build, test, deploy)
+libraries: [core@0.1.0, cicd@0.1.0]
+components:
+  # Stage containers. The core schema has no first-class "parent" field on a
+  # component, so containment is expressed the way the spec's own renderer
+  # (drawio.ts styleFor/edgeStyle) expects: the container is itself a
+  # component, and each job declares a core:relationship.belongs.to edge to
+  # it (see relationships below). The layout layer then nests the job's
+  # geometry under the stage's node id via parentId.
+  - id: build_stage
+    type: cicd:pipeline.stage
+    tokens: []
+    metadata: {label: build stage}
+  - id: test_stage
+    type: cicd:pipeline.stage
+    tokens: []
+    metadata: {label: test stage}
+  - id: deploy_stage
+    type: cicd:pipeline.stage
+    tokens: []
+    metadata: {label: deploy stage}
+
+  # Jobs — 9 total, matching every node in source.mmd exactly.
+  - {id: build, type: cicd:pipeline.job, tokens: []}
+  - {id: build_a, type: cicd:pipeline.job, tokens: []}
+  - {id: build_b, type: cicd:pipeline.job, tokens: []}
+  - {id: test, type: cicd:pipeline.job, tokens: []}
+  - {id: test_a, type: cicd:pipeline.job, tokens: []}
+  - {id: test_b, type: cicd:pipeline.job, tokens: []}
+  - {id: deploy, type: cicd:pipeline.job, tokens: []}
+  - {id: deploy_a, type: cicd:pipeline.job, tokens: []}
+  - {id: deploy_b, type: cicd:pipeline.job, tokens: []}
+
+relationships:
+  # Triggers — 10 total, matching every edge in source.mmd exactly.
+  # In-stage fan-out (solid in source): entry job -> its two parallel jobs.
+  - {id: build-build_a, type: cicd:pipeline.triggers, from: build, to: build_a, tokens: []}
+  - {id: build-build_b, type: cicd:pipeline.triggers, from: build, to: build_b, tokens: []}
+  - {id: test-test_a, type: cicd:pipeline.triggers, from: test, to: test_a, tokens: []}
+  - {id: test-test_b, type: cicd:pipeline.triggers, from: test, to: test_b, tokens: []}
+  - {id: deploy-deploy_a, type: cicd:pipeline.triggers, from: deploy, to: deploy_a, tokens: []}
+  - {id: deploy-deploy_b, type: cicd:pipeline.triggers, from: deploy, to: deploy_b, tokens: []}
+  # Stage handoff (dotted in source): parallel jobs -> next stage's entry job.
+  - id: build_a-test
+    type: cicd:pipeline.triggers
+    from: build_a
+    to: test
+    tokens: [{token: cicd:pipeline.stage-transition}]
+  - id: build_b-test
+    type: cicd:pipeline.triggers
+    from: build_b
+    to: test
+    tokens: [{token: cicd:pipeline.stage-transition}]
+  - id: test_a-deploy
+    type: cicd:pipeline.triggers
+    from: test_a
+    to: deploy
+    tokens: [{token: cicd:pipeline.stage-transition}]
+  - id: test_b-deploy
+    type: cicd:pipeline.triggers
+    from: test_b
+    to: deploy
+    tokens: [{token: cicd:pipeline.stage-transition}]
+
+  # Containment — 9 total, one per job, expressing the source's three
+  # "subgraph ... end" groupings. Not drawn as visible connectors in
+  # final.svg (containment is shown by nesting, per diagram-rules B9/B10);
+  # they exist so the semantic model and the layout hierarchy both state
+  # which jobs belong to which stage, matching how drawio.ts already
+  # special-cases core:relationship.belongs.to for containment rendering.
+  - {id: build-in-build_stage, type: core:relationship.belongs.to, from: build, to: build_stage, tokens: []}
+  - {id: build_a-in-build_stage, type: core:relationship.belongs.to, from: build_a, to: build_stage, tokens: []}
+  - {id: build_b-in-build_stage, type: core:relationship.belongs.to, from: build_b, to: build_stage, tokens: []}
+  - {id: test-in-test_stage, type: core:relationship.belongs.to, from: test, to: test_stage, tokens: []}
+  - {id: test_a-in-test_stage, type: core:relationship.belongs.to, from: test_a, to: test_stage, tokens: []}
+  - {id: test_b-in-test_stage, type: core:relationship.belongs.to, from: test_b, to: test_stage, tokens: []}
+  - {id: deploy-in-deploy_stage, type: core:relationship.belongs.to, from: deploy, to: deploy_stage, tokens: []}
+  - {id: deploy_a-in-deploy_stage, type: core:relationship.belongs.to, from: deploy_a, to: deploy_stage, tokens: []}
+  - {id: deploy_b-in-deploy_stage, type: core:relationship.belongs.to, from: deploy_b, to: deploy_stage, tokens: []}

@@ -1,0 +1,42 @@
+kind: token-library
+namespace: cicd
+domains: [pipeline]
+version: 0.1.0
+name: CI/CD Pipeline
+description: >-
+  Local token library for the GitLab "Basic pipelines" showcase example.
+  The built-in core/security/environment/lifecycle libraries have no
+  component type for a pipeline job or a pipeline stage, and no
+  relationship type for "runs after / triggers" — this library adds
+  exactly those three tokens plus one applied token that marks a
+  triggers relationship as crossing a stage boundary.
+tokens:
+  - id: pipeline.job
+    kind: component-type
+    name: Job
+    description: >-
+      A single CI/CD job that executes as part of a pipeline stage
+      (e.g. a GitLab CI job).
+  - id: pipeline.stage
+    kind: component-type
+    name: Stage
+    description: >-
+      A pipeline stage: a named group of jobs that run at the same
+      point in the pipeline (build, test, deploy, ...).
+  - id: pipeline.triggers
+    kind: relationship-type
+    name: Triggers
+    description: >-
+      The source job's successful completion triggers execution of the
+      target job. Used both for fan-out within a stage and for the
+      handoff into the next stage's entry job.
+  - id: pipeline.stage-transition
+    kind: applied
+    name: Stage Transition
+    description: >-
+      Marks a pipeline.triggers relationship that crosses a pipeline
+      stage boundary (its source and target jobs belong to different
+      stages), as opposed to an ordinary in-stage fan-out trigger.
+    appliesTo:
+      elementKinds: [relationship]
+      relationshipTypes: [cicd:pipeline.triggers]

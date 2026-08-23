@@ -1,0 +1,11 @@
+{
+  "url": "https://gitlab.com/gitlab-org/gitlab/-/raw/master/doc/ci/pipelines/pipeline_architectures.md",
+  "license": "CC-BY-SA-4.0",
+  "fetched": "2026-08-24T06:33:00Z",
+  "title": "GitLab CI/CD docs - Basic pipelines diagram",
+  "genre": "cicd-flow",
+  "format": "mermaid",
+  "node_count_estimate": 9,
+  "edge_count_estimate": 10,
+  "substitution_note": "The task's suggested sources (mermaid.js.org docs / mermaid-js/mermaid GitHub repo docs/) do not contain any CI/CD-pipeline-specific flowchart example -- checked packages/mermaid/src/docs/syntax/{flowchart,examples}.md in full; only generic shape-reference and lettered-node (a1/b1/c1) demos exist there, none named/labelled as a CI/CD pipeline. Substituted with GitLab's own official CI/CD documentation, which embeds a real Mermaid 'graph LR' diagram (the 'Basic pipelines' figure) illustrating a build -> test -> deploy pipeline with parallel jobs per stage. Source is genuine Mermaid syntax, copied verbatim from the fetched markdown. GitLab's documentation (docs.gitlab.com / doc/ in the gitlab repo) is published under CC BY-SA 4.0 (confirmed via the by-sa.svg / creativecommons.org/licenses/by-sa/4.0/ footer link on docs.gitlab.com), which is attribution + share-alike -- note the share-alike condition, slightly more restrictive than MIT/Apache-2.0/plain CC-BY used for the other 4 sources."
+}
