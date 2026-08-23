@@ -38,12 +38,12 @@ function parseArgs(argv) {
   return { model, layoutPath, out, libraries, policies };
 }
 
-async function main() {
-  const parsed = parseArgs(process.argv.slice(2));
+// Exported so tests can drive the offline harness in-process (same pattern
+// as `run()` in src/cli.ts) instead of shelling out to a child process.
+export async function runOffline(argv) {
+  const parsed = parseArgs(argv);
   if (parsed.error) {
-    process.stderr.write(parsed.error);
-    process.exitCode = 2;
-    return;
+    return { exitCode: 2, stdout: '', stderr: parsed.error };
   }
   const { model, layoutPath, out, libraries, policies } = parsed;
 
@@ -51,11 +51,11 @@ async function main() {
   try {
     layout = JSON.parse(readFileSync(layoutPath, 'utf8'));
   } catch (cause) {
-    process.stderr.write(
-      `Could not read layout file ${layoutPath}: ${cause instanceof Error ? cause.message : String(cause)}\n`,
-    );
-    process.exitCode = 2;
-    return;
+    return {
+      exitCode: 2,
+      stdout: '',
+      stderr: `Could not read layout file ${layoutPath}: ${cause instanceof Error ? cause.message : String(cause)}\n`,
+    };
   }
 
   // Returns the same pre-authored layout on every call, including the
@@ -77,10 +77,14 @@ async function main() {
     ...policies.flatMap((file) => ['--policy', file]),
   ];
 
-  const result = await run(cliArgv, plannerStub);
+  return run(cliArgv, plannerStub);
+}
+
+async function main() {
+  const result = await runOffline(process.argv.slice(2));
   process.stdout.write(result.stdout);
   process.stderr.write(result.stderr);
   process.exitCode = result.exitCode;
 }
 
-await main();
+if (process.argv[1]?.endsWith('/offline-generate.mjs')) await main();
