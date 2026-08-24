@@ -114,6 +114,120 @@ describe('archtokens public CLI', () => {
     expect(good.exitCode).toBe(0);
   });
 
+  it('validates a view before planning and passes a valid view to the planner', async () => {
+    const output = path.join(os.tmpdir(), `view-${Date.now()}.drawio`);
+    const mock = planner([validLayout]);
+    const result = await run(
+      [
+        'generate',
+        fixture('payments.yaml'),
+        '--out',
+        output,
+        '--view',
+        fixture('payments-view.yaml'),
+      ],
+      mock,
+    );
+    expect(result.exitCode).toBe(0);
+    expect(mock.calls).toBe(1);
+    expect(mock.requests[0].view).toMatchObject({
+      kind: 'view',
+      version: '0.1.0',
+      mode: 'restyle',
+      flow: { direction: 'right' },
+    });
+  });
+
+  it('returns stable view diagnostics and never calls the planner for an invalid view', async () => {
+    const base = {
+      kind: 'view',
+      version: '0.1.0',
+      id: 'payments-test',
+      model: 'payments.yaml',
+      mode: 'restyle',
+      flow: { direction: 'right' },
+      components: {},
+      relationships: {},
+      visualElements: [],
+    };
+    const cases = [
+      {
+        mutate: (value: any) => {
+          value.mode = 'enhance';
+        },
+        code: 'SCHEMA_INVALID_ARCHITECTURE_VIEW',
+        path: '/mode',
+      },
+      {
+        mutate: (value: any) => {
+          value.model = 'local-model.yaml';
+        },
+        code: 'VIEW_MODEL_MISMATCH',
+        path: '/model',
+      },
+      {
+        mutate: (value: any) => {
+          value.components.missing = [{ icon: 'api', anchor: 'middle-center' }];
+        },
+        code: 'UNRESOLVED_VIEW_ATTACHMENT_OWNER',
+        path: '/components/missing',
+      },
+      {
+        mutate: (value: any) => {
+          value.visualElements = [{ id: 'zone', members: ['missing'] }];
+        },
+        code: 'UNRESOLVED_VIEW_MEMBER',
+        path: '/visualElements/0/members/0',
+      },
+      {
+        mutate: (value: any) => {
+          value.visualElements = [
+            { id: 'zone', members: ['api'] },
+            { id: 'zone', members: ['ledger'] },
+          ];
+        },
+        code: 'DUPLICATE_VIEW_ELEMENT_ID',
+        path: '/visualElements/1/id',
+      },
+      {
+        mutate: (value: any) => {
+          value.relationships['api-ledger'] = [{ icon: 'lock', anchor: 'top-left' }];
+        },
+        code: 'INVALID_VIEW_ATTACHMENT_ANCHOR',
+        path: '/relationships/api-ledger/0/anchor',
+      },
+    ];
+    for (const [index, testCase] of cases.entries()) {
+      const view = structuredClone(base);
+      testCase.mutate(view);
+      const viewFile = path.join(root, 'examples', `invalid-view-${Date.now()}-${index}.json`);
+      fs.writeFileSync(viewFile, JSON.stringify(view));
+      try {
+        const mock = planner([validLayout]);
+        const result = await run(
+          [
+            'generate',
+            fixture('payments.yaml'),
+            '--out',
+            `${viewFile}.drawio`,
+            '--view',
+            viewFile,
+            '--format',
+            'json',
+          ],
+          mock,
+        );
+        expect(result.exitCode).toBe(1);
+        expect(JSON.parse(result.stdout).diagnostics).toContainEqual(
+          expect.objectContaining({ code: testCase.code, path: testCase.path }),
+        );
+        expect(mock.calls).toBe(0);
+      } finally {
+        fs.unlinkSync(viewFile);
+      }
+    }
+  });
+
   it('enforces layout identity, finite geometry, parents, waypoints, and accepts valid layout', () => {
     const model = loadAndValidate(fixture('payments.yaml'), [], []).model;
     expect(validateLayout(validLayout, model).valid).toBe(true);

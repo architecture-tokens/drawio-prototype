@@ -23,6 +23,7 @@
 # per-family box sizing, C2's arrow-color-by-destination), mirroring
 # 1-cloud-web-app's own reproduce-mode exemptions for the same reasons.
 mode: reproduce
+version: 0.1.0
 reason: >
   Source already conveys deliberate structure (a clean 3-lane pipeline grid
   with consistent fan-out/merge idioms); target is a faithful redraw with
@@ -49,7 +50,9 @@ flow:
 # source), so there is nothing to attach here -- omitted entirely rather
 # than declared empty, same as final.svg's restyle view has no icons
 # either. `components:`/`relationships:` keys are left out (VIEW_REF_
-# UNRESOLVED treats both as optional, `view.components ?? {}`).
+# UNRESOLVED treats both as empty maps.
+components: {}
+relationships: {}
 
 # Visual-layer elements: the 3 stage subgraph containers. Each stage is
 # ALSO a first-class model.yaml component (build_stage/test_stage/

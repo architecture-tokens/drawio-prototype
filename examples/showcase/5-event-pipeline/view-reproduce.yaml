@@ -13,6 +13,7 @@
 # positions/box shapes/palette as source, orthogonal+rounded connectors
 # instead of the source's smooth curves.
 mode: reproduce
+version: 0.1.0
 reason: >
   Source is Mermaid's own clean default layout (uniform box heights,
   near-equal gaps, already grid-aligned); nothing here is a layout defect
@@ -35,3 +36,6 @@ flow:
 # "when the source shows icons" gate the task brief states. Likewise no
 # `visualElements:`: source has no subgraphs/clusters/boundaries, so there
 # is no container for this section to declare.
+components: {}
+relationships: {}
+visualElements: []
