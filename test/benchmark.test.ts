@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { describe, expect, it } from 'vitest';
-import { runBenchmarkCli } from '../src/benchmark-cli.js';
+import { applySourceTopologyContract, runBenchmarkCli } from '../src/benchmark-cli.js';
 import type { FullGateReport } from '../src/benchmark.js';
 import type { Planner, PlannerRequest } from '../src/types.js';
 
@@ -26,6 +26,22 @@ const sequencePlanner = (responses: unknown[]): Planner & { calls: PlannerReques
 });
 
 describe('subscription planner benchmark', () => {
+  it('uses verified source-only crossing intent for the fixed SVG gate', () => {
+    const candidate = {
+      version: '0.1',
+      canvas: { width: 10, height: 10 },
+      nodes: [],
+      edges: [],
+      topology: { allowEdgeCrossings: [] },
+    } as any;
+    const source = {
+      ...candidate,
+      topology: { allowEdgeCrossings: [{ edgeIds: ['source-a', 'source-b'] }] },
+    } as any;
+    expect(applySourceTopologyContract(candidate, source).topology).toEqual(source.topology);
+    expect(candidate.topology.allowEdgeCrossings).toEqual([]);
+  });
+
   it('repairs a schema-valid full-gate failure once and accepts the repaired attempt', async () => {
     const layout = JSON.parse(
       fs.readFileSync(
