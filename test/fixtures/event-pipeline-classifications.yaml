@@ -1,0 +1,14 @@
+kind: source-classifications
+version: '0.1'
+mappings:
+  A: { primary_bucket: component, target_ids: [producer] }
+  B: { primary_bucket: component, target_ids: [message] }
+  'edge:A->B': { primary_bucket: relationship, target_ids: [producer-message] }
+  C: { primary_bucket: component, target_ids: [channel] }
+  'edge:B->C': { primary_bucket: relationship, target_ids: [message-channel] }
+  D: { primary_bucket: component, target_ids: [consumer-a] }
+  'edge:C->D': { primary_bucket: relationship, target_ids: [channel-consumer-a] }
+  E: { primary_bucket: component, target_ids: [consumer-b] }
+  'edge:C->E': { primary_bucket: relationship, target_ids: [channel-consumer-b] }
+  F: { primary_bucket: component, target_ids: [consumer-c] }
+  'edge:C->F': { primary_bucket: relationship, target_ids: [channel-consumer-c] }
