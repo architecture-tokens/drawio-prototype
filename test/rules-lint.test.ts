@@ -3,7 +3,9 @@ import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error -- tools/rules-lint.mjs is plain JS and outside tsconfig's `include`.
-import { runCli } from '../tools/rules-lint.mjs';
+import { runCli, parseMermaidSourceElements } from '../tools/rules-lint.mjs';
+
+type SourceElement = { id: string; kind: 'vertex' | 'edge' };
 
 const root = path.resolve(import.meta.dirname, '..');
 const showcaseDir = path.join(root, 'examples', 'showcase');
@@ -778,5 +780,235 @@ describe('tools/rules-lint.mjs hardening (adversarial-review fixes)', () => {
     const check = reports[0].checks.find((c) => c.id === 'RELATIONSHIP_ATTACHMENT_NOT_RENDERED');
     expect(check?.status).toBe('PASS');
     expect(check?.message).toMatch(/2 relationship attachment/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Mermaid census source parsing (parseMermaidSourceElements / --census-dump)
+// -- examples 2 (flowchart, 3 subgraphs), 3 (C4Container), 5 (graph) have
+// .mmd sources; census.yaml for those examples does not exist yet, so these
+// tests exercise the parser directly against the real source.mmd files plus
+// one synthetic round-trip against inline fixtures.
+// ---------------------------------------------------------------------------
+
+describe('tools/rules-lint.mjs Mermaid census source parsing', () => {
+  function readSource(dir: string) {
+    return fs.readFileSync(path.join(showcaseDir, dir, 'source.mmd'), 'utf8');
+  }
+  function idsByKind(elements: SourceElement[], kind: 'vertex' | 'edge') {
+    return new Set(elements.filter((e) => e.kind === kind).map((e) => e.id));
+  }
+
+  // 2-cicd-flow/source.mmd: 3 subgraph blocks (deploy stage/test stage/build
+  // stage, each itself a vertex) + 9 plain nodes (deploy/deploy_a/deploy_b,
+  // test/test_a/test_b, build/build_a/build_b) = 12 vertices. 6 edges inside
+  // the subgraphs (2 per stage: stage -> _a, stage -> _b) + 4 dotted
+  // cross-stage edges (build_a/build_b -.-> test, test_a/test_b -.-> deploy)
+  // = 10 edges. 22 elements total.
+  it('parses 2-cicd-flow/source.mmd to exactly 12 vertices (9 nodes + 3 subgraphs) and 10 edges (6 solid + 4 dotted)', () => {
+    const elements = parseMermaidSourceElements(readSource('2-cicd-flow')) as SourceElement[];
+    expect(elements.filter((e) => e.kind === 'vertex')).toHaveLength(12);
+    expect(elements.filter((e) => e.kind === 'edge')).toHaveLength(10);
+    expect(elements).toHaveLength(22);
+    expect(idsByKind(elements, 'vertex')).toEqual(
+      new Set([
+        'deploy stage',
+        'deploy',
+        'deploy_a',
+        'deploy_b',
+        'test stage',
+        'test',
+        'test_a',
+        'test_b',
+        'build stage',
+        'build',
+        'build_a',
+        'build_b',
+      ]),
+    );
+    expect(idsByKind(elements, 'edge')).toEqual(
+      new Set([
+        'edge:deploy->deploy_a',
+        'edge:deploy->deploy_b',
+        'edge:test->test_a',
+        'edge:test->test_b',
+        'edge:build->build_a',
+        'edge:build->build_b',
+        'edge:build_a->test',
+        'edge:build_b->test',
+        'edge:test_a->deploy',
+        'edge:test_b->deploy',
+      ]),
+    );
+  });
+
+  // 3-microservices-c4/source.mmd: 9 C4 element macro calls are vertices
+  // (System_Ext x2, Person, Container_Boundary, Container x2, Container_Ext,
+  // ContainerDb, ContainerDb_Ext) -- the 7 UpdateRelStyle calls are layout
+  // directives, not elements. 10 Rel/Rel_Back calls are edges; the one
+  // Rel_Back (database, backend_api, ...) reverses into backend_api->database.
+  it('parses 3-microservices-c4/source.mmd to exactly 9 vertices (C4 element macros) and 10 edges (Rel/Rel_Back, UpdateRelStyle excluded), with Rel_Back reversed', () => {
+    const elements = parseMermaidSourceElements(
+      readSource('3-microservices-c4'),
+    ) as SourceElement[];
+    expect(elements.filter((e) => e.kind === 'vertex')).toHaveLength(9);
+    expect(elements.filter((e) => e.kind === 'edge')).toHaveLength(10);
+    expect(elements).toHaveLength(19);
+    expect(idsByKind(elements, 'vertex')).toEqual(
+      new Set([
+        'email_system',
+        'customer',
+        'c1',
+        'spa',
+        'mobile_app',
+        'web_app',
+        'database',
+        'backend_api',
+        'banking_system',
+      ]),
+    );
+    const edgeIds = idsByKind(elements, 'edge');
+    expect(edgeIds).toEqual(
+      new Set([
+        'edge:customer->web_app',
+        'edge:customer->spa',
+        'edge:customer->mobile_app',
+        'edge:web_app->spa',
+        'edge:spa->backend_api',
+        'edge:mobile_app->backend_api',
+        'edge:backend_api->database', // Rel_Back(database, backend_api, ...) reversed
+        'edge:email_system->customer',
+        'edge:backend_api->email_system',
+        'edge:backend_api->banking_system',
+      ]),
+    );
+    // The Rel_Back source order (database, backend_api) must NOT survive
+    // un-reversed.
+    expect(edgeIds.has('edge:database->backend_api')).toBe(false);
+  });
+
+  // 5-event-pipeline/source.mmd: 6 plain nodes (A-F), 5 solid edges
+  // (A->B, B->C, C->D, C->E, C->F). 11 elements total, no subgraphs.
+  it('parses 5-event-pipeline/source.mmd to exactly 6 vertices (A-F) and 5 edges (A->B, B->C, C->D/E/F)', () => {
+    const elements = parseMermaidSourceElements(readSource('5-event-pipeline')) as SourceElement[];
+    expect(elements.filter((e) => e.kind === 'vertex')).toHaveLength(6);
+    expect(elements.filter((e) => e.kind === 'edge')).toHaveLength(5);
+    expect(elements).toHaveLength(11);
+    expect(idsByKind(elements, 'vertex')).toEqual(new Set(['A', 'B', 'C', 'D', 'E', 'F']));
+    expect(idsByKind(elements, 'edge')).toEqual(
+      new Set(['edge:A->B', 'edge:B->C', 'edge:C->D', 'edge:C->E', 'edge:C->F']),
+    );
+  });
+
+  it('--census-dump prints the parsed element list and counts for a .mmd source (5-event-pipeline)', async () => {
+    const { exitCode, stdout } = await runCli([
+      '--census-dump',
+      path.join(showcaseDir, '5-event-pipeline', 'source.mmd'),
+      '--format',
+      'json',
+    ]);
+    expect(exitCode).toBe(0);
+    const dump = JSON.parse(stdout) as {
+      vertexCount: number;
+      edgeCount: number;
+      elements: SourceElement[];
+    };
+    expect(dump.vertexCount).toBe(6);
+    expect(dump.edgeCount).toBe(5);
+    expect(dump.elements).toHaveLength(11);
+  });
+
+  // Synthetic round-trip: a small inline .mmd fixture with a duplicate
+  // (from, to) pair, to exercise the "n disambiguates parallel duplicates"
+  // edge-id rule end to end through CENSUS_MISMATCH (not just the parser).
+  const roundTripMmd = ['graph LR', '  X --> Y', '  X --> Y', ''].join('\n');
+  // Elements: vertex X, vertex Y, edge:X->Y (1st X->Y), edge:X->Y:2 (2nd).
+
+  it('CENSUS_MISMATCH exits 0 (PASS) when a census.yaml bijects onto a synthetic .mmd fixture, including a disambiguated parallel-duplicate edge id', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-mmd-census-pass-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const sourcePath = path.join(dir, 'source.mmd');
+    const censusPath = path.join(dir, 'census.yaml');
+    fs.writeFileSync(svgPath, MINIMAL_SVG);
+    fs.writeFileSync(sourcePath, roundTripMmd);
+    fs.writeFileSync(
+      censusPath,
+      [
+        'source: source.mmd',
+        'records:',
+        '  - source_id: X',
+        '    kind: vertex',
+        '    label: null',
+        '    primary_bucket: component',
+        '    target_ids: [x]',
+        '  - source_id: Y',
+        '    kind: vertex',
+        '    label: null',
+        '    primary_bucket: component',
+        '    target_ids: [y]',
+        '  - source_id: "edge:X->Y"',
+        '    kind: edge',
+        '    label: null',
+        '    primary_bucket: relationship',
+        '    target_ids: [x-y-1]',
+        '  - source_id: "edge:X->Y:2"',
+        '    kind: edge',
+        '    label: null',
+        '    primary_bucket: relationship',
+        '    target_ids: [x-y-2]',
+        '',
+      ].join('\n'),
+    );
+
+    // MINIMAL_SVG fails unrelated baseline checks (e.g. C1's palette
+    // comment) on its own, so — same convention as the other cross-layer
+    // fixtures above — this looks up CENSUS_MISMATCH by id rather than
+    // asserting the overall exit code/FAIL count.
+    const { reports } = await runJson([svgPath, '--census', censusPath]);
+    const check = reports[0].checks.find((c) => c.id === 'CENSUS_MISMATCH');
+    expect(check?.status).toBe('PASS');
+    expect(check?.message).toMatch(/4 census record\(s\)/);
+    expect(check?.message).toMatch(/bijects onto 4 source element/);
+  });
+
+  it('CENSUS_MISMATCH exits 1 (FAIL) when a census.yaml against a synthetic .mmd fixture is missing a record for one source id', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-mmd-census-fail-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const sourcePath = path.join(dir, 'source.mmd');
+    const censusPath = path.join(dir, 'census.yaml');
+    fs.writeFileSync(svgPath, MINIMAL_SVG);
+    fs.writeFileSync(sourcePath, roundTripMmd);
+    // Missing the record for the second (disambiguated) parallel edge,
+    // "edge:X->Y:2" -- 3 records for 4 source elements.
+    fs.writeFileSync(
+      censusPath,
+      [
+        'source: source.mmd',
+        'records:',
+        '  - source_id: X',
+        '    kind: vertex',
+        '    label: null',
+        '    primary_bucket: component',
+        '    target_ids: [x]',
+        '  - source_id: Y',
+        '    kind: vertex',
+        '    label: null',
+        '    primary_bucket: component',
+        '    target_ids: [y]',
+        '  - source_id: "edge:X->Y"',
+        '    kind: edge',
+        '    label: null',
+        '    primary_bucket: relationship',
+        '    target_ids: [x-y-1]',
+        '',
+      ].join('\n'),
+    );
+
+    const { result, reports } = await runJson([svgPath, '--census', censusPath]);
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'CENSUS_MISMATCH');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/CENSUS_MISMATCH/);
+    expect(check?.message).toMatch(/edge:X->Y:2/);
   });
 });

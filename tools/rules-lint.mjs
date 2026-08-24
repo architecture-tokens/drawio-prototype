@@ -67,9 +67,13 @@
 //   DIRECTION_GEOMETRY_CONFLICT      view.yaml's flow.direction vs. the net
 //                                    displacement (layout.json node centers)
 //                                    of each model.yaml relationship.
-//   CENSUS_MISMATCH                  census.yaml's record count vs.
-//                                    source.xml's mxCell count, target-id
-//                                    resolvability, and drop reasons.
+//   CENSUS_MISMATCH                  census.yaml's record count vs. its
+//                                    source file's element count -- mxCell
+//                                    vertices/edges for a .xml source.xml,
+//                                    or flowchart/C4 nodes+edges for a .mmd
+//                                    source.mmd (see parseMermaidSourceElements
+//                                    below) -- target-id resolvability, and
+//                                    drop reasons.
 //   RELATIONSHIP_ATTACHMENT_NOT_RENDERED
 //                                    every relationship attachment view.yaml
 //                                    declares (e.g. the SSL padlock badges)
@@ -1617,16 +1621,201 @@ function parseSourceMxCells(sourceXmlText) {
   return cells;
 }
 
+// ---------------------------------------------------------------------------
+// Mermaid source parsing (census `source:` files ending in .mmd). Two
+// dialects, dispatched on the first non-blank/non-comment line: flowchart
+// (`graph`/`flowchart` + node defs + `-->`/`-.->`/`==>` edges +
+// `subgraph`/`end` blocks) and C4 (`C4Container`/`C4Context`/etc + element
+// macros like `Person(...)`/`Container(...)` + `Rel`/`Rel_Back` edges).
+// Same "not a real grammar" tradeoff as parseSourceMxCells above: a
+// line-oriented regex scan tuned to what these showcase sources actually
+// use, not a full mermaid parser -- unrecognized syntax is silently
+// skipped (not guessed at) rather than crashing.
+//
+// Element rules (see the task that introduced this, and diagram-rules.md's
+// census section, for the authoring contract these ids feed):
+//   - every declared node id is a vertex.
+//   - every subgraph block (flowchart) / boundary or element macro call
+//     (C4) is a vertex -- it is a drawable element census.yaml must
+//     account for.
+//   - every edge line/macro is an edge, with a stable synthesized id
+//     `edge:<from>-><to>[:n]` (n disambiguates parallel duplicates of the
+//     same from/to pair; the first occurrence carries no suffix).
+//   - an edge's label is part of the edge, not a separate element.
+//   - comments (%%) and non-drawing directives (mermaid init blocks,
+//     `graph`/`flowchart` direction, `accTitle`/`accDescr`, C4 `title`,
+//     C4 layout/style directives like `UpdateRelStyle`/`UpdateLayoutConfig`)
+//     are not elements.
+// ---------------------------------------------------------------------------
+
+// Assigns the synthesized edge id for the n-th edge sharing a given
+// (from, to) pair -- "edge:<from>-><to>" for the first, "...:2", "...:3", …
+// for later duplicates. `edgeCounts` is mutated (one Map shared across an
+// entire source parse).
+function synthesizeEdgeId(edgeCounts, from, to) {
+  const key = `${from}->${to}`;
+  const n = (edgeCounts.get(key) ?? 0) + 1;
+  edgeCounts.set(key, n);
+  return n === 1 ? `edge:${key}` : `edge:${key}:${n}`;
+}
+
+// Strips a flowchart node token's shape delimiters down to its bare id:
+// "A[Producer]" -> "A", "B(message)" -> "B", "deploy_a" -> "deploy_a".
+// Mermaid node ids are [A-Za-z0-9_-]+.
+function bareMermaidNodeId(token) {
+  const m = /^([A-Za-z0-9_-]+)/.exec(token.trim());
+  return m ? m[1] : token.trim();
+}
+
+// Flowchart/graph dialect (`graph TD`/`flowchart LR`, …).
+const MERMAID_ARROW_RE = /-\.->|==>|-->/;
+
+function parseMermaidFlowchartSource(text) {
+  const elements = [];
+  const seenVertex = new Set();
+  const edgeCounts = new Map();
+
+  function addVertex(id) {
+    if (!seenVertex.has(id)) {
+      seenVertex.add(id);
+      elements.push({ id, kind: 'vertex' });
+    }
+  }
+  function addEdge(from, to) {
+    addVertex(from);
+    addVertex(to);
+    elements.push({ id: synthesizeEdgeId(edgeCounts, from, to), kind: 'edge' });
+  }
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (line === '' || line.startsWith('%%')) continue; // blank / comment / init directive
+    if (/^(graph|flowchart)\s+/i.test(line)) continue; // direction directive
+    if (/^acc(Title|Descr)\s*:/i.test(line)) continue; // accessibility metadata
+
+    const subgraphMatch = /^subgraph\s+(.+)$/i.exec(line);
+    if (subgraphMatch) {
+      const header = subgraphMatch[1].trim();
+      // "subgraph id [Title]" form vs. bare-title form, where mermaid uses
+      // the title text itself as the (auto-generated) id -- see
+      // diagram-rules.md's census section for why the raw header text is
+      // kept as-is rather than slugified: it's what a census author reads
+      // back off --census-dump and writes into source_id.
+      const bracketMatch = /^([A-Za-z0-9_-]+)\s*\[(.+)\]$/.exec(header);
+      addVertex(bracketMatch ? bracketMatch[1] : header);
+      continue;
+    }
+    if (/^end$/i.test(line)) continue; // closes a subgraph block -- not an element
+
+    if (MERMAID_ARROW_RE.test(line)) {
+      const ids = line
+        .split(MERMAID_ARROW_RE)
+        .map((part) => bareMermaidNodeId(part.replace(/^\|[^|]*\|\s*/, '')));
+      for (let i = 0; i + 1 < ids.length; i += 1) addEdge(ids[i], ids[i + 1]);
+      continue;
+    }
+
+    // A bare node declaration with no edge on this line.
+    const bareMatch = /^([A-Za-z0-9_-]+)\s*(\[.*\]|\(\(.*\)\)|\(.*\)|\{.*\})?\s*$/.exec(line);
+    if (bareMatch) addVertex(bareMatch[1]);
+    // Anything else (unrecognized syntax) is silently skipped.
+  }
+
+  return elements;
+}
+
+// C4 dialect (`C4Container`/`C4Context`/`C4Component`/`C4Dynamic`/
+// `C4Deployment`). Every macro call is a vertex (id = first arg) EXCEPT
+// `Rel`/`Rel_Back`, which are edges (`Rel_Back` reverses the declared
+// from/to into the actual edge direction), and any macro starting with
+// "Update" (UpdateRelStyle/UpdateElementStyle/UpdateLayoutConfig/…), which
+// are layout/style directives, not elements.
+const C4_HEADER_RE = /^C4(Container|Context|Component|Dynamic|Deployment)\b/;
+const C4_REL_CALL_RE = /^(Rel|Rel_Back)\s*\(\s*([A-Za-z0-9_.-]+)\s*,\s*([A-Za-z0-9_.-]+)/;
+const C4_MACRO_CALL_RE = /^([A-Za-z_][A-Za-z0-9_]*)\s*\(\s*([A-Za-z0-9_.-]+)/;
+
+function parseMermaidC4Source(text) {
+  const elements = [];
+  const seenVertex = new Set();
+  const edgeCounts = new Map();
+
+  function addVertex(id) {
+    if (!seenVertex.has(id)) {
+      seenVertex.add(id);
+      elements.push({ id, kind: 'vertex' });
+    }
+  }
+  function addEdge(from, to) {
+    addVertex(from);
+    addVertex(to);
+    elements.push({ id: synthesizeEdgeId(edgeCounts, from, to), kind: 'edge' });
+  }
+
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (line === '' || line.startsWith('%%')) continue; // blank / comment
+    if (C4_HEADER_RE.test(line)) continue; // diagram-type directive
+    if (/^title\b/.test(line)) continue; // C4 title directive
+    if (/^[{}]$/.test(line)) continue; // bare Boundary block brace
+
+    const relMatch = C4_REL_CALL_RE.exec(line);
+    if (relMatch) {
+      const [, macro, argA, argB] = relMatch;
+      if (macro === 'Rel_Back') addEdge(argB, argA);
+      else addEdge(argA, argB);
+      continue;
+    }
+
+    const callMatch = C4_MACRO_CALL_RE.exec(line);
+    if (callMatch) {
+      const [, macro, id] = callMatch;
+      if (/^Update/.test(macro)) continue; // layout/style directive, not an element
+      addVertex(id);
+      continue;
+    }
+    // Anything else (a Boundary block's closing brace on its own line,
+    // unrecognized syntax) is silently skipped.
+  }
+
+  return elements;
+}
+
+// Dispatches on the first non-blank/non-comment line: a C4 diagram-type
+// header selects the C4 dialect, everything else falls back to
+// flowchart/graph (the only two dialects the showcase sources use today).
+export function parseMermaidSourceElements(text) {
+  const firstMeaningfulLine = text
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .find((l) => l !== '' && !l.startsWith('%%'));
+  if (firstMeaningfulLine && C4_HEADER_RE.test(firstMeaningfulLine)) {
+    return parseMermaidC4Source(text);
+  }
+  return parseMermaidFlowchartSource(text);
+}
+
+// Dispatches a census `source:` file to the right parser by extension: a
+// .mmd source uses parseMermaidSourceElements (flowchart or C4 dialect),
+// anything else is assumed to be drawio XML and uses parseSourceMxCells --
+// same contract, { id, kind: 'vertex' | 'edge' }[], either way, so
+// checkCensusMismatch below doesn't need to know which dialect it got.
+function parseSourceElements(sourceText, sourcePath) {
+  if (/\.mmd$/i.test(sourcePath)) return parseMermaidSourceElements(sourceText);
+  return parseSourceMxCells(sourceText);
+}
+
 const CENSUS_PRIMARY_BUCKETS = new Set(['component', 'relationship', 'token', 'visual', 'drop']);
 
 // CENSUS_MISMATCH (requires --census; --model additionally enables
 // component/relationship/token target-id resolvability, --view additionally
 // enables visual target-id resolvability): census.yaml's `source` field
 // names the raw diagram source (resolved relative to census.yaml's own
-// directory). Its vertex+edge mxCell ids must map ONE-TO-ONE onto
-// census.yaml's records — every source_id in records must exist exactly
-// once (no duplicates, no unknown ids) and every source vertex/edge id must
-// have exactly one record (no missing ids); this used to be checked as a
+// directory), parsed by parseSourceElements above -- drawio mxCells for a
+// .xml source, flowchart/C4 nodes+edges for a .mmd one. Its vertex+edge ids
+// must map ONE-TO-ONE onto census.yaml's records — every source_id in
+// records must exist exactly once (no duplicates, no unknown ids) and
+// every source vertex/edge id must have exactly one record (no missing
+// ids); this used to be checked as a
 // bare count comparison, which a census that duplicated one id enough times
 // to match the total (e.g. all records pointing at the same source_id)
 // could pass while covering almost nothing. Each record's `kind` must match
@@ -1660,7 +1849,7 @@ function checkCensusMismatch(census, censusFilePath, model, view) {
         message: `CENSUS_MISMATCH: could not read census source "${census.source}" (resolved ${sourcePath}): ${cause instanceof Error ? cause.message : String(cause)}`,
       };
     }
-    sourceCells = parseSourceMxCells(sourceText);
+    sourceCells = parseSourceElements(sourceText, sourcePath);
   }
 
   if (sourceCells) {
@@ -1926,7 +2115,15 @@ const USAGE = `Usage:
   node tools/rules-lint.mjs <file.svg> [more.svg...] [--format human|json]
   node tools/rules-lint.mjs <file.svg> [--model model.yaml] [--view view.yaml] [--census census.yaml] [--layout layout.json] [--format human|json]
   node tools/rules-lint.mjs <file.svg> --full --model model.yaml --view view.yaml --census census.yaml --layout layout.json [--format human|json]
+  node tools/rules-lint.mjs --census-dump <source.xml|source.mmd> [--format human|json]
   node tools/rules-lint.mjs --help
+
+--census-dump is a standalone mode: it parses ONE raw diagram source (a
+census.yaml's own \`source\` file, before census.yaml exists) with the same
+parser CENSUS_MISMATCH below uses -- drawio mxCells for .xml, flowchart or
+C4 nodes+edges for .mmd -- and prints every { id, kind } element it found,
+so a census.yaml author has the exact source_id inventory to write records
+against. It cannot be combined with <file.svg> positional arguments.
 
 --model/--view/--census/--layout are each optional, and together they
 require exactly one <file.svg> (they describe ONE example, unlike the plain
@@ -1987,7 +2184,10 @@ A cross-layer check only runs when ALL of the flags it needs are supplied:
                                      resolvability, --view to check visual
                                      target-id resolvability). census.yaml's
                                      records must map ONE-TO-ONE onto its own
-                                     \`source\` file's vertex+edge mxCell ids
+                                     \`source\` file's vertex+edge ids --
+                                     mxCells for a .xml source, flowchart or
+                                     C4 nodes+edges for a .mmd source (see
+                                     --census-dump above to inventory them)
                                      (source path resolved relative to
                                      census.yaml's own directory; no
                                      duplicate or unknown source_ids, no
@@ -2034,6 +2234,7 @@ function parseArgs(argv) {
   let censusPath;
   let layoutPath;
   let full = false;
+  let censusDumpPath;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--help' || arg === '-h') {
@@ -2057,13 +2258,23 @@ function parseArgs(argv) {
     } else if (arg === '--layout' && argv[i + 1]) {
       layoutPath = argv[i + 1];
       i += 1;
+    } else if (arg === '--census-dump' && argv[i + 1]) {
+      censusDumpPath = argv[i + 1];
+      i += 1;
     } else {
       files.push(arg);
     }
   }
-  if (files.length === 0) return { error: USAGE };
   if (format !== 'human' && format !== 'json')
     return { error: `Unknown --format: ${format}\n${USAGE}` };
+  if (censusDumpPath) {
+    if (files.length > 0 || modelPath || viewPath || censusPath || layoutPath || full)
+      return {
+        error: `--census-dump is a standalone mode and cannot be combined with <file.svg> positional arguments or --model/--view/--census/--layout/--full\n${USAGE}`,
+      };
+    return { format, censusDumpPath };
+  }
+  if (files.length === 0) return { error: USAGE };
   const anyCrossLayerFlag = Boolean(modelPath || viewPath || censusPath || layoutPath || full);
   if (anyCrossLayerFlag && files.length !== 1)
     return {
@@ -2072,12 +2283,47 @@ function parseArgs(argv) {
   return { files, format, modelPath, viewPath, censusPath, layoutPath, full };
 }
 
+// --census-dump output: the raw { id, kind } element list parseSourceElements
+// produced for one source file, plus vertex/edge counts -- what a
+// census.yaml author reads off to write source_id records against.
+function formatCensusDump(elements, sourcePath, format) {
+  const vertexCount = elements.filter((e) => e.kind === 'vertex').length;
+  const edgeCount = elements.filter((e) => e.kind === 'edge').length;
+  if (format === 'json') {
+    return `${JSON.stringify({ source: sourcePath, vertexCount, edgeCount, elements }, null, 2)}\n`;
+  }
+  const lines = [sourcePath];
+  for (const el of elements) lines.push(`  [${el.kind.padEnd(6, ' ')}] ${el.id}`);
+  lines.push(`  -> ${vertexCount} vertex, ${edgeCount} edge, ${elements.length} total`);
+  return `${lines.join('\n')}\n`;
+}
+
 // Exported so tests can drive the linter in-process (same pattern as
 // tools/offline-generate.mjs's runOffline) instead of shelling out.
 export async function runCli(argv) {
   const parsed = parseArgs(argv);
   if (parsed.help) return { exitCode: 0, stdout: USAGE, stderr: '' };
   if (parsed.error) return { exitCode: 2, stdout: '', stderr: parsed.error };
+
+  if (parsed.censusDumpPath) {
+    let sourceText;
+    try {
+      sourceText = readFileSync(parsed.censusDumpPath, 'utf8');
+    } catch (cause) {
+      return {
+        exitCode: 2,
+        stdout: '',
+        stderr: `Could not read --census-dump source "${parsed.censusDumpPath}": ${cause instanceof Error ? cause.message : String(cause)}\n`,
+      };
+    }
+    const elements = parseSourceElements(sourceText, parsed.censusDumpPath);
+    return {
+      exitCode: 0,
+      stdout: formatCensusDump(elements, parsed.censusDumpPath, parsed.format),
+      stderr: '',
+    };
+  }
+
   const { files, format, modelPath, viewPath, censusPath, layoutPath, full } = parsed;
 
   // Full-gate mode: --model/--view/--census/--layout are all required
