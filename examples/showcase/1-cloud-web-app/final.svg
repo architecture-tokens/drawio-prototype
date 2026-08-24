@@ -132,22 +132,22 @@
      infra:deployment.availability-zone token matches. Left/right margin
      inset from the container's own 30px child margin (24 vs 30) so the
      band's stroke sits strictly inside the container's, never coincident. -->
-<rect x="226" y="120" width="368" height="420" rx="8" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5"/>
-<rect x="774" y="120" width="368" height="420" rx="8" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5"/>
+<rect x="226" y="120" width="368" height="420" rx="8" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5" data-view-element="az-band-a"/>
+<rect x="774" y="120" width="368" height="420" rx="8" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="6 5" data-view-element="az-band-b"/>
 <!-- Band labels are drawn LAST (see bottom of file, just before the legend
      closes) so the opaque Autoscaling Group container fill — drawn later in
      z-order than the band itself — never paints over them. -->
 
 <!-- ============ CONTAINERS (Autoscaling Groups, drawn behind connectors/leaf boxes) ============ -->
 <!-- height = top-pad(30) + child-height(60) + bottom-pad(30) = 120, equal margins both axes (B9) -->
-<rect x="220" y="140" width="928" height="120" rx="8" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" stroke-dasharray="7 5"/>
+<rect x="220" y="140" width="928" height="120" rx="8" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" stroke-dasharray="7 5" data-component="app-asg"/>
 <text x="228" y="114" font-size="13" font-weight="600" fill="#8A2F09">App Tier Autoscaling Group (&#215;2 AZ)</text>
 
-<rect x="220" y="400" width="928" height="120" rx="8" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" stroke-dasharray="7 5"/>
+<rect x="220" y="400" width="928" height="120" rx="8" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" stroke-dasharray="7 5" data-component="web-asg"/>
 <text x="228" y="374" font-size="13" font-weight="600" fill="#8A2F09">Web Tier Autoscaling Group (&#215;2 AZ)</text>
 
 <!-- ============ CONNECTORS ============ -->
-<!-- Flow reads BOTTOM-UP (infra:presentation.flow.direction = up on `user`),
+<!-- Flow reads BOTTOM-UP (view.yaml's flow.direction = up),
      preserving the source's own direction: every arrowhead's final segment
      points toward smaller y (up), into the tier above. -->
 <g fill="none" stroke-width="1.5">
@@ -220,72 +220,72 @@
 
 <g font-size="13" text-anchor="middle">
   <!-- database (top row: flow origin is `user` at the bottom; RDS is the far end) -->
-  <rect x="524" y="40" width="140" height="60" rx="6" fill="#E7EDFC" stroke="#1D4ED8" stroke-width="2.5"/>
+  <rect x="524" y="40" width="140" height="60" rx="6" fill="#E7EDFC" stroke="#1D4ED8" stroke-width="2.5" data-component="rds-master"/>
   <text x="594" y="75" fill="#15359E">RDS Master</text>
   <use href="#icon-aws-rds" x="640" y="62" width="16" height="16"/>
 
-  <rect x="704" y="40" width="140" height="60" rx="6" fill="#E7EDFC" stroke="#1D4ED8" stroke-width="2.5"/>
+  <rect x="704" y="40" width="140" height="60" rx="6" fill="#E7EDFC" stroke="#1D4ED8" stroke-width="2.5" data-component="rds-slave"/>
   <text x="774" y="75" fill="#15359E">RDS Slave</text>
   <use href="#icon-aws-rds" x="712" y="62" width="16" height="16"/>
 
   <!-- compute: app-tier instances -->
-  <rect x="250" y="170" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5"/>
+  <rect x="250" y="170" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" data-component="app-instance-1"/>
   <text x="320" y="205" fill="#8A2F09">App 1</text>
   <use href="#icon-aws-ec2-instance" x="313" y="176" width="14" height="14"/>
-  <rect x="430" y="170" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5"/>
+  <rect x="430" y="170" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" data-component="app-instance-2"/>
   <text x="500" y="205" fill="#8A2F09">App 2</text>
   <use href="#icon-aws-ec2-instance" x="493" y="176" width="14" height="14"/>
-  <rect x="798" y="170" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5"/>
+  <rect x="798" y="170" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" data-component="app-instance-3"/>
   <text x="868" y="205" fill="#8A2F09">App 3</text>
   <use href="#icon-aws-ec2-instance" x="861" y="176" width="14" height="14"/>
-  <rect x="978" y="170" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5"/>
+  <rect x="978" y="170" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" data-component="app-instance-4"/>
   <text x="1048" y="205" fill="#8A2F09">App 4</text>
   <use href="#icon-aws-ec2-instance" x="1041" y="176" width="14" height="14"/>
 
   <!-- routing -->
-  <rect x="614" y="300" width="140" height="60" rx="6" fill="#FBF1DC" stroke="#B7791F" stroke-width="2.5"/>
+  <rect x="614" y="300" width="140" height="60" rx="6" fill="#FBF1DC" stroke="#B7791F" stroke-width="2.5" data-component="app-elb"/>
   <text x="684" y="335" fill="#7A5010">App ELB</text>
   <use href="#icon-aws-elb" x="622" y="322" width="16" height="16"/>
 
   <!-- storage -->
-  <rect x="40" y="360" width="140" height="60" rx="6" fill="#E7F6EC" stroke="#15803D" stroke-width="2.5"/>
+  <rect x="40" y="360" width="140" height="60" rx="6" fill="#E7F6EC" stroke="#15803D" stroke-width="2.5" data-component="s3"/>
   <text x="110" y="395" fill="#0F5C2E">Amazon S3</text>
   <use href="#icon-aws-s3" x="156" y="382" width="16" height="16"/>
 
   <!-- compute: web-tier instances -->
-  <rect x="250" y="430" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5"/>
+  <rect x="250" y="430" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" data-component="web-instance-1"/>
   <text x="320" y="465" fill="#8A2F09">Web 1</text>
   <use href="#icon-aws-ec2-instance" x="313" y="436" width="14" height="14"/>
-  <rect x="430" y="430" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5"/>
+  <rect x="430" y="430" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" data-component="web-instance-2"/>
   <text x="500" y="465" fill="#8A2F09">Web 2</text>
   <use href="#icon-aws-ec2-instance" x="493" y="436" width="14" height="14"/>
-  <rect x="798" y="430" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5"/>
+  <rect x="798" y="430" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" data-component="web-instance-3"/>
   <text x="868" y="465" fill="#8A2F09">Web 3</text>
   <use href="#icon-aws-ec2-instance" x="861" y="436" width="14" height="14"/>
-  <rect x="978" y="430" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5"/>
+  <rect x="978" y="430" width="140" height="60" rx="6" fill="#FCEBE0" stroke="#C2410C" stroke-width="2.5" data-component="web-instance-4"/>
   <text x="1048" y="465" fill="#8A2F09">Web 4</text>
   <use href="#icon-aws-ec2-instance" x="1041" y="436" width="14" height="14"/>
 
   <!-- storage -->
-  <rect x="40" y="460" width="140" height="60" rx="6" fill="#E7F6EC" stroke="#15803D" stroke-width="2.5"/>
+  <rect x="40" y="460" width="140" height="60" rx="6" fill="#E7F6EC" stroke="#15803D" stroke-width="2.5" data-component="static-assets"/>
   <text x="110" y="495" fill="#0F5C2E">Static Assets</text>
   <use href="#icon-aws-static-assets" x="160" y="466" width="14" height="14"/>
 
   <!-- ingress / routing -->
-  <rect x="40" y="560" width="140" height="60" rx="6" fill="#F1ECFB" stroke="#6B46C1" stroke-width="2.5"/>
+  <rect x="40" y="560" width="140" height="60" rx="6" fill="#F1ECFB" stroke="#6B46C1" stroke-width="2.5" data-component="cdn"/>
   <text x="110" y="595" fill="#452F82">CloudFront</text>
   <use href="#icon-aws-cloudfront" x="156" y="582" width="16" height="16"/>
 
-  <rect x="614" y="560" width="140" height="60" rx="6" fill="#FBF1DC" stroke="#B7791F" stroke-width="2.5"/>
+  <rect x="614" y="560" width="140" height="60" rx="6" fill="#FBF1DC" stroke="#B7791F" stroke-width="2.5" data-component="web-elb"/>
   <text x="684" y="595" fill="#7A5010">Web ELB</text>
   <use href="#icon-aws-elb" x="622" y="582" width="16" height="16"/>
 
   <!-- actor / ingress (bottom row: flow origin) -->
-  <rect x="374" y="660" width="140" height="60" rx="6" fill="#EDF0F3" stroke="#3B4657" stroke-width="2.5"/>
+  <rect x="374" y="660" width="140" height="60" rx="6" fill="#EDF0F3" stroke="#3B4657" stroke-width="2.5" data-component="user"/>
   <text x="444" y="695" fill="#24303D">User</text>
   <use href="#icon-actor-user" x="437" y="666" width="14" height="14"/>
 
-  <rect x="554" y="660" width="140" height="60" rx="6" fill="#F1ECFB" stroke="#6B46C1" stroke-width="2.5"/>
+  <rect x="554" y="660" width="140" height="60" rx="6" fill="#F1ECFB" stroke="#6B46C1" stroke-width="2.5" data-component="route53"/>
   <text x="624" y="695" fill="#452F82">Amazon Route 53</text>
   <use href="#icon-aws-route53" x="674" y="666" width="14" height="14"/>
 </g>

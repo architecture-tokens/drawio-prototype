@@ -1,15 +1,22 @@
 #!/usr/bin/env node
 // Machine check for the MECHANICALLY-CHECKABLE subset of the rules in
-// diagram-rules.md, run against a rendered `final.svg`.
+// diagram-rules.md, run against a rendered `final.svg`, plus (optionally)
+// a set of CROSS-LAYER checks that read the other artifacts an example
+// carries alongside its SVG — model.yaml, view.yaml, census.yaml,
+// layout.json — and check that they agree with each other and with the
+// rendered SVG. See "Cross-layer checks" below for those four.
 //
-// This is a heuristic linter, not a renderer: it parses the SVG *source*
-// with a small hand-rolled tag tokenizer (no xmldom/DOMParser, no new
-// dependencies — node:fs only) and can only see what's literally written
-// in the markup. Rules that depend on how the file actually paints pixels
+// This is a heuristic linter, not a renderer: the SVG itself is parsed
+// with a small hand-rolled tag tokenizer (no xmldom/DOMParser — node:fs
+// only for that part) and can only see what's literally written in the
+// markup. Rules that depend on how the file actually paints pixels
 // (arrow directionality, whitespace around boxes, text overlap, …) are
 // NOT evaluated here — they are always reported as
 // NOT-CHECKABLE (render-dependent) so the report stays honest about what
 // it did and did not verify. See diagram-rules.md for the full rule text.
+// The cross-layer inputs (model.yaml/view.yaml/census.yaml, all YAML;
+// layout.json) are parsed with the `yaml` package, an existing project
+// dependency (see src/validate.ts) — not a new one.
 //
 // Checked rules (see individual check* functions below for the exact
 // heuristic + its known limits):
@@ -31,8 +38,30 @@
 // or because it needs semantic judgement this tool has no way to form from
 // markup alone (B1, B2, C2-C5, T3 — left as future work, not silently
 // skipped).
+//
+// Cross-layer checks (run only when their required --flags are supplied;
+// see USAGE below for the exact requirements and the DIRECTION_GEOMETRY_
+// CONFLICT threshold):
+//   UNKNOWN_ICON_SYMBOL              every icon id view.yaml references has
+//                                    a matching <symbol id="icon-<id>"> in
+//                                    the SVG defs (id maps "." -> "-"); an
+//                                    unreferenced symbol is WARN, not FAIL.
+//   UNTRACEABLE_VISUAL /
+//   MISSING_COMPONENT                every model.yaml component id appears
+//                                    exactly once via data-component in the
+//                                    SVG, and vice versa (plus
+//                                    data-view-element <-> view.yaml
+//                                    visualElements, when --view given).
+//   DIRECTION_GEOMETRY_CONFLICT      view.yaml's flow.direction vs. the net
+//                                    displacement (layout.json node centers)
+//                                    of each model.yaml relationship.
+//   CENSUS_MISMATCH                  census.yaml's record count vs.
+//                                    source.xml's mxCell count, target-id
+//                                    resolvability, and drop reasons.
 
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { parse as parseYaml } from 'yaml';
 
 const RENDER_DEPENDENT_IDS = [
   '1',
@@ -649,10 +678,322 @@ function checkT2Lite(root) {
 }
 
 // ---------------------------------------------------------------------------
+// Cross-layer checks (need model.yaml / view.yaml / census.yaml / layout.json
+// alongside the SVG — see USAGE for which flags each one needs).
+// ---------------------------------------------------------------------------
+
+// The rule this tool enforces everywhere an icon id crosses from view.yaml
+// (dotted, e.g. "aws.ec2-instance", matching tokens.yaml's enum values) into
+// an SVG <symbol> id (hyphenated, e.g. "icon-aws-ec2-instance" — SVG ids
+// used as CSS id selectors are safer without a literal "."): the symbol id
+// is always `icon-` + the icon id with every "." replaced by "-".
+function svgSymbolIdForIcon(iconId) {
+  return `icon-${iconId.replace(/\./g, '-')}`;
+}
+
+function collectIconIdsFromView(view) {
+  const ids = new Set();
+  const addAll = (byId) => {
+    if (!byId) return;
+    for (const attachments of Object.values(byId)) {
+      if (!Array.isArray(attachments)) continue;
+      for (const attachment of attachments) {
+        if (attachment && typeof attachment.icon === 'string') ids.add(attachment.icon);
+      }
+    }
+  };
+  addAll(view.components);
+  addAll(view.relationships);
+  return ids;
+}
+
+// UNKNOWN_ICON_SYMBOL (requires --view): every icon id view.yaml references
+// must resolve (via svgSymbolIdForIcon) to a <symbol> actually defined in
+// the SVG. The reverse direction — a defined <symbol> no view.yaml
+// attachment uses — is reported too, but as WARN: an unused glyph in the
+// shared icon set isn't a defect the way a dangling reference is.
+function checkUnknownIconSymbol(root, view) {
+  const iconIds = collectIconIdsFromView(view);
+  if (iconIds.size === 0)
+    return {
+      status: 'NOT-CHECKABLE',
+      message: 'view.yaml has no component/relationship icon attachments',
+    };
+  const symbolIds = new Set(
+    collectAll(root, 'symbol')
+      .map((s) => s.attrs.id)
+      .filter(Boolean),
+  );
+  const expected = new Map([...iconIds].map((iconId) => [iconId, svgSymbolIdForIcon(iconId)]));
+  const missing = [...expected].filter(([, symbolId]) => !symbolIds.has(symbolId));
+  if (missing.length > 0) {
+    const [iconId, symbolId] = missing[0];
+    return {
+      status: 'FAIL',
+      message:
+        `UNKNOWN_ICON_SYMBOL: ${missing.length} icon id(s) referenced in view.yaml have no ` +
+        `matching <symbol> (id maps "." -> "-"), e.g. icon "${iconId}" expects ` +
+        `<symbol id="${symbolId}">, not found`,
+    };
+  }
+  const usedSymbolIds = new Set(expected.values());
+  const unused = [...symbolIds].filter((id) => !usedSymbolIds.has(id));
+  if (unused.length > 0) {
+    return {
+      status: 'WARN',
+      message: `${iconIds.size} icon id(s) all resolve to a symbol; ${unused.length} <symbol> id(s) defined in the SVG are unused by view.yaml: ${unused.join(', ')}`,
+    };
+  }
+  return {
+    status: 'PASS',
+    message: `${iconIds.size} icon id(s) referenced in view.yaml all resolve to a matching <symbol id="icon-<id>">`,
+  };
+}
+
+// Every element under root carrying `attrName` -> how many times each value
+// occurs (an id should occur exactly once; more than once is as much a
+// defect as zero times).
+function collectDataAttrCounts(root, attrName) {
+  const counts = new Map();
+  (function walk(n) {
+    for (const c of n.children) {
+      const v = c.attrs && c.attrs[attrName];
+      if (v !== undefined) counts.set(v, (counts.get(v) ?? 0) + 1);
+      walk(c);
+    }
+  })(root);
+  return counts;
+}
+
+// UNTRACEABLE_VISUAL / MISSING_COMPONENT (requires --model; --view extends
+// it to also check data-view-element <-> view.yaml visualElements):
+//   MISSING_COMPONENT  - a model.yaml component (or, with --view, a
+//                         visualElements entry) does not appear via its
+//                         data-component/data-view-element attribute in the
+//                         SVG exactly once.
+//   UNTRACEABLE_VISUAL - a data-component/data-view-element value present in
+//                         the SVG does not resolve back to a known id.
+function checkUntraceableVisual(root, model, view) {
+  const missing = [];
+  const untraceable = [];
+
+  const componentIds = new Set((model.components ?? []).map((c) => String(c.id)));
+  const seenComponent = collectDataAttrCounts(root, 'data-component');
+  for (const id of componentIds) {
+    const count = seenComponent.get(id) ?? 0;
+    if (count !== 1) missing.push({ id, count, attr: 'data-component' });
+  }
+  for (const id of seenComponent.keys())
+    if (!componentIds.has(id)) untraceable.push({ id, attr: 'data-component' });
+
+  if (view) {
+    const elementIds = new Set((view.visualElements ?? []).map((e) => String(e.id)));
+    const seenViewElement = collectDataAttrCounts(root, 'data-view-element');
+    for (const id of elementIds) {
+      const count = seenViewElement.get(id) ?? 0;
+      if (count !== 1) missing.push({ id, count, attr: 'data-view-element' });
+    }
+    for (const id of seenViewElement.keys())
+      if (!elementIds.has(id)) untraceable.push({ id, attr: 'data-view-element' });
+  }
+
+  if (missing.length > 0) {
+    const m = missing[0];
+    return {
+      status: 'FAIL',
+      message:
+        `MISSING_COMPONENT: ${missing.length} id(s) do not appear exactly once via their ` +
+        `attribute in the SVG, e.g. "${m.id}" appears ${m.count} time(s) via ${m.attr} (expected 1)`,
+    };
+  }
+  if (untraceable.length > 0) {
+    const u = untraceable[0];
+    return {
+      status: 'FAIL',
+      message: `UNTRACEABLE_VISUAL: ${untraceable.length} ${u.attr} value(s) in the SVG do not resolve to a known id, e.g. "${u.id}"`,
+    };
+  }
+  const viewNote = view
+    ? `; ${(view.visualElements ?? []).length} view visual-element id(s) each appear exactly once via data-view-element`
+    : '';
+  return {
+    status: 'PASS',
+    message: `${componentIds.size} model component id(s) each appear exactly once via data-component${viewNote}`,
+  };
+}
+
+// Resolves every layout.json node's absolute-canvas center, following
+// parentId chains (a non-root-parented node's x/y is relative to its
+// parent's origin — see README.md "Coordinate convention in layout.json").
+// Returns null for a node whose parent chain doesn't resolve (unknown
+// parent, or a cycle) rather than guessing.
+function resolveLayoutCenters(layout) {
+  const byId = new Map((layout.nodes ?? []).map((n) => [n.id, n]));
+  const originCache = new Map();
+  function origin(id, seen) {
+    if (originCache.has(id)) return originCache.get(id);
+    const node = byId.get(id);
+    if (!node || seen.has(id)) return null;
+    seen.add(id);
+    let result;
+    if (node.parentId === null || node.parentId === undefined) {
+      result = { x: node.x, y: node.y };
+    } else {
+      const parentOrigin = origin(node.parentId, seen);
+      result = parentOrigin ? { x: parentOrigin.x + node.x, y: parentOrigin.y + node.y } : null;
+    }
+    originCache.set(id, result);
+    return result;
+  }
+  const centers = new Map();
+  for (const node of byId.values()) {
+    const o = origin(node.id, new Set());
+    if (o) centers.set(node.id, { x: o.x + node.width / 2, y: o.y + node.height / 2 });
+  }
+  return centers;
+}
+
+const DIRECTION_AXIS = {
+  up: { key: 'y', sign: -1 },
+  down: { key: 'y', sign: 1 },
+  left: { key: 'x', sign: -1 },
+  right: { key: 'x', sign: 1 },
+};
+export const DIRECTION_GEOMETRY_THRESHOLD = 0.6;
+
+// DIRECTION_GEOMETRY_CONFLICT (requires --model, --view, --layout): for each
+// model.yaml relationship, the net displacement (layout.json node center,
+// target minus source) along the axis view.yaml's flow.direction names must
+// be POSITIVE in that direction for at least DIRECTION_GEOMETRY_THRESHOLD of
+// relationships whose endpoints resolve. "mixed" skips the check entirely
+// (no single dominant direction to check against). A same-row/same-column
+// edge (net displacement 0 on that axis) counts toward the denominator but
+// not the numerator — it neither confirms nor conflicts.
+function checkDirectionGeometryConflict(model, view, layout) {
+  const direction = view?.flow?.direction;
+  if (!direction) return { status: 'NOT-CHECKABLE', message: 'view.yaml has no flow.direction' };
+  if (direction === 'mixed')
+    return { status: 'NOT-CHECKABLE', message: 'flow.direction is "mixed" — check skipped' };
+  const axis = DIRECTION_AXIS[direction];
+  if (!axis)
+    return {
+      status: 'NOT-CHECKABLE',
+      message: `flow.direction "${direction}" is not one of up/down/left/right/mixed`,
+    };
+  const centers = resolveLayoutCenters(layout);
+  const relationships = model.relationships ?? [];
+  let considered = 0;
+  let compliant = 0;
+  let firstOffender = null;
+  for (const rel of relationships) {
+    const from = centers.get(rel.from);
+    const to = centers.get(rel.to);
+    if (!from || !to) continue;
+    considered += 1;
+    const raw = axis.key === 'y' ? to.y - from.y : to.x - from.x;
+    const delta = raw * axis.sign;
+    if (delta > 0) compliant += 1;
+    else if (!firstOffender) firstOffender = rel.id;
+  }
+  if (considered === 0)
+    return {
+      status: 'NOT-CHECKABLE',
+      message: 'no model.yaml relationship had both endpoints resolvable against layout.json nodes',
+    };
+  const fraction = compliant / considered;
+  const pct = (n) => `${Math.round(n * 100)}%`;
+  if (fraction < DIRECTION_GEOMETRY_THRESHOLD) {
+    return {
+      status: 'FAIL',
+      message:
+        `DIRECTION_GEOMETRY_CONFLICT: flow.direction="${direction}" but only ${compliant}/${considered} ` +
+        `relationship(s) (${pct(fraction)}) have a net displacement matching that direction ` +
+        `(threshold ${pct(DIRECTION_GEOMETRY_THRESHOLD)}), e.g. ${firstOffender}`,
+    };
+  }
+  return {
+    status: 'PASS',
+    message: `${compliant}/${considered} relationship(s) (${pct(fraction)}) have a net displacement matching flow.direction="${direction}" (>= ${pct(DIRECTION_GEOMETRY_THRESHOLD)} required)`,
+  };
+}
+
+function countSourceMxCells(sourceXmlText) {
+  const vertexCount = (sourceXmlText.match(/<mxCell\b[^>]*\bvertex="1"/g) ?? []).length;
+  const edgeCount = (sourceXmlText.match(/<mxCell\b[^>]*\bedge="1"/g) ?? []).length;
+  return { vertexCount, edgeCount };
+}
+
+// CENSUS_MISMATCH (requires --census; --model additionally enables the
+// target-id resolvability check): census.yaml's `source` field names the
+// raw diagram source (resolved relative to census.yaml's own directory);
+// its mxCell vertex+edge count must equal census.yaml's record count.
+// Every component/relationship primary_bucket record's target_ids must
+// resolve into model.yaml (skipped, not failed, when --model isn't given —
+// this half of the check needs it to mean anything). Every drop record
+// must carry a non-empty reason.
+function checkCensusMismatch(census, censusFilePath, model) {
+  const problems = [];
+  const records = census.records ?? [];
+
+  if (census.source) {
+    const sourcePath = path.resolve(path.dirname(censusFilePath), census.source);
+    let sourceText;
+    try {
+      sourceText = readFileSync(sourcePath, 'utf8');
+    } catch (cause) {
+      return {
+        status: 'FAIL',
+        message: `CENSUS_MISMATCH: could not read census source "${census.source}" (resolved ${sourcePath}): ${cause instanceof Error ? cause.message : String(cause)}`,
+      };
+    }
+    const { vertexCount, edgeCount } = countSourceMxCells(sourceText);
+    const expectedTotal = vertexCount + edgeCount;
+    if (records.length !== expectedTotal) {
+      problems.push(
+        `record count ${records.length} != source element count ${expectedTotal} (${vertexCount} vertex + ${edgeCount} edge, from "${census.source}")`,
+      );
+    }
+  }
+
+  if (model) {
+    const componentIds = new Set((model.components ?? []).map((c) => String(c.id)));
+    const relationshipIds = new Set((model.relationships ?? []).map((r) => String(r.id)));
+    for (const rec of records) {
+      const ids = rec.primary_bucket === 'component' ? componentIds : relationshipIds;
+      if (rec.primary_bucket !== 'component' && rec.primary_bucket !== 'relationship') continue;
+      for (const target of rec.target_ids ?? []) {
+        if (!ids.has(String(target))) {
+          problems.push(
+            `census record ${rec.source_id} (${rec.primary_bucket}) targets "${target}", not found in model.yaml`,
+          );
+          break;
+        }
+      }
+    }
+  }
+
+  for (const rec of records) {
+    if (rec.primary_bucket === 'drop' && !(rec.reason && String(rec.reason).trim())) {
+      problems.push(`census record ${rec.source_id} has primary_bucket=drop but no reason`);
+    }
+  }
+
+  if (problems.length > 0)
+    return { status: 'FAIL', message: `CENSUS_MISMATCH: ${problems.join('; ')}` };
+  const modelNote = model
+    ? '; every component/relationship target_id resolves into model.yaml'
+    : ' (target_id resolvability not checked — no --model given)';
+  return {
+    status: 'PASS',
+    message: `${records.length} census record(s) match the source element count${modelNote}; every drop carries a reason`,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Report assembly
 // ---------------------------------------------------------------------------
 
-function lintSource(text, label) {
+function lintSource(text, label, crossLayer = {}) {
   const { comments, stripped } = extractComments(text);
   const root = buildTree(stripped);
   const allCommentsText = comments.join('\n');
@@ -668,6 +1009,21 @@ function lintSource(text, label) {
     ['B2-lite', checkB2Lite(root)],
     ['T2-lite', checkT2Lite(root)],
   ]);
+
+  const { model, view, census, censusFilePath, layout } = crossLayer;
+  if (view) checkResults.set('UNKNOWN_ICON_SYMBOL', checkUnknownIconSymbol(root, view));
+  if (model)
+    checkResults.set(
+      'UNTRACEABLE_VISUAL / MISSING_COMPONENT',
+      checkUntraceableVisual(root, model, view),
+    );
+  if (model && view && layout)
+    checkResults.set(
+      'DIRECTION_GEOMETRY_CONFLICT',
+      checkDirectionGeometryConflict(model, view, layout),
+    );
+  if (census)
+    checkResults.set('CENSUS_MISMATCH', checkCensusMismatch(census, censusFilePath, model));
 
   const checks = [];
   for (const [id, result] of checkResults) {
@@ -690,7 +1046,7 @@ function lintSource(text, label) {
   }
   checks.sort((a, b) => ruleSortKey(a.id) - ruleSortKey(b.id) || a.id.localeCompare(b.id));
 
-  const summary = { PASS: 0, FAIL: 0, 'NOT-CHECKABLE': 0 };
+  const summary = { PASS: 0, FAIL: 0, WARN: 0, 'NOT-CHECKABLE': 0 };
   for (const c of checks) summary[c.status] += 1;
 
   return { file: label, checks, summary, ok: summary.FAIL === 0 };
@@ -698,14 +1054,17 @@ function lintSource(text, label) {
 
 // Sort connector rules (numeric) before box/color/text rules (alpha), each
 // group in natural order — purely cosmetic, for a stable/readable report.
+// Cross-layer check ids (not all-digit, don't start with a rule letter we
+// special-cased) just sort after everything else by their own charCode,
+// which is fine — order here is cosmetic, not meaningful.
 function ruleSortKey(id) {
   if (/^\d+$/.test(id)) return Number.parseInt(id, 10);
   return 1000 + id.charCodeAt(0) * 10 + (id.includes('-lite') ? 0.5 : 0);
 }
 
-function lintFile(filePath) {
+function lintFile(filePath, crossLayer) {
   const text = readFileSync(filePath, 'utf8');
-  return lintSource(text, filePath);
+  return lintSource(text, filePath, crossLayer);
 }
 
 function formatHuman(result) {
@@ -716,7 +1075,7 @@ function formatHuman(result) {
     if (c.snippet) lines.push(`      snippet: ${c.snippet}`);
   }
   lines.push(
-    `  -> ${result.summary.PASS} PASS, ${result.summary.FAIL} FAIL, ${result.summary['NOT-CHECKABLE']} NOT-CHECKABLE`,
+    `  -> ${result.summary.PASS} PASS, ${result.summary.FAIL} FAIL, ${result.summary.WARN} WARN, ${result.summary['NOT-CHECKABLE']} NOT-CHECKABLE`,
   );
   return lines.join('\n');
 }
@@ -725,19 +1084,82 @@ function formatHuman(result) {
 // CLI
 // ---------------------------------------------------------------------------
 
-const USAGE =
-  'Usage:\n  node tools/rules-lint.mjs <file.svg> [more.svg...] [--format human|json]\n';
+const USAGE = `Usage:
+  node tools/rules-lint.mjs <file.svg> [more.svg...] [--format human|json]
+  node tools/rules-lint.mjs <file.svg> [--model model.yaml] [--view view.yaml] [--census census.yaml] [--layout layout.json] [--format human|json]
+  node tools/rules-lint.mjs --help
+
+--model/--view/--census/--layout are each optional, and together they
+require exactly one <file.svg> (they describe ONE example, unlike the plain
+per-file SVG rule checks, which accept any number of files with no flags).
+A cross-layer check only runs when ALL of the flags it needs are supplied:
+
+  UNKNOWN_ICON_SYMBOL               needs --view. Every icon id referenced
+                                     in view.yaml's components/relationships
+                                     attachments must resolve to a
+                                     <symbol id="icon-<id>"> in the SVG defs
+                                     (id maps by replacing "." with "-");
+                                     an SVG <symbol> no attachment uses is
+                                     reported as WARN, not FAIL.
+  UNTRACEABLE_VISUAL /
+  MISSING_COMPONENT                 needs --model (add --view to also check
+                                     data-view-element against view.yaml's
+                                     visualElements). Every model.yaml
+                                     component id must appear via
+                                     data-component in the SVG exactly once,
+                                     and every data-component/
+                                     data-view-element value in the SVG must
+                                     resolve back to a known id.
+  DIRECTION_GEOMETRY_CONFLICT       needs --model, --view, and --layout.
+                                     For each model.yaml relationship,
+                                     computes the net displacement between
+                                     its endpoints' layout.json node centers;
+                                     if view.yaml's flow.direction is one of
+                                     up/down/left/right, at least
+                                     ${Math.round(DIRECTION_GEOMETRY_THRESHOLD * 100)}% of relationships must have a net
+                                     displacement matching that direction.
+                                     "mixed" skips the check.
+  CENSUS_MISMATCH                   needs --census (add --model to also
+                                     check target-id resolvability).
+                                     census.yaml's record count must equal
+                                     its own \`source\` file's mxCell
+                                     vertex+edge count (source path is
+                                     resolved relative to census.yaml's own
+                                     directory); every component/
+                                     relationship record's target_ids must
+                                     resolve into model.yaml; every
+                                     primary_bucket=drop record must carry a
+                                     non-empty reason.
+`;
 
 function parseArgs(argv) {
   const files = [];
   let format = 'human';
+  let modelPath;
+  let viewPath;
+  let censusPath;
+  let layoutPath;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === '--format') {
+    if (arg === '--help' || arg === '-h') {
+      return { help: true };
+    } else if (arg === '--format') {
       format = argv[i + 1];
       i += 1;
     } else if (arg.startsWith('--format=')) {
       format = arg.slice('--format='.length);
+    } else if (arg === '--model' && argv[i + 1]) {
+      modelPath = argv[i + 1];
+      i += 1;
+    } else if (arg === '--view' && argv[i + 1]) {
+      viewPath = argv[i + 1];
+      i += 1;
+    } else if (arg === '--census' && argv[i + 1]) {
+      censusPath = argv[i + 1];
+      i += 1;
+    } else if (arg === '--layout' && argv[i + 1]) {
+      layoutPath = argv[i + 1];
+      i += 1;
     } else {
       files.push(arg);
     }
@@ -745,21 +1167,45 @@ function parseArgs(argv) {
   if (files.length === 0) return { error: USAGE };
   if (format !== 'human' && format !== 'json')
     return { error: `Unknown --format: ${format}\n${USAGE}` };
-  return { files, format };
+  const anyCrossLayerFlag = Boolean(modelPath || viewPath || censusPath || layoutPath);
+  if (anyCrossLayerFlag && files.length !== 1)
+    return {
+      error: `--model/--view/--census/--layout require exactly one <file.svg> positional argument (got ${files.length})\n${USAGE}`,
+    };
+  return { files, format, modelPath, viewPath, censusPath, layoutPath };
 }
 
 // Exported so tests can drive the linter in-process (same pattern as
 // tools/offline-generate.mjs's runOffline) instead of shelling out.
 export async function runCli(argv) {
   const parsed = parseArgs(argv);
+  if (parsed.help) return { exitCode: 0, stdout: USAGE, stderr: '' };
   if (parsed.error) return { exitCode: 2, stdout: '', stderr: parsed.error };
-  const { files, format } = parsed;
+  const { files, format, modelPath, viewPath, censusPath, layoutPath } = parsed;
+
+  let model;
+  let view;
+  let census;
+  let layout;
+  try {
+    if (modelPath) model = parseYaml(readFileSync(modelPath, 'utf8'));
+    if (viewPath) view = parseYaml(readFileSync(viewPath, 'utf8'));
+    if (censusPath) census = parseYaml(readFileSync(censusPath, 'utf8'));
+    if (layoutPath) layout = JSON.parse(readFileSync(layoutPath, 'utf8'));
+  } catch (cause) {
+    return {
+      exitCode: 2,
+      stdout: '',
+      stderr: `Could not read/parse cross-layer input: ${cause instanceof Error ? cause.message : String(cause)}\n`,
+    };
+  }
+  const crossLayer = { model, view, census, censusFilePath: censusPath, layout };
 
   const results = [];
   for (const file of files) {
     let result;
     try {
-      result = lintFile(file);
+      result = lintFile(file, crossLayer);
     } catch (cause) {
       return {
         exitCode: 2,

@@ -189,6 +189,12 @@ origin + relative child offset), not generated through `drawio.ts`.
 
 ## Direction token
 
+> **Updated:** `infra:presentation.flow.direction` is no longer _applied_
+> anywhere in `model.yaml` — see "View layer (view.yaml)" below. The token
+> **type** and the rationale for its value are unchanged and still live in
+> `tokens.yaml`; this section now describes that rationale, not a live
+> model.yaml application.
+
 `infra:presentation.flow.direction` (`tokens.yaml`, domain `presentation`)
 records that this diagram reads **bottom-to-top** (`value: up`), matching
 the source exactly: `user`/`route53` at the bottom, `rds-master`/
@@ -201,22 +207,27 @@ implicit in a pile of hand-picked y-coordinates, so a downstream
 layout/render pass can consume it directly rather than re-deriving it from
 geometry.
 
-**Where it's applied, and why there:** the architecture-model schema has
-no model-wide token scope — `tokens` is a field on `component` and
+**Where it used to be applied, and why there (historical — model.yaml no
+longer carries this token at all):** the architecture-model schema has no
+model-wide token scope — `tokens` is a field on `component` and
 `relationship` only (`$defs.component` / `$defs.relationship` in the spec
 schema; the model itself has no top-level `tokens` array, and
-`additionalProperties: false` means one can't be added informally). So
-this token is applied once, on `user` — the component the whole flow
-originates from — rather than repeated on all 19 components (which would
-technically validate too, but adds noise without adding meaning: 18 of the
-19 copies would just restate the same fact). This is the same kind of
-schema-gap workaround as `deployment.multi-az` above: pick the one
-component that best carries a fact the schema has no dedicated slot for,
-and document why.
+`additionalProperties: false` means one can't be added informally). So this
+token used to be applied once, on `user` — the component the whole flow
+originates from — rather than repeated on all 19 components. `view.yaml`
+isn't constrained by that schema, so `flow.direction` is now a genuine
+top-level, diagram-wide field there instead — the single-component
+workaround is gone, not relocated.
 
 ## Icon tokens and the nine-grid
 
-Two applied tokens, both domain `presentation`, both `appliesTo:
+> **Updated:** both tokens below are no longer _applied_ anywhere in
+> `model.yaml` — see "View layer (view.yaml)" below. The token **types**
+> and the per-component reasoning (including the table) are unchanged and
+> still live in `tokens.yaml`; this section now describes that reasoning,
+> not a live model.yaml application.
+
+Two applied token **types**, both domain `presentation`, both `appliesTo:
 {elementKinds: [component]}`:
 
 - **`infra:presentation.icon`** — which glyph from `final.svg`'s shared
@@ -230,7 +241,9 @@ Two applied tokens, both domain `presentation`, both `appliesTo:
   that glyph sits inside the component's box, clear of the title text
   (rule T1) and the box padding (rule T2).
 
-Applied to all 17 leaf components that have a source icon (not the 2 ASG
+Applied (from `view.yaml`, as `components[<id>][].icon` /
+`components[<id>][].anchor` — see below) to all 17 leaf components that
+have a source icon (not the 2 ASG
 containers — see below). Position was chosen from the source's own
 `labelPosition`/`verticalLabelPosition` style attribute on each icon
 (grounded in `source.xml`, not guessed): `verticalLabelPosition=bottom`
@@ -319,3 +332,35 @@ the source's original 6 pure-text annotation vertices, only `"A"`, `"EC2"`,
 and `"AZ"` are still dropped (see "Flattening & simplification decisions"
 #1); "Cross-AZ Replication" was never dropped; the two "Availability Zone"
 captions are restored here.
+
+## View layer (view.yaml)
+
+This example is the prototype for a View Layer Contract: presentation
+facts (flow direction, per-component icon + nine-grid anchor, per-edge
+icon attachments, and the two AZ-band visual elements) now live in
+`view.yaml`, not as `infra:presentation.*` applied tokens inside
+`model.yaml`. `model.yaml` keeps only semantic tokens
+(`deployment.multi-az`, `deployment.availability-zone`,
+`security.encryption.in-transit`); `tokens.yaml` still defines the three
+`presentation.*` token **types** (a view document has no independent
+vocabulary mechanism of its own) under a "View vocabulary" section, now
+documented as applied from `view.yaml`, not `model.yaml`. `final.svg`
+carries `data-component="<id>"` on every one of the 19 rendered model
+components and `data-view-element="<id>"` on the two AZ-band rects, so a
+tool can trace SVG geometry back to `model.yaml`/`view.yaml` mechanically.
+
+`census.yaml` is the companion machine-readable manifest: one record per
+**source** element (28 vertices + 23 edges from `source.xml`, by stable
+source id), each with an exclusive `primary_bucket`
+(`component`/`relationship`/`token`/`visual`/`drop`) and `target_ids`
+trace links — replacing this README's prose "18 icons − 1 + 2 = 19" bucket
+counting with something a tool can check.
+
+`tools/rules-lint.mjs` gained four cross-layer checks
+(`UNKNOWN_ICON_SYMBOL`, `UNTRACEABLE_VISUAL`/`MISSING_COMPONENT`,
+`DIRECTION_GEOMETRY_CONFLICT`, `CENSUS_MISMATCH`) that read these files
+together; see `node tools/rules-lint.mjs --help` for exactly what each
+one needs and checks. Gate: the full cross-layer invocation (`final.svg`
+
+- `--model` + `--view` + `--census` + `--layout`) exits 0 for this
+  example.

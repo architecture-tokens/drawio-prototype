@@ -6,59 +6,33 @@ components:
   # --- Ingress ---
   - id: user
     type: core:component.external-actor
-    tokens:
-      [
-        { token: infra:presentation.flow.direction, value: up },
-        { token: infra:presentation.icon, value: actor.user },
-        { token: infra:presentation.icon.position, value: top-center },
-      ]
+    # No presentation.* tokens: those moved to view.yaml (View Layer
+    # Contract). This component carries no semantic tokens either — it is
+    # the flow's external actor, nothing about it is environment/AZ/security
+    # scoped.
+    tokens: []
     metadata: { label: User }
   - id: route53
     type: infra:component.dns
-    tokens:
-      [
-        { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.route53 },
-        { token: infra:presentation.icon.position, value: top-right },
-      ]
+    tokens: [{ token: environment:environment.production }]
     metadata: { label: 'Amazon Route 53' }
   - id: web-elb
     type: infra:component.load-balancer
-    tokens:
-      [
-        { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.elb },
-        { token: infra:presentation.icon.position, value: middle-left },
-      ]
+    tokens: [{ token: environment:environment.production }]
     metadata: { label: 'Web ELB' }
 
   # --- CDN / static-content path ---
   - id: cdn
     type: infra:component.cdn
-    tokens:
-      [
-        { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.cloudfront },
-        { token: infra:presentation.icon.position, value: middle-right },
-      ]
+    tokens: [{ token: environment:environment.production }]
     metadata: { label: CloudFront }
   - id: static-assets
     type: infra:component.static-assets
-    tokens:
-      [
-        { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.static-assets },
-        { token: infra:presentation.icon.position, value: top-right },
-      ]
+    tokens: [{ token: environment:environment.production }]
     metadata: { label: 'Static Assets' }
   - id: s3
     type: infra:component.object-storage
-    tokens:
-      [
-        { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.s3 },
-        { token: infra:presentation.icon.position, value: middle-right },
-      ]
+    tokens: [{ token: environment:environment.production }]
     metadata: { label: 'Amazon S3' }
 
   # --- Web tier ---
@@ -75,8 +49,6 @@ components:
     tokens:
       [
         { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.ec2-instance },
-        { token: infra:presentation.icon.position, value: top-center },
         { token: infra:deployment.availability-zone, value: a },
       ]
     metadata: { label: 'Web 1' }
@@ -85,8 +57,6 @@ components:
     tokens:
       [
         { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.ec2-instance },
-        { token: infra:presentation.icon.position, value: top-center },
         { token: infra:deployment.availability-zone, value: a },
       ]
     metadata: { label: 'Web 2' }
@@ -95,8 +65,6 @@ components:
     tokens:
       [
         { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.ec2-instance },
-        { token: infra:presentation.icon.position, value: top-center },
         { token: infra:deployment.availability-zone, value: b },
       ]
     metadata: { label: 'Web 3' }
@@ -105,8 +73,6 @@ components:
     tokens:
       [
         { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.ec2-instance },
-        { token: infra:presentation.icon.position, value: top-center },
         { token: infra:deployment.availability-zone, value: b },
       ]
     metadata: { label: 'Web 4' }
@@ -114,12 +80,7 @@ components:
   # --- App tier ---
   - id: app-elb
     type: infra:component.load-balancer
-    tokens:
-      [
-        { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.elb },
-        { token: infra:presentation.icon.position, value: middle-left },
-      ]
+    tokens: [{ token: environment:environment.production }]
     metadata: { label: 'App ELB' }
   - id: app-asg
     type: infra:component.autoscaling-group
@@ -134,8 +95,6 @@ components:
     tokens:
       [
         { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.ec2-instance },
-        { token: infra:presentation.icon.position, value: top-center },
         { token: infra:deployment.availability-zone, value: a },
       ]
     metadata: { label: 'App 1' }
@@ -144,8 +103,6 @@ components:
     tokens:
       [
         { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.ec2-instance },
-        { token: infra:presentation.icon.position, value: top-center },
         { token: infra:deployment.availability-zone, value: a },
       ]
     metadata: { label: 'App 2' }
@@ -154,8 +111,6 @@ components:
     tokens:
       [
         { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.ec2-instance },
-        { token: infra:presentation.icon.position, value: top-center },
         { token: infra:deployment.availability-zone, value: b },
       ]
     metadata: { label: 'App 3' }
@@ -164,8 +119,6 @@ components:
     tokens:
       [
         { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.ec2-instance },
-        { token: infra:presentation.icon.position, value: top-center },
         { token: infra:deployment.availability-zone, value: b },
       ]
     metadata: { label: 'App 4' }
@@ -174,22 +127,12 @@ components:
   - id: rds-master
     type: core:component.database
     configuration: { engine: amazon-rds }
-    tokens:
-      [
-        { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.rds },
-        { token: infra:presentation.icon.position, value: middle-right },
-      ]
+    tokens: [{ token: environment:environment.production }]
     metadata: { label: 'RDS Master' }
   - id: rds-slave
     type: core:component.database
     configuration: { engine: amazon-rds }
-    tokens:
-      [
-        { token: environment:environment.production },
-        { token: infra:presentation.icon, value: aws.rds },
-        { token: infra:presentation.icon.position, value: middle-left },
-      ]
+    tokens: [{ token: environment:environment.production }]
     metadata: { label: 'RDS Slave' }
 
 relationships:

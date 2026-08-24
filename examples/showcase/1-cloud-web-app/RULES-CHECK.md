@@ -25,8 +25,10 @@ found and fixed during that process (see below).
    marker — out of scope for this rule per its own text, and confirmed by
    rules-lint rule 4).
 4. **Arrowhead follows the final segment.** PASS, checked edge by edge —
-   flow reads bottom-up (`infra:presentation.flow.direction = up` on
-   `user`), and every arrowhead's approach direction matches: up into
+   flow reads bottom-up (`infra:presentation.flow.direction = up`, now
+   view.yaml's top-level `flow.direction`, not a model.yaml token on
+   `user` — see README.md "View layer (view.yaml)"), and every arrowhead's
+   approach direction matches: up into
    every box one tier above it (`cdn`, `web-elb`, both ELBs' targets, both
    instance tiers' targets, `rds-master`), right into `rds-slave`, right
    into `route53`.

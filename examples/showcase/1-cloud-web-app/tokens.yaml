@@ -10,9 +10,15 @@ description: >
   call.sync/data.read/belongs.to relationships). Also carries the multi-AZ
   deployment marker used to flatten the source's crossing Availability-Zone
   grouping (see model.yaml / README.md for why), the per-instance AZ marker
-  that names WHICH zone each instance sits in, and the presentation-layer
-  tokens (flow direction, icon, icon position) that let the visual rework
-  record layout facts as data instead of hardcoding them in final.svg.
+  that names WHICH zone each instance sits in, and — in the "View
+  vocabulary" section below — the presentation-layer token TYPES (flow
+  direction, icon, icon position) that let the visual rework record layout
+  facts as data instead of hardcoding them in final.svg. As of the View
+  Layer Contract (view.yaml), those three are still defined here (a view
+  document has no independent token-vocabulary mechanism of its own) but are
+  no longer *applied* on any model.yaml component — view.yaml's
+  `flow.direction` / `components[].icon` / `components[].anchor` fields
+  apply them instead.
 tokens:
   - id: component.dns
     kind: component-type
@@ -80,25 +86,33 @@ tokens:
       elements").
     appliesTo: { elementKinds: [component], componentTypes: [infra:component.compute-instance] }
     valueSchema: { type: string, enum: [a, b] }
+  # --- View vocabulary ----------------------------------------------------
+  # The three token types below are typed vocabulary owned by this library
+  # (id, valueSchema, description all still live here — a view document has
+  # no independent token-vocabulary mechanism of its own) but, as of the
+  # View Layer Contract (view.yaml), are no longer *applied* inside any
+  # model.yaml component's `tokens` array. They are applied from view.yaml
+  # instead: `flow.direction` (top-level field, no schema-gap workaround
+  # needed there), `components[<id>][].icon`, and
+  # `components[<id>][].anchor`. `appliesTo` below is retained as the
+  # authoring-time constraint a view document's fields are expected to
+  # satisfy (component ids only, per component-type where noted) — nothing
+  # in this repo mechanically re-validates a view.yaml against it yet.
   - id: presentation.flow.direction
     kind: applied
     name: Flow Direction
     description: >
-      Records the diagram's intended top-to-bottom reading direction as data
-      instead of leaving it implicit in hand-picked coordinates. Default
-      policy: detect and preserve the source diagram's own flow direction
-      when it reads as logical (don't silently invert a source that already
-      makes sense); this token is how a renderer/layout layer is told what
-      that direction is when a human has confirmed it explicitly. The
-      architecture-model schema has no model-wide token scope (only
-      component/relationship carry a `tokens` array — see
-      SPEC's $defs.component/$defs.relationship, no top-level `tokens` field
-      on the model itself), so this is applied once, on the diagram's flow
-      origin component (`user`, the external actor everything else derives
-      from), the same schema-gap workaround already used for
-      deployment.multi-az's flattened AZ axis.
+      Records the diagram's intended reading direction as data instead of
+      leaving it implicit in hand-picked coordinates. Default policy: detect
+      and preserve the source diagram's own flow direction when it reads as
+      logical (don't silently invert a source that already makes sense).
+      Applied from view.yaml's top-level `flow.direction` field (one value
+      for the whole diagram — a view document isn't constrained by the
+      architecture-model schema's component/relationship-only `tokens`
+      arrays, so this no longer needs the single-component schema-gap
+      workaround `deployment.multi-az` still uses on model.yaml).
     appliesTo: { elementKinds: [component] }
-    valueSchema: { type: string, enum: [up, down, left, right] }
+    valueSchema: { type: string, enum: [up, down, left, right, mixed] }
   - id: presentation.icon
     kind: applied
     name: Icon
@@ -107,16 +121,21 @@ tokens:
       single <defs> block, referenced everywhere with <use>) represents this
       component. Restores the source's AWS shape-library icons that a
       previous rework iteration dropped in favor of plain text-only boxes.
-      Not applied to the two Autoscaling Group containers: the source's own
-      small "Auto Scaling" badge icon on those containers is redundant with
-      the container's own title text ("Web/App Tier Autoscaling Group"),
-      same reasoning as the dropped pure-text annotation vertices in
-      "Flattening & simplification decisions" below. Not applied to
-      relationships either — the one edge-attached icon this diagram needs
-      (the SSL padlock) is keyed off the EXISTING
+      Applied from view.yaml's `components[<id>][].icon` field (a list per
+      component, not a scalar — a component could in principle carry more
+      than one glyph). Not applied to the two Autoscaling Group containers:
+      the source's own small "Auto Scaling" badge icon on those containers
+      is redundant with the container's own title text ("Web/App Tier
+      Autoscaling Group"), same reasoning as the dropped pure-text
+      annotation vertices in "Flattening & simplification decisions" below.
+      Not applied to relationships either — the one edge-attached icon this
+      diagram needs (the SSL padlock) is keyed off the EXISTING
       security:security.encryption.in-transit token's presence on an edge,
-      not a second icon token, per the task brief's "keep the security token
-      AND render a glyph" framing.
+      via view.yaml's separate `relationships[<id>][].icon` field
+      (`security.ssl-padlock`, matching final.svg's existing
+      `icon-security-ssl-padlock` symbol id — see
+      tools/rules-lint.mjs's UNKNOWN_ICON_SYMBOL check for the id<->symbol
+      mapping rule), not a second component-icon token value.
     appliesTo: { elementKinds: [component] }
     valueSchema:
       {
@@ -145,7 +164,10 @@ tokens:
       where the label is long enough that the matching middle-row position
       would collide with the centered title text — those are bumped to the
       top row on the same side instead (see README's icon table for the
-      per-component reasoning).
+      per-component reasoning). Applied from view.yaml's
+      `components[<id>][].anchor` field (renamed from "position" to
+      "anchor" in the view schema — same nine-grid value set, see
+      view.yaml's own comments).
     appliesTo: { elementKinds: [component] }
     valueSchema:
       {
