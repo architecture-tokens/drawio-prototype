@@ -1,0 +1,12 @@
+{
+  "url": "https://raw.githubusercontent.com/jgraph/drawio-diagrams/dev/examples/aws-saas-example.drawio",
+  "repo": "jgraph/drawio-diagrams",
+  "license": "Apache-2.0",
+  "fetched": "2026-08-24T06:33:00Z",
+  "title": "AWS SaaS example architecture",
+  "genre": "cloud-web-app",
+  "format": "drawio-xml",
+  "node_count_estimate": 20,
+  "edge_count_estimate": 23,
+  "notes": "Original file stored base64+deflate compressed inside the <diagram> tag (standard draw.io compression). Decoded to plain <mxGraphModel> XML for source.xml via: base64-decode -> zlib.decompress(raw, -15) -> urllib.parse.unquote. Diagram shows a 3-tier AWS web app: Route53 -> ELB (web tier) -> EC2 C3 instances (Auto Scaling) -> ELB (app tier) -> EC2 M4 instances (Auto Scaling) -> RDS Master/Slave (Cross-AZ replication), plus a CloudFront CDN -> S3 static assets path."
+}

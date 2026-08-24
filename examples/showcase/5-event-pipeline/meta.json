@@ -1,0 +1,12 @@
+{
+  "url": "https://raw.githubusercontent.com/asyncapi/website/master/markdown/docs/concepts/channel.md",
+  "repo": "asyncapi/website",
+  "license": "Apache-2.0",
+  "fetched": "2026-08-24T06:35:00Z",
+  "title": "AsyncAPI docs - Channel concept diagram (Producer -> Channel -> Consumers)",
+  "genre": "event-pipeline",
+  "format": "mermaid",
+  "node_count_estimate": 6,
+  "edge_count_estimate": 5,
+  "notes": "From the official AsyncAPI documentation site (asyncapi.com / asyncapi/website repo, Apache-2.0), docs/concepts/channel.md. Illustrates the producer -> broker(channel/queue) -> multiple-consumers pattern the task asked for; AsyncAPI's 'Channel' is the addressable topic/queue construct on a broker. Node count sits at the task's minimum (6): Producer, message, Channel, and 3 Consumer nodes, 5 directed edges. A richer nearby example exists at docs/concepts/consumer.md (Producer -[Event A/B]-> Broker -> Consumer A/B/C with a Consumers subgraph) but has only 5 distinct nodes, just under the 6-node floor, so channel.md was used instead."
+}

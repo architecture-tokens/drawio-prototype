@@ -1,0 +1,272 @@
+# Source census (prototype v0). One record per SOURCE element (source.xml mxCell),
+# not per model.yaml element -- this is what makes the 4-bucket census machine-checkable
+# instead of a hand-maintained claim: tools/rules-lint.mjs's CENSUS_MISMATCH check parses
+# `source` below and asserts len(records) == vertex_count + edge_count, that every
+# component/relationship target_id resolves into `model`, and that every drop carries a
+# reason. A record's bucket is EXCLUSIVE (primary_bucket); `target_ids` is a list because
+# one source element can trace to more than one downstream artifact (source_id 34 below is
+# the padlock pass-through hop that feeds two model relationships).
+kind: census
+model: model.yaml
+source: source.xml
+records:
+  - source_id: '2'
+    kind: vertex
+    label: null
+    primary_bucket: visual
+    target_ids: [az-band-b]
+  - source_id: '3'
+    kind: vertex
+    label: null
+    primary_bucket: visual
+    target_ids: [az-band-a]
+  - source_id: '4'
+    kind: vertex
+    label: 'Auto Scaling'
+    primary_bucket: component
+    target_ids: [web-asg]
+  - source_id: '5'
+    kind: vertex
+    label: 'Auto Scaling'
+    primary_bucket: component
+    target_ids: [app-asg]
+  - source_id: '7'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [app-instance-1-rds-master]
+  - source_id: '8'
+    kind: vertex
+    label: M4
+    primary_bucket: component
+    target_ids: [app-instance-1]
+  - source_id: '9'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [app-instance-2-rds-master]
+  - source_id: '10'
+    kind: vertex
+    label: M4
+    primary_bucket: component
+    target_ids: [app-instance-2]
+  - source_id: '11'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [app-instance-3-rds-master]
+  - source_id: '12'
+    kind: vertex
+    label: M4
+    primary_bucket: component
+    target_ids: [app-instance-3]
+  - source_id: '13'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [app-instance-4-rds-master]
+  - source_id: '14'
+    kind: vertex
+    label: M4
+    primary_bucket: component
+    target_ids: [app-instance-4]
+  - source_id: '15'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [app-elb-app-instance-4]
+  - source_id: '16'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [app-elb-app-instance-3]
+  - source_id: '17'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [app-elb-app-instance-2]
+  - source_id: '18'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [app-elb-app-instance-1]
+  - source_id: '19'
+    kind: vertex
+    label: 'Elastic Load Balancing'
+    primary_bucket: component
+    target_ids: [app-elb]
+  - source_id: '20'
+    kind: vertex
+    label: 'Amazon S3'
+    primary_bucket: component
+    target_ids: [s3]
+  - source_id: '21'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [web-instance-1-app-elb]
+  - source_id: '22'
+    kind: vertex
+    label: M3
+    primary_bucket: component
+    target_ids: [web-instance-1]
+  - source_id: '23'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [web-instance-2-app-elb]
+  - source_id: '24'
+    kind: vertex
+    label: M3
+    primary_bucket: component
+    target_ids: [web-instance-2]
+  - source_id: '25'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [web-instance-3-app-elb]
+  - source_id: '26'
+    kind: vertex
+    label: M3
+    primary_bucket: component
+    target_ids: [web-instance-3]
+  - source_id: '27'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [web-instance-4-app-elb]
+  - source_id: '28'
+    kind: vertex
+    label: M3
+    primary_bucket: component
+    target_ids: [web-instance-4]
+  - source_id: '29'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [web-elb-web-instance-1]
+  - source_id: '30'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [web-elb-web-instance-2]
+  - source_id: '31'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [web-elb-web-instance-3]
+  - source_id: '32'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [web-elb-web-instance-4]
+  - source_id: '33'
+    kind: vertex
+    label: 'Elastic Load Balancing'
+    primary_bucket: component
+    target_ids: [web-elb]
+  - source_id: '34'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [user-cdn, user-web-elb]
+    reason: "Shared first hop of the source's user->padlock->{cdn,web-elb} pass-through; the padlock node itself is dropped (see source_id 40) and this segment's meaning is split across both relationships it feeds."
+  - source_id: '35'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [user-route53]
+  - source_id: '36'
+    kind: vertex
+    label: null
+    primary_bucket: component
+    target_ids: [user]
+  - source_id: '37'
+    kind: vertex
+    label: 'Amazon Route 53'
+    primary_bucket: component
+    target_ids: [route53]
+  - source_id: '38'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [user-cdn]
+  - source_id: '39'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [user-web-elb]
+  - source_id: '40'
+    kind: vertex
+    label: null
+    primary_bucket: token
+    target_ids: [security:security.encryption.in-transit, user-cdn, user-web-elb]
+    reason: 'SSL padlock pass-through node; its meaning survives as security:security.encryption.in-transit on user-cdn/user-web-elb (model.yaml) and as the security.ssl-padlock icon attachment on those same two relationships (view.yaml relationships.user-cdn/user-web-elb) -- not a model component itself.'
+  - source_id: '41'
+    kind: vertex
+    label: A
+    primary_bucket: drop
+    target_ids: []
+    reason: "Pure-text 'A' annotation restating the Availability Zone A band's own identity; the AZ band's label (view.yaml visualElements[az-band-a].label) already carries this meaning."
+  - source_id: '42'
+    kind: vertex
+    label: 'Availability Zone'
+    primary_bucket: visual
+    target_ids: [az-band-a]
+  - source_id: '43'
+    kind: vertex
+    label: 'Availability Zone'
+    primary_bucket: visual
+    target_ids: [az-band-b]
+  - source_id: '44'
+    kind: vertex
+    label: EC2
+    primary_bucket: drop
+    target_ids: []
+    reason: "Pure-text 'EC2' annotation restating the compute-instance components' own AWS resource identity; carried by each instance's infra:component.compute-instance type and aws.ec2-instance icon instead."
+  - source_id: '46'
+    kind: vertex
+    label: AZ
+    primary_bucket: drop
+    target_ids: []
+    reason: "Pure-text 'AZ' annotation restating the Availability Zone bands' own identity; the AZ band labels (view.yaml visualElements[].label) already carry this meaning."
+  - source_id: '47'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [cdn-static-assets]
+  - source_id: '48'
+    kind: vertex
+    label: 'CloudFront CDN'
+    primary_bucket: component
+    target_ids: [cdn]
+  - source_id: '49'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [rds-master-rds-slave]
+  - source_id: '50'
+    kind: vertex
+    label: 'Cross-AZ Replication'
+    primary_bucket: relationship
+    target_ids: [rds-master-rds-slave]
+  - source_id: '51'
+    kind: vertex
+    label: 'RDS Master'
+    primary_bucket: component
+    target_ids: [rds-master]
+  - source_id: '52'
+    kind: vertex
+    label: 'RDS Slave'
+    primary_bucket: component
+    target_ids: [rds-slave]
+  - source_id: '53'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [static-assets-s3]
+  - source_id: '54'
+    kind: vertex
+    label: 'Static Resources'
+    primary_bucket: component
+    target_ids: [static-assets]

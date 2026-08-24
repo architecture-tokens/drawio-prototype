@@ -1,0 +1,1 @@
+Wrote examples/showcase/5-event-pipeline/out.drawio.

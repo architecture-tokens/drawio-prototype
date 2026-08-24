@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1806 528" font-family="'Segoe UI', Helvetica, Arial, sans-serif">
+<!--
+Semantic palette (diagram-rules.md C1). Every colored element below draws from
+this palette; arrows are colored by the domain they lead INTO (C2).
+
+  ACTOR      border #6B3FA0  bg #F3E8FC  text #3E1A63
+             External test actor, outside the Kubernetes cluster.
+  WORKLOAD   border #1D4ED8  bg #EAF1FE  text #1E3A8A
+             A Kubernetes ReplicationController (k8s:workload.replication-controller), a
+             pod-managing compute workload.
+  NETWORK    border #0F766E  bg #E6FBF8  text #0B4F49
+             A Kubernetes Service (k8s:network.service), a routing object in front of a workload.
+  STRUCTURE (neutral, C3, carries no domain meaning, two tints for two nesting levels)
+    platform   border #C7CDD6  bg #F5F6F8  text #6B7280
+               Outer platform boundary (Google Cloud Platform).
+    namespace  border #BFDCEF  bg #EAF3FB  text #5B7186
+               Kubernetes namespace boundary (k8s:topology.namespace), nested one level inside platform.
+  CHROME     bg #2B3440  text #FFFFFF
+             Title bar: UI chrome, not diagram data (C3 fallback, no semantic applies).
+  SUBTEXT    text #7C8AA5 (neutral, C3, no border/bg)
+             Secondary caption under each workload title ("Kubernetes Engine"), muted so it
+             reads as annotation rather than the WORKLOAD-blue title above it.
+
+Arrow color = destination-node semantic (C2): an arrow entering a WORKLOAD node is
+WORKLOAD-blue; an arrow entering a NETWORK node is NETWORK-teal. This produces the
+alternating blue/teal chain that mirrors the real compute-then-routing hops.
+-->
+<rect x="0" y="0" width="1806" height="528" fill="#FFFFFF"/>
+<defs>
+  <marker id="arrow-workload" markerWidth="13" markerHeight="13" refX="10" refY="5"
+          viewBox="0 0 10 10" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#1D4ED8"/>
+  </marker>
+  <marker id="arrow-network" markerWidth="13" markerHeight="13" refX="10" refY="5"
+          viewBox="0 0 10 10" orient="auto-start-reverse" markerUnits="userSpaceOnUse">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#0F766E"/>
+  </marker>
+</defs>
+<rect x="178" y="104" width="1604" height="400" rx="10" fill="#F5F6F8" stroke="#C7CDD6" stroke-width="1.5"/>
+<text x="200" y="138" font-size="17" font-weight="700" fill="#6B7280">Google Cloud Platform</text>
+<rect x="206" y="160" width="788" height="316" rx="8" fill="#EAF3FB" stroke="#BFDCEF" stroke-width="1.5"/>
+<text x="224" y="187" font-size="14" font-weight="600" fill="#5B7186">Selenium Namespace</text>
+<rect x="1058" y="160" width="696" height="316" rx="8" fill="#EAF3FB" stroke="#BFDCEF" stroke-width="1.5"/>
+<text x="1076" y="187" font-size="14" font-weight="600" fill="#5B7186">Web App Namespace</text>
+<rect x="178" y="24" width="1604" height="56" rx="6" fill="#2B3440"/>
+<text x="202" y="59" font-size="19" font-weight="600" fill="#FFFFFF">Architecture: Dev Test &gt; UI Testing with Kubernetes</text>
+<polyline points="134,324.0 234,324.0" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
+<polyline points="466,324.0 530,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-network)"/>
+<polyline points="670,324.0 702,324.0" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+<path d="M 702,324 V 257 Q 702,252 707,252 H 734" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
+<path d="M 702,324 V 391 Q 702,396 707,396 H 734" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
+<path d="M 966,252 H 1021 Q 1026,252 1026,257 V 324" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+<path d="M 966,396 H 1021 Q 1026,396 1026,391 V 324" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+<polyline points="1026,324.0 1086,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-network)"/>
+<path d="M 1226,324 H 1253 Q 1258,324 1258,319 V 257 Q 1258,252 1263,252 H 1290" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
+<path d="M 1522,252 H 1549 Q 1554,252 1554,257 V 324" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+<path d="M 1522,396 H 1549 Q 1554,396 1554,391 V 324" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+<polyline points="1554,324.0 1586,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-network)"/>
+<rect x="234" y="272" width="232" height="104" rx="8" fill="#EAF1FE" stroke="#1D4ED8" stroke-width="2"/>
+<rect x="252" y="307.0" width="34" height="34" rx="7" fill="#1D4ED8"/>
+<polygon points="269.0,315.0 276.8,319.5 276.8,328.5 269.0,333.0 261.2,328.5 261.2,319.5 269.0,315.0" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+<text x="298" y="310.0" font-size="12.5" font-weight="600" fill="#1E3A8A">Selenium Hub</text>
+<text x="298" y="328.0" font-size="12.5" font-weight="600" fill="#1E3A8A">(Replication Controller)</text>
+<text x="298" y="346.0" font-size="11" fill="#7C8AA5">Kubernetes Engine</text>
+<rect x="734" y="200" width="232" height="104" rx="8" fill="#EAF1FE" stroke="#1D4ED8" stroke-width="2"/>
+<rect x="752" y="235.0" width="34" height="34" rx="7" fill="#1D4ED8"/>
+<polygon points="769.0,243.0 776.8,247.5 776.8,256.5 769.0,261.0 761.2,256.5 761.2,247.5 769.0,243.0" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+<text x="798" y="238.0" font-size="12.5" font-weight="600" fill="#1E3A8A">Firefox Nodes</text>
+<text x="798" y="256.0" font-size="12.5" font-weight="600" fill="#1E3A8A">(Attribute Name)</text>
+<text x="798" y="274.0" font-size="11" fill="#7C8AA5">Kubernetes Engine</text>
+<rect x="734" y="344" width="232" height="104" rx="8" fill="#EAF1FE" stroke="#1D4ED8" stroke-width="2"/>
+<rect x="752" y="379.0" width="34" height="34" rx="7" fill="#1D4ED8"/>
+<polygon points="769.0,387.0 776.8,391.5 776.8,400.5 769.0,405.0 761.2,400.5 761.2,391.5 769.0,387.0" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+<text x="798" y="382.0" font-size="12.5" font-weight="600" fill="#1E3A8A">Firefox Nodes</text>
+<text x="798" y="400.0" font-size="12.5" font-weight="600" fill="#1E3A8A">(Replication Controller)</text>
+<text x="798" y="418.0" font-size="11" fill="#7C8AA5">Kubernetes Engine</text>
+<rect x="1290" y="200" width="232" height="104" rx="8" fill="#EAF1FE" stroke="#1D4ED8" stroke-width="2"/>
+<rect x="1308" y="235.0" width="34" height="34" rx="7" fill="#1D4ED8"/>
+<polygon points="1325.0,243.0 1332.8,247.5 1332.8,256.5 1325.0,261.0 1317.2,256.5 1317.2,247.5 1325.0,243.0" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+<text x="1354" y="238.0" font-size="12.5" font-weight="600" fill="#1E3A8A">UI Servers</text>
+<text x="1354" y="256.0" font-size="12.5" font-weight="600" fill="#1E3A8A">(Replication Controller)</text>
+<text x="1354" y="274.0" font-size="11" fill="#7C8AA5">Kubernetes Engine</text>
+<rect x="1290" y="344" width="232" height="104" rx="8" fill="#EAF1FE" stroke="#1D4ED8" stroke-width="2"/>
+<rect x="1308" y="379.0" width="34" height="34" rx="7" fill="#1D4ED8"/>
+<polygon points="1325.0,387.0 1332.8,391.5 1332.8,400.5 1325.0,405.0 1317.2,400.5 1317.2,391.5 1325.0,387.0" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round"/>
+<text x="1354" y="382.0" font-size="12.5" font-weight="600" fill="#1E3A8A">Backend Servers</text>
+<text x="1354" y="400.0" font-size="12.5" font-weight="600" fill="#1E3A8A">(Replication Controller)</text>
+<text x="1354" y="418.0" font-size="11" fill="#7C8AA5">Kubernetes Engine</text>
+<rect x="530" y="296" width="140" height="56" rx="8" fill="#E6FBF8" stroke="#0F766E" stroke-width="2"/>
+<text x="600.0" y="329.0" font-size="13.5" font-weight="600" text-anchor="middle" fill="#0B4F49">Hub Service</text>
+<rect x="1086" y="296" width="140" height="56" rx="8" fill="#E6FBF8" stroke="#0F766E" stroke-width="2"/>
+<text x="1156.0" y="329.0" font-size="13.5" font-weight="600" text-anchor="middle" fill="#0B4F49">Frontend Service</text>
+<rect x="1586" y="296" width="140" height="56" rx="8" fill="#E6FBF8" stroke="#0F766E" stroke-width="2"/>
+<text x="1656.0" y="329.0" font-size="13.5" font-weight="600" text-anchor="middle" fill="#0B4F49">Backend Service</text>
+<rect x="24" y="289" width="110" height="70" rx="8" fill="#F3E8FC" stroke="#6B3FA0" stroke-width="2"/>
+<rect x="66.0" y="301" width="26" height="26" rx="6" fill="#6B3FA0"/>
+<circle cx="79.0" cy="309" r="4.2" fill="#FFFFFF"/>
+<path d="M 70.0 323 Q 79.0 312 88.0 323" fill="none" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round"/>
+<text x="79.0" y="345" font-size="13.5" font-weight="600" text-anchor="middle" fill="#3E1A63">Tester</text>
+</svg>

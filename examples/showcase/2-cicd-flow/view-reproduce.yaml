@@ -1,0 +1,79 @@
+# View Layer Contract (prototype v0) -- REPRODUCE MODE.
+#
+# mode: reproduce, per README.md "Conversion modes". Reason: source.mmd's
+# 3-lane layout already conveys deliberate structure -- one column per
+# pipeline stage, each stage's entry job fanning out to two parallel jobs
+# on a shared grid, every applicable Diagram rule this genre exercises
+# (B1/B2/B3/B9/B10 grid+spacing, rule 11 converging trunks) already holds
+# in the mermaid render extracted below, and its one real structural
+# feature -- three subgraph containers nested left-to-right -- is
+# deliberate grouping, not a defect. Per the conversion-modes contract, a
+# clean source gets zero visual edits beyond the two things that ARE
+# normative in both modes: geometry here is EXTRACTED (see
+# layout-reproduce.json, node positions/sizes parsed from the
+# mermaid.ink-rendered SVG's own <rect>/transform values, no invention),
+# and every connector is orthogonal + rule-3a uniformly rounded even
+# though source.mmd's own mermaid render draws smooth diagonal bezier
+# curves for every edge -- rule 3/3a is explicitly NOT part of what
+# reproduce mode preserves (README.md "Conversion modes": "What reproduce
+# does NOT copy is connector treatment... a bezier-routed Mermaid source
+# reproduces with its positions, shapes, and palette, but with orthogonal
+# rounded connectors"). See RULES-CHECK.md "Reproduce mode" for the two
+# documented, disclosed exemptions this file's rendering takes (B1's
+# per-family box sizing, C2's arrow-color-by-destination), mirroring
+# 1-cloud-web-app's own reproduce-mode exemptions for the same reasons.
+mode: reproduce
+reason: >
+  Source already conveys deliberate structure (a clean 3-lane pipeline grid
+  with consistent fan-out/merge idioms); target is a faithful redraw with
+  orthogonal rule-3a connectors, not a rules-authored re-layout. See
+  RULES-CHECK.md "Reproduce mode" for the full rationale.
+kind: view
+id: cicd-flow
+model: model.yaml
+
+# Direction computed the same way README.md's contract specifies: the
+# dominant axis-aligned projection of edge displacement vectors across ALL
+# 19 model.yaml relationships (triggers AND belongs.to), using
+# layout-reproduce.json's extracted node centers -- 13/19 (68%) have a net
+# positive-x displacement, clearing the 60% threshold (rules-lint
+# DIRECTION_GEOMETRY_CONFLICT; see RULES-CHECK.md "Verification" for the
+# exact count). This also matches source.mmd's own declared `graph LR`
+# direction and final.svg's restyle view -- both views agree, same as
+# 1-cloud-web-app's precedent.
+flow:
+  direction: right
+
+# No icon attachments: source.mmd's nodes are bare-text boxes (mermaid's
+# default flowchart node shape, no icon/emoji syntax anywhere in the
+# source), so there is nothing to attach here -- omitted entirely rather
+# than declared empty, same as final.svg's restyle view has no icons
+# either. `components:`/`relationships:` keys are left out (VIEW_REF_
+# UNRESOLVED treats both as optional, `view.components ?? {}`).
+
+# Visual-layer elements: the 3 stage subgraph containers. Each stage is
+# ALSO a first-class model.yaml component (build_stage/test_stage/
+# deploy_stage, typed cicd:pipeline.stage -- census.yaml already commits
+# them to the `component` bucket), so -- exactly like 1-cloud-web-app's
+# web-asg-band/app-asg-band precedent -- these 3 entries exist only so the
+# SAME rendered rect can ALSO carry data-view-element (dual-tagged in
+# final-reproduce.svg), satisfying "visualElements for subgraph/boundary/
+# namespace containers (members lists)" per the task brief without
+# re-bucketing an already-committed census record. The `members` list is
+# what source.mmd expresses purely through subgraph NESTING and no visual
+# arrow at all (the 9 core:relationship.belongs.to edges in model.yaml
+# have no source edge counterpart -- see census.yaml's header comment);
+# this is the declared, machine-checkable trace for that containment.
+visualElements:
+  - id: build_stage_container
+    kind: pipeline-stage-container
+    label: build stage
+    members: [build, build_a, build_b]
+  - id: test_stage_container
+    kind: pipeline-stage-container
+    label: test stage
+    members: [test, test_a, test_b]
+  - id: deploy_stage_container
+    kind: pipeline-stage-container
+    label: deploy stage
+    members: [deploy, deploy_a, deploy_b]

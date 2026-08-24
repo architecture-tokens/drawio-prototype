@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-150 -20 899 809" width="899" height="809" font-family="Arial, Helvetica, sans-serif">
+<!--
+  REPRODUCE MODE (view-reproduce.yaml mode: reproduce). This file is a
+  faithful redraw of source.xml / source.png, not a rules-authored
+  restyle: geometry is extracted (see layout-reproduce.json), the
+  source's own two-tier x two-AZ crossing grouping is kept as crossing
+  rectangles (not flattened into single-parent containers the way
+  final.svg does), and AWS icon glyphs are the OFFICIAL AWS Architecture
+  Icons artwork (asset package 07302021, mirrored via the aws-svg-icons
+  npm package — see README.md "Icon provenance" for the exact channel,
+  version, and license terms for every icon below).
+
+  Semantic palette (C1) — source's own hex values, one linearGradient
+  per domain (source's gradientDirection="north" = pure vertical, fill
+  color at the bottom rising to gradient color at the top). Label text
+  next to each icon-square node reuses that same domain's fontColor from
+  source.xml (also listed here):
+  domain    | meaning                            | fill(bottom) | gradient(top) | label fontColor | icon source
+  routing   | load balancers                     | #D05C17      | #F78E04       | #7A5010 | official (Arch_Elastic-Load-Balancing_64 white glyph, unmodified)
+  ingress   | DNS + CDN edge entry                | #5A30B5      | #945DF2       | #452F82 | official (Arch_Amazon-Route-53_64 / Arch_Amazon-CloudFront_64 white glyph, unmodified)
+  storage   | object storage                      | #277116      | #60A337       | #0F5C2E | official (Arch_Amazon-Simple-Storage-Service_64 white glyph, unmodified)
+  database  | RDS master/slave                    | #3334B9      | #4D72F3       | #15359E | official (Arch_Amazon-RDS_64 white glyph, unmodified)
+  structure | "general resource" placeholder       | #1E262E      | #505863       | #232F3E | no official 2021 equivalent for AWS4's retired "general" cube glyph — hand-drawn fallback (README "Icon provenance")
+  compute   | EC2 instances (bare outline chip)    | #F58534 solid, no gradient (matches source) | — | n/a (baked in the glyph itself) | official (Res_Amazon-EC2_Instance_48_Light), recolored from shipped #D45B07 to source's #F58534 — disclosed deviation (README)
+  neutral   | user actor / SSL padlock (bare glyphs, no background box) | — | — | n/a | official (Res_User_48_Light #242F3E, Res_SSL-padlock_48_Light #232F3D) — used as shipped, near-identical to source's own #232F3E
+  structure (view) | Availability-Zone / Autoscaling-Group bands | stroke #5A6C86 (AZ) / #D86613 (ASG), both matching source exactly | — | n/a | n/a (dashed rectangles, not icons)
+  connectors | every connector + arrowhead (including the dashed RDS replication line) | — | — | stroke/marker #505863 (source's single, uniform edge color — grepped and confirmed, not a per-domain C2 palette) | n/a
+
+  Crossing groups: AZ bands (view-only visualElements az-band-a/b) and
+  ASG bands (model components web-asg/app-asg, also tagged
+  data-view-element as web-asg-band/app-asg-band) are drawn as two
+  independent, CROSSING sets of rectangles — exactly as source.xml
+  draws them. This is the one structural difference from final.svg's
+  restyle, which flattens the crossing into two single-parent containers.
+
+  Genuine source defect fixed here (README "Source defects fixed"): the
+  "Availability Zone A/B" band labels were authored with
+  fontColor="#ffffff" on a transparent background in source.xml —
+  invisible in source.png. Rendered here in a readable color; position
+  and rotation are unchanged. The three OTHER white-on-white text
+  vertices (source_id 41 "A", 44 "EC2", 46 "AZ") stay dropped per
+  census.yaml's existing, unmodified drop records — they were already
+  invisible in source.png, so dropping them is what "faithful" requires.
+-->
+
+<defs>
+  <linearGradient id="grad-routing" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#D05C17"/><stop offset="100%" stop-color="#F78E04"/></linearGradient>
+  <linearGradient id="grad-ingress" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#5A30B5"/><stop offset="100%" stop-color="#945DF2"/></linearGradient>
+  <linearGradient id="grad-storage" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#277116"/><stop offset="100%" stop-color="#60A337"/></linearGradient>
+  <linearGradient id="grad-database" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#3334B9"/><stop offset="100%" stop-color="#4D72F3"/></linearGradient>
+  <linearGradient id="grad-structure" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#1E262E"/><stop offset="100%" stop-color="#505863"/></linearGradient>
+  <marker id="arrow-neutral" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#505863"/></marker>
+  <!-- Official AWS Architecture Icon artwork, asset package 07302021 (README.md "Icon provenance"). -->
+  <symbol id="icon-aws-elb" fill-rule="evenodd" viewBox="0 0 80 80"><path d="M30,53 C22.832,53 17,47.168 17,40 C17,32.832 22.832,27 30,27 C37.168,27 43,32.832 43,40 C43,47.168 37.168,53 30,53 M60,59 C60,61.206 58.206,63 56,63 C53.794,63 52,61.206 52,59 C52,56.794 53.794,55 56,55 C58.206,55 60,56.794 60,59 M56,17 C58.206,17 60,18.794 60,21 C60,23.206 58.206,25 56,25 C53.794,25 52,23.206 52,21 C52,18.794 53.794,17 56,17 M59,36 C61.206,36 63,37.794 63,40 C63,42.206 61.206,44 59,44 C56.794,44 55,42.206 55,40 C55,37.794 56.794,36 59,36 M44.949,41 L53.09,41 C53.568,43.833 56.033,46 59,46 C62.309,46 65,43.309 65,40 C65,36.691 62.309,34 59,34 C56.033,34 53.568,36.167 53.09,39 L44.949,39 C44.823,37.099 44.344,35.297 43.572,33.654 L52.446,25.823 C53.442,26.559 54.669,27 56,27 C59.309,27 62,24.309 62,21 C62,17.691 59.309,15 56,15 C52.691,15 50,17.691 50,21 C50,22.256 50.389,23.421 51.051,24.386 L42.581,31.859 C39.904,27.738 35.271,25 30,25 C21.729,25 15,31.729 15,40 C15,48.271 21.729,55 30,55 C35.271,55 39.904,52.262 42.581,48.141 L51.051,55.614 C50.389,56.579 50,57.744 50,59 C50,62.309 52.691,65 56,65 C59.309,65 62,62.309 62,59 C62,55.691 59.309,53 56,53 C54.669,53 53.442,53.441 52.446,54.177 L43.572,46.346 C44.344,44.703 44.823,42.901 44.949,41" fill="#FFFFFF"/></symbol>
+  <symbol id="icon-aws-cloudfront" fill-rule="evenodd" viewBox="0 0 80 80"><path d="M55.122,52.123 C55.122,50.469 53.776,49.123 52.122,49.123 C50.468,49.123 49.122,50.469 49.122,52.123 C49.122,53.777 50.468,55.123 52.122,55.123 C53.776,55.123 55.122,53.777 55.122,52.123 L55.122,52.123 Z M57.122,52.123 C57.122,54.88 54.879,57.123 52.122,57.123 C49.365,57.123 47.122,54.88 47.122,52.123 C47.122,49.366 49.365,47.123 52.122,47.123 C54.879,47.123 57.122,49.366 57.122,52.123 L57.122,52.123 Z M30.392,37.692 C30.392,36.038 29.046,34.692 27.392,34.692 C25.737,34.692 24.392,36.038 24.392,37.692 C24.392,39.346 25.737,40.692 27.392,40.692 C29.046,40.692 30.392,39.346 30.392,37.692 L30.392,37.692 Z M32.392,37.692 C32.392,40.449 30.148,42.692 27.392,42.692 C24.635,42.692 22.392,40.449 22.392,37.692 C22.392,34.935 24.635,32.692 27.392,32.692 C30.148,32.692 32.392,34.935 32.392,37.692 L32.392,37.692 Z M39.73,22.007 C39.73,23.661 41.076,25.007 42.73,25.007 C44.385,25.007 45.73,23.661 45.73,22.007 C45.73,20.352 44.385,19.007 42.73,19.007 C41.076,19.007 39.73,20.352 39.73,22.007 L39.73,22.007 Z M37.73,22.007 C37.73,19.25 39.974,17.007 42.73,17.007 C45.487,17.007 47.73,19.25 47.73,22.007 C47.73,24.764 45.487,27.007 42.73,27.007 C39.974,27.007 37.73,24.764 37.73,22.007 L37.73,22.007 Z M66,40 C66,30.727 61.028,22.148 53.012,17.509 C51.575,17.799 50.185,18.196 48.451,18.823 L47.771,16.942 C48.676,16.616 49.486,16.352 50.266,16.126 C47.046,14.737 43.548,14 40,14 C38.311,14 36.649,14.175 35.025,14.492 C36.201,15.18 37.244,15.866 38.257,16.634 L37.048,18.227 C35.62,17.145 34.14,16.228 32.197,15.21 C22.378,18.298 15.306,26.958 14.183,37.128 C16.242,36.711 18.219,36.484 20.414,36.43 L20.463,38.429 C18.163,38.486 16.187,38.73 14.027,39.205 C14.018,39.47 14,39.738 14,40 C14,48.658 18.283,56.636 25.327,61.447 C24.074,57.716 23.45,54.19 23.45,50.746 C23.45,48.782 23.788,47.169 24.145,45.462 C24.228,45.067 24.312,44.665 24.394,44.248 L26.357,44.635 C26.273,45.059 26.187,45.47 26.103,45.873 C25.753,47.545 25.45,48.989 25.45,50.746 C25.45,54.654 26.308,58.695 28.054,63.083 C31.773,65.014 35.789,66 40,66 C42.756,66 45.446,65.56 48.012,64.714 C49.019,62.727 49.766,60.852 50.39,58.699 L52.311,59.256 C51.855,60.826 51.332,62.253 50.709,63.677 C52.323,62.951 53.85,62.053 55.283,61.005 C54.938,60.159 54.568,59.318 54.159,58.499 L55.948,57.604 C56.296,58.3 56.615,59.012 56.92,59.728 C62.705,54.775 66,47.66 66,40 L66,40 Z M68,40 C68,48.727 64.034,56.799 57.121,62.149 C55.409,63.479 53.552,64.583 51.589,65.472 C50.756,65.85 49.908,66.2 49.036,66.494 C46.156,67.493 43.113,68 40,68 C35.4,68 30.832,66.854 26.788,64.686 C17.667,59.806 12,50.347 12,40 C12,39.314 12.018,38.792 12.059,38.309 C12.74,26.625 20.756,16.512 32.001,13.166 C34.562,12.393 37.255,12 40,12 C44.808,12 49.539,13.238 53.684,15.579 C62.513,20.525 68,29.884 68,40 L68,40 Z M37.314,25.463 L36,23.956 C33.758,25.912 32.014,27.989 29.977,31.126 L31.655,32.215 C33.583,29.244 35.223,27.288 37.314,25.463 L37.314,25.463 Z M34.275,38.427 L33.625,40.318 C38.218,41.895 42.225,44.411 46.234,48.236 L47.615,46.789 C43.389,42.758 39.15,40.101 34.275,38.427 L34.275,38.427 Z M47.646,26.668 C51.398,32.39 53.511,38.671 53.925,45.338 L51.929,45.462 C51.536,39.146 49.533,33.192 45.975,27.765 L47.646,26.668 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="icon-aws-route53" fill-rule="evenodd" viewBox="0 0 80 80"><path d="M48.692,40.6795109 C49.431,41.3627732 49.801,42.2781246 49.801,43.4275659 C49.801,44.678046 49.351,45.6764293 48.452,46.4227159 C47.552,47.1700028 46.343,47.543146 44.826,47.543146 C43.627,47.543146 42.44,47.2870477 41.266,46.7768518 L41.266,45.2452638 C42.657,45.7054405 43.843,45.9345284 44.826,45.9345284 C45.796,45.9345284 46.542,45.7174451 47.065,45.2842788 C47.588,44.8501121 47.849,44.2308744 47.849,43.4275659 C47.849,41.8829729 46.874,41.1106764 44.921,41.1106764 C44.309,41.1106764 43.703,41.1426887 43.103,41.2057129 L43.103,39.9432282 L47.123,35.5585448 L41.458,35.5585448 L41.458,33.9889422 L49.247,33.9889422 L49.247,35.5015229 L45.304,39.6751253 C45.369,39.6621203 45.431,39.656118 45.496,39.656118 L45.687,39.656118 C46.951,39.656118 47.952,39.9972489 48.692,40.6795109 M37.574,40.3453826 C38.351,41.0726618 38.74,42.0740463 38.74,43.349536 C38.74,44.6010165 38.288,45.6124048 37.381,46.3847013 C36.475,47.1569978 35.283,47.543146 33.803,47.543146 C32.503,47.543146 31.284,47.2870477 30.148,46.7768518 L30.148,45.2452638 C31.564,45.7054405 32.776,45.9345284 33.784,45.9345284 C34.754,45.9345284 35.497,45.7154443 36.013,45.2742749 C36.53,44.834106 36.789,44.1998624 36.789,43.3695437 C36.789,42.4631957 36.546,41.8059434 36.061,41.3977867 C35.576,40.9896299 34.785,40.7845512 33.688,40.7845512 C32.897,40.7845512 31.909,40.8495762 30.722,40.976625 L30.722,39.7131399 L31.086,33.9889422 L38.071,33.9889422 L38.071,35.5585448 L32.693,35.5585448 L32.444,39.4450369 C33.146,39.3179882 33.777,39.2539636 34.338,39.2539636 C35.716,39.2539636 36.795,39.617103 37.574,40.3453826 M51.957,54.37777 C47.103,55.250105 42.852,57.2268639 40,58.8374822 C37.147,57.2268639 32.896,55.250105 28.043,54.37777 C26.677,54.1326759 19.869,52.7111302 19.869,48.7756192 C19.869,46.951919 20.522,45.7424547 21.776,43.5826255 C23.274,40.9996338 25.138,37.7843994 25.138,33.1556222 C25.138,29.8473521 24.271,26.6751342 22.559,23.7149977 C22.76,23.4669025 22.965,23.2158061 23.171,22.9627089 C25.707,24.2301955 28.347,24.8724421 31.031,24.8724421 C34.311,24.8724421 37.325,24.0111114 40,22.3114589 C42.674,24.0111114 45.688,24.8724421 48.968,24.8724421 C51.652,24.8724421 54.293,24.2301955 56.829,22.9627089 C57.034,23.2158061 57.239,23.4669025 57.44,23.7149977 C55.728,26.6751342 54.861,29.8473521 54.861,33.1556222 C54.861,37.7843994 56.725,40.9996338 58.226,43.586627 C59.477,45.7424547 60.13,46.951919 60.13,48.7756192 C60.13,52.7111302 53.322,54.1326759 51.957,54.37777 M56.861,33.1556222 C56.861,29.9974097 57.752,26.9702475 59.507,24.1581679 C59.735,23.7950284 59.706,23.3278491 59.434,22.9957216 C58.926,22.3734827 58.393,21.7182311 57.867,21.0669811 C57.562,20.6898363 57.032,20.5857963 56.606,20.8198862 C54.143,22.1814089 51.574,22.8716739 48.968,22.8716739 C45.824,22.8716739 43.077,22.0263494 40.569,20.2886823 C40.227,20.0515912 39.772,20.0515912 39.43,20.2886823 C36.922,22.0263494 34.175,22.8716739 31.031,22.8716739 C28.425,22.8716739 25.856,22.1814089 23.393,20.8198862 C22.968,20.5857963 22.437,20.6898363 22.132,21.0669811 C21.606,21.7182311 21.073,22.3734827 20.565,22.9957216 C20.294,23.3278491 20.264,23.7950284 20.492,24.1581679 C22.248,26.9702475 23.138,29.9974097 23.138,33.1556222 C23.138,37.2461927 21.423,40.2023277 20.045,42.581241 C18.695,44.9041328 17.869,46.4467251 17.869,48.7756192 C17.869,54.1646882 25.385,55.9343677 27.689,56.3475263 C32.549,57.2208616 36.793,59.2806524 39.497,60.8542565 C39.652,60.9452915 39.826,60.9903088 40,60.9903088 C40.173,60.9903088 40.347,60.9452915 40.503,60.8542565 C43.207,59.2806524 47.45,57.2208616 52.31,56.3475263 C54.614,55.9343677 62.13,54.1646882 62.13,48.7756192 C62.13,46.4467251 61.304,44.9041328 59.954,42.5782399 C58.576,40.2023277 56.861,37.2461927 56.861,33.1556222 M52.994,60.1569888 C46.863,61.2594121 41.723,64.556678 40,65.7641416 C38.276,64.556678 33.136,61.2594121 27.005,60.1569888 C14.937,57.9891566 14,50.8974338 14,48.7756192 C14,45.2852792 15.371,42.9233724 16.697,40.6374948 C17.961,38.4596586 19.268,36.2067937 19.268,33.1556222 C19.268,28.3357718 16.485,24.9314648 15.112,23.5459328 C16.556,21.7892584 20.204,17.3415508 22.003,15.0236609 C24.729,17.5966487 27.898,19.0001876 31.031,19.0001876 C34.509,19.0001876 37.385,17.5846441 40,14.5644846 C42.614,17.5846441 45.49,19.0001876 48.968,19.0001876 C52.101,19.0001876 55.27,17.5966487 57.997,15.0236609 C59.796,17.3415508 63.443,21.7892584 64.887,23.5459328 C63.514,24.9314648 60.731,28.3357718 60.731,33.1556222 C60.731,36.2067937 62.039,38.4596586 63.302,40.6374948 C64.629,42.9233724 66,45.2852792 66,48.7756192 C66,50.8974338 65.062,57.9891566 52.994,60.1569888 M65.032,39.6341095 C63.797,37.5052922 62.731,35.6675867 62.731,33.1556222 C62.731,27.867592 66.847,24.4472789 66.887,24.4152666 C67.094,24.2472021 67.226,24.0031083 67.254,23.7370062 C67.28,23.470904 67.2,23.2058022 67.03,22.9997231 C66.963,22.9196924 60.408,14.9726413 58.906,12.9138509 C58.73,12.6727583 58.457,12.5227007 58.159,12.5046938 C57.86,12.4826853 57.572,12.601731 57.368,12.8198148 C54.848,15.5148495 51.866,16.9994194 48.968,16.9994194 C45.764,16.9994194 43.244,15.5718713 40.794,12.3706423 C40.415,11.8764526 39.585,11.8764526 39.206,12.3706423 C36.755,15.5718713 34.235,16.9994194 31.031,16.9994194 C28.133,16.9994194 25.151,15.5148495 22.631,12.8198148 C22.427,12.601731 22.137,12.4776834 21.84,12.5046938 C21.543,12.5227007 21.269,12.6727583 21.093,12.9138509 C19.591,14.9726413 13.036,22.9196924 12.969,22.9997231 C12.8,23.2058022 12.72,23.470904 12.747,23.7360058 C12.773,24.0011076 12.904,24.2452013 13.11,24.4132658 C13.152,24.4472789 17.268,27.867592 17.268,33.1556222 C17.268,35.6675867 16.202,37.5052922 14.967,39.6341095 C13.576,42.0310298 12,44.7470725 12,48.7756192 C12,55.487196 17.477,60.4781121 26.652,62.1267451 C33.559,63.3682217 39.334,67.7489036 39.391,67.7939209 C39.57,67.9309735 39.785,68 40,68 C40.214,68 40.429,67.9309735 40.609,67.7929205 C40.667,67.7489036 46.422,63.3712229 53.347,62.1267451 C62.522,60.4781121 68,55.487196 68,48.7756192 C68,44.7470725 66.423,42.0310298 65.032,39.6341095" fill="#FFFFFF"/></symbol>
+  <symbol id="icon-aws-s3" fill-rule="evenodd" viewBox="0 0 80 80"><path d="M52.8359,34.8926 L53.2199,32.1886 C56.7609,34.3096 56.8069,35.1856 56.8059132,35.2096 C56.7999,35.2146 56.1959,35.7186 52.8359,34.8926 L52.8359,34.8926 Z M50.8929,34.3526 C44.7729,32.5006 36.2499,28.5906 32.8009,26.9606 C32.8009,26.9466 32.8049,26.9336 32.8049,26.9196 C32.8049,25.5946 31.7269,24.5166 30.4009,24.5166 C29.0769,24.5166 27.9989,25.5946 27.9989,26.9196 C27.9989,28.2446 29.0769,29.3226 30.4009,29.3226 C30.9829,29.3226 31.5109,29.1056 31.9279,28.7606 C35.9859,30.6816 44.4429,34.5346 50.6079,36.3546 L48.1699,53.5606 C48.1629,53.6076 48.1599,53.6546 48.1599,53.7016 C48.1599,55.2166 41.4529,57.9996 30.4939,57.9996 C19.4189,57.9996 12.6409,55.2166 12.6409,53.7016 C12.6409,53.6556 12.6379,53.6106 12.6319,53.5656 L7.5379,16.3586 C11.9469,19.3936 21.4299,20.9996 30.4999,20.9996 C39.5559,20.9996 49.0229,19.3996 53.4409,16.3736 L50.8929,34.3526 Z M6.9999,12.4776 C7.0719,11.1616 14.6339,5.9996 30.4999,5.9996 C46.3639,5.9996 53.9269,11.1606 53.9999,12.4776 L53.9999,12.9266 C53.1299,15.8776 43.3299,18.9996 30.4999,18.9996 C17.6479,18.9996 7.8429,15.8676 6.9999,12.9126 L6.9999,12.4776 Z M55.9999,12.4996 C55.9999,9.0346 46.0659,3.9996 30.4999,3.9996 C14.9339,3.9996 4.9999,9.0346 4.9999,12.4996 L5.0939,13.2536 L10.6419,53.7776 C10.7749,58.3096 22.8609,59.9996 30.4939,59.9996 C39.9659,59.9996 50.0289,57.8216 50.1589,53.7806 L52.5549,36.8836 C53.8879,37.2026 54.9849,37.3656 55.8659,37.3656 C57.0489,37.3656 57.8489,37.0766 58.3339,36.4986 C58.7319,36.0246 58.8839,35.4506 58.7699,34.8396 C58.5109,33.4556 56.8679,31.9636 53.5219,30.0546 L55.8979,13.2926 L55.9999,12.4996 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="icon-aws-rds" fill-rule="evenodd" viewBox="0 0 80 80"><path d="M15.414,14 L24.707,23.293 L23.293,24.707 L14,15.414 L14,23 L12,23 L12,13 C12,12.448 12.447,12 13,12 L23,12 L23,14 L15.414,14 Z M68,13 L68,23 L66,23 L66,15.414 L56.707,24.707 L55.293,23.293 L64.586,14 L57,14 L57,12 L67,12 C67.553,12 68,12.448 68,13 L68,13 Z M66,57 L68,57 L68,67 C68,67.552 67.553,68 67,68 L57,68 L57,66 L64.586,66 L55.293,56.707 L56.707,55.293 L66,64.586 L66,57 Z M65.5,39.213 C65.5,35.894 61.668,32.615 55.25,30.442 L55.891,28.548 C63.268,31.045 67.5,34.932 67.5,39.213 C67.5,43.495 63.268,47.383 55.89,49.879 L55.249,47.984 C61.668,45.812 65.5,42.534 65.5,39.213 L65.5,39.213 Z M14.556,39.213 C14.556,42.393 18.143,45.585 24.152,47.753 L23.473,49.634 C16.535,47.131 12.556,43.333 12.556,39.213 C12.556,35.094 16.535,31.296 23.473,28.792 L24.152,30.673 C18.143,32.842 14.556,36.034 14.556,39.213 L14.556,39.213 Z M24.707,56.707 L15.414,66 L23,66 L23,68 L13,68 C12.447,68 12,67.552 12,67 L12,57 L14,57 L14,64.586 L23.293,55.293 L24.707,56.707 Z M40,31.286 C32.854,31.286 29,29.44 29,28.686 C29,27.931 32.854,26.086 40,26.086 C47.145,26.086 51,27.931 51,28.686 C51,29.44 47.145,31.286 40,31.286 L40,31.286 Z M40.029,39.031 C33.187,39.031 29,37.162 29,36.145 L29,31.284 C31.463,32.643 35.832,33.286 40,33.286 C44.168,33.286 48.537,32.643 51,31.284 L51,36.145 C51,37.163 46.835,39.031 40.029,39.031 L40.029,39.031 Z M40.029,46.667 C33.187,46.667 29,44.798 29,43.781 L29,38.862 C31.431,40.291 35.742,41.031 40.029,41.031 C44.292,41.031 48.578,40.292 51,38.867 L51,43.781 C51,44.799 46.835,46.667 40.029,46.667 L40.029,46.667 Z M40,53.518 C32.883,53.518 29,51.605 29,50.622 L29,46.498 C31.431,47.927 35.742,48.667 40.029,48.667 C44.292,48.667 48.578,47.929 51,46.503 L51,50.622 C51,51.605 47.117,53.518 40,53.518 L40,53.518 Z M40,24.086 C33.739,24.086 27,25.525 27,28.686 L27,50.622 C27,53.836 33.54,55.518 40,55.518 C46.46,55.518 53,53.836 53,50.622 L53,28.686 C53,25.525 46.261,24.086 40,24.086 L40,24.086 Z" fill="#FFFFFF"/></symbol>
+  <symbol id="icon-aws-ec2-instance" fill-rule="evenodd" viewBox="0 0 48 48"><path d="M9,39 L39,39 L39,9 L9,9 L9,39 Z M46,13 L46,11 L41,11 L41,8 C41,7.448 40.552,7 40,7 L37,7 L37,2 L35,2 L35,7 L31,7 L31,2 L29,2 L29,7 L25,7 L25,2 L23,2 L23,7 L19,7 L19,2 L17,2 L17,7 L13,7 L13,2 L11,2 L11,7 L8,7 C7.447,7 7,7.448 7,8 L7,11 L2,11 L2,13 L7,13 L7,17 L2,17 L2,19 L7,19 L7,23 L2,23 L2,25 L7,25 L7,29 L2,29 L2,31 L7,31 L7,35 L2,35 L2,37 L7,37 L7,40 C7,40.553 7.447,41 8,41 L11,41 L11,46 L13,46 L13,41 L17,41 L17,46 L19,46 L19,41 L23,41 L23,46 L25,46 L25,41 L29,41 L29,46 L31,46 L31,41 L35,41 L35,46 L37,46 L37,41 L40,41 C40.552,41 41,40.553 41,40 L41,37 L46,37 L46,35 L41,35 L41,31 L46,31 L46,29 L41,29 L41,25 L46,25 L46,23 L41,23 L41,19 L46,19 L46,17 L41,17 L41,13 L46,13 Z" fill="#F58534"/></symbol>
+  <symbol id="icon-actor-user" fill-rule="evenodd" viewBox="0 0 48 48"><path d="M6.025,44 C6.524,34.085 14.395,26.178 24,26.178 C27.248,26.178 30.43,27.092 33.205,28.822 C38.354,32.033 41.653,37.783 41.974,44 L6.025,44 Z M14.192,13.878 C14.192,8.432 18.592,4 24.001,4 C29.408,4 33.807,8.432 33.807,13.878 C33.807,19.325 29.408,23.757 24.001,23.757 C18.592,23.757 14.192,19.325 14.192,13.878 L14.192,13.878 Z M34.263,27.125 C32.53,26.044 30.65,25.26 28.698,24.771 C32.877,22.939 35.807,18.749 35.807,13.878 C35.807,7.329 30.51,2 24.001,2 C17.489,2 12.192,7.329 12.192,13.878 C12.192,18.755 15.13,22.95 19.317,24.778 C10.545,26.981 4,35.2 4,45 C4,45.552 4.447,46 5,46 L43,46 C43.552,46 44,45.552 44,45 C44,37.719 40.269,30.87 34.263,27.125 L34.263,27.125 Z" fill="#242F3E"/></symbol>
+  <symbol id="icon-security-ssl-padlock" fill-rule="evenodd" viewBox="0 0 48 48"><path d="M24.111,24.356 C24.806,24.356 25.372,24.921 25.372,25.617 C25.372,26.312 24.806,26.877 24.111,26.877 C23.416,26.877 22.85,26.312 22.85,25.617 C22.85,24.921 23.416,24.356 24.111,24.356 L24.111,24.356 Z M23.111,28.704 L23.111,32.096 L25.111,32.096 L25.111,28.704 C26.418,28.279 27.372,27.063 27.372,25.617 C27.372,23.819 25.909,22.356 24.111,22.356 C22.313,22.356 20.85,23.819 20.85,25.617 C20.85,27.063 21.804,28.279 23.111,28.704 L23.111,28.704 Z M31.954,33.507 L16.261,33.5 L16.266,20.861 L31.96,20.869 L31.954,33.507 Z M20.066,15.811 C20.073,13.633 21.899,11.866 24.139,11.866 L24.153,11.866 C25.24,11.869 26.258,12.289 27.021,13.048 C27.779,13.801 28.193,14.799 28.1900162,15.86 L28.1900162,18.867 L20.051,18.863 L20.066,15.811 Z M32.96,18.869 L30.19,18.868 L30.19,15.863 C30.195,14.267 29.571,12.764 28.432,11.63 C27.295,10.498 25.776,9.871 24.159,9.866 L24.139,9.866 C20.799,9.866 18.077,12.526 18.066,15.803 L18.051,18.862 L15.266,18.861 C15.002,18.861 14.747,18.966 14.559,19.154 C14.372,19.341 14.266,19.595 14.266,19.861 L14.261,34.5 C14.261,35.051 14.709,35.5 15.261,35.5 L32.954,35.507 C33.218,35.507 33.473,35.402 33.661,35.214 C33.848,35.027 33.954,34.773 33.954,34.507 L33.96,19.869 C33.96,19.317 33.512,18.869 32.96,18.869 L32.96,18.869 Z M34.232,39.659 C29.54,40.502 25.584,42.975 24.111,43.991 C22.637,42.975 18.681,40.502 13.989,39.659 C11.645,39.238 4,37.369 4,30.978 C4,28.309 5.009,26.57 6.079,24.728 C7.082,23 8.119,21.213 8.119,18.769 C8.119,15.083 6.078,12.435 4.943,11.247 C6.103,9.835 8.664,6.711 10.065,4.919 C12.198,6.866 14.66,7.924 17.098,7.924 C19.813,7.924 22.067,6.852 24.111,4.569 C26.154,6.852 28.408,7.924 31.124,7.924 C33.562,7.924 36.024,6.866 38.157,4.919 C39.557,6.712 42.118,9.835 43.278,11.247 C42.143,12.435 40.102,15.083 40.102,18.769 C40.102,21.213 41.139,23 42.142,24.728 C43.212,26.57 44.221,28.309 44.221,30.978 C44.221,37.37 36.576,39.238 34.232,39.659 L34.232,39.659 Z M43.872,23.724 C42.923,22.087 42.102,20.674 42.102,18.769 C42.102,14.746 45.242,12.131 45.271,12.107 C45.478,11.94 45.61,11.696 45.637,11.43 C45.664,11.165 45.584,10.899 45.414,10.693 C45.362,10.63 40.24,4.425 39.07,2.821 C38.895,2.58 38.621,2.429 38.323,2.412 C38.045,2.4 37.735,2.509 37.532,2.727 C35.603,4.789 33.328,5.924 31.124,5.924 C28.693,5.924 26.775,4.835 24.905,2.392 C24.715,2.145 24.423,2 24.111,2 C23.799,2 23.507,2.144 23.317,2.392 C21.447,4.835 19.529,5.924 17.098,5.924 C14.894,5.924 12.619,4.789 10.69,2.727 C10.486,2.508 10.198,2.387 9.899,2.412 C9.601,2.429 9.328,2.58 9.152,2.82 C7.981,4.425 2.859,10.63 2.807,10.693 C2.638,10.898 2.559,11.164 2.585,11.428 C2.611,11.693 2.742,11.937 2.948,12.106 C2.979,12.131 6.119,14.746 6.119,18.769 C6.119,20.674 5.299,22.087 4.349,23.724 C3.248,25.621 2,27.771 2,30.978 C2,36.338 6.349,40.32 13.635,41.627 C18.98,42.587 23.458,45.981 23.503,46.015 C23.681,46.153 23.896,46.222 24.111,46.222 C24.326,46.222 24.541,46.153 24.719,46.015 C24.764,45.981 29.241,42.587 34.586,41.627 C41.872,40.32 46.221,36.338 46.221,30.978 C46.221,27.771 44.973,25.621 43.872,23.724 L43.872,23.724 Z" fill="#232F3D"/></symbol>
+  <!-- No official 2021 equivalent for AWS4's retired "general resource" wireframe-cube glyph (source shape mxgraph.aws4.resourceIcon;resIcon=general) — hand-drawn fallback, documented in README.md "Icon provenance". -->
+  <symbol id="icon-aws-static-assets" viewBox="0 0 20 20"><polygon points="10,2 18,6 18,14 10,18 2,14 2,6" fill="none" stroke="#FFFFFF" stroke-width="1.4"/><polyline points="2,6 10,10 18,6" fill="none" stroke="#FFFFFF" stroke-width="1.2"/><line x1="10" y1="10" x2="10" y2="18" stroke="#FFFFFF" stroke-width="1.2"/></symbol>
+  <!-- Decorative only — no view.yaml icon attachment references this (web-asg/app-asg carry none, matching final.svg's existing precedent). Official Auto-Scaling badge, matching source's own small badge inside each ASG band. -->
+  <symbol id="icon-aws-ec2-auto-scaling" fill-rule="evenodd" viewBox="0 0 48 48"><path d="M45.92,23.08125 L37.912,23.08125 L41.734,19.25825 L40.32,17.84425 L34.731,23.43525 C34.34,23.82525 34.34,24.45825 34.731,24.84925 L40.32,30.43825 L41.734,29.02425 L37.791,25.08125 L45.92,25.08125 L45.92,23.08125 Z M7.597,17.84425 L6.183,19.25825 L10.006,23.08125 L2,23.08125 L2,25.08125 L10.126,25.08125 L6.183,29.02425 L7.597,30.43825 L13.187,24.84925 C13.577,24.45825 13.577,23.82525 13.187,23.43525 L7.597,17.84425 Z M18.81,29.23125 L29.108,29.23125 L29.108,18.93225 L18.81,18.93225 L18.81,29.23125 Z M30.892,17.81025 L32.743,17.81025 L32.743,19.81025 L31.108,19.81025 L31.108,21.32425 L32.743,21.32425 L32.743,23.32425 L31.108,23.32425 L31.108,24.83825 L32.743,24.83825 L32.743,26.83825 L31.108,26.83825 L31.108,28.35225 L32.743,28.35225 L32.743,30.35225 L30.892,30.35225 C30.737,30.63125 30.509,30.85925 30.23,31.01425 L30.23,32.86525 L28.23,32.86525 L28.23,31.23025 L26.717,31.23025 L26.717,32.86525 L24.717,32.86525 L24.717,31.23025 L23.203,31.23025 L23.203,32.86525 L21.203,32.86525 L21.203,31.23025 L19.69,31.23025 L19.69,32.86525 L17.69,32.86525 L17.69,31.01425 C17.411,30.85925 17.183,30.63125 17.028,30.35225 L15.176,30.35225 L15.176,28.35225 L16.811,28.35225 L16.811,26.83825 L15.176,26.83825 L15.176,24.83825 L16.811,24.83825 L16.811,23.32425 L15.176,23.32425 L15.176,21.32425 L16.811,21.32425 L16.811,19.81025 L15.176,19.81025 L15.176,17.81025 L17.028,17.81025 C17.183,17.53125 17.411,17.30325 17.69,17.14825 L17.69,15.29825 L19.69,15.29825 L19.69,16.93225 L21.203,16.93225 L21.203,15.29825 L23.203,15.29825 L23.203,16.93225 L24.717,16.93225 L24.717,15.29825 L26.717,15.29825 L26.717,16.93225 L28.23,16.93225 L28.23,15.29825 L30.23,15.29825 L30.23,17.14825 C30.509,17.30325 30.737,17.53125 30.892,17.81025 L30.892,17.81025 Z M24.961,42.74725 L24.961,34.62225 L22.961,34.62225 L22.961,42.75125 L19.075,38.86625 L17.661,40.28025 L23.251,45.87025 C23.446,46.06525 23.702,46.16325 23.958,46.16325 C24.214,46.16325 24.47,46.06525 24.665,45.87025 L30.256,40.28025 L28.842,38.86625 L24.961,42.74725 Z M19.075,9.29725 L17.661,7.88325 L23.251,2.29325 C23.642,1.90225 24.274,1.90225 24.665,2.29325 L30.256,7.88325 L28.842,9.29725 L24.961,5.41625 L24.961,13.54125 L22.961,13.54125 L22.961,5.41225 L19.075,9.29725 Z" fill="#FFFFFF"/></symbol>
+</defs>
+
+<rect x="-150" y="-20" width="899" height="809" fill="#FFFFFF"/>
+
+<!-- ============ CROSSING GROUPS: 2 Availability-Zone bands (view-only) x 2 Autoscaling-Group bands (model components), drawn exactly as source.xml draws them — neither nests inside the other. AZ bands drawn first (behind), matching source z-order (id 2/3 precede id 4/5). ============ -->
+<rect x="164" y="185" width="225" height="356" fill="none" stroke="#5A6C86" stroke-width="2" stroke-dasharray="6 5" data-view-element="az-band-a"/>
+<text x="178" y="363" font-size="13" font-weight="600" fill="#5A6C86" text-anchor="middle" transform="rotate(-90 178 363)">Availability Zone A</text>
+<rect x="464" y="185" width="225" height="356" fill="none" stroke="#5A6C86" stroke-width="2" stroke-dasharray="6 5" data-view-element="az-band-b"/>
+<text x="675" y="363" font-size="13" font-weight="600" fill="#5A6C86" text-anchor="middle" transform="rotate(-90 675 363)">Availability Zone B</text>
+<rect x="164" y="185" width="525" height="75" rx="6" fill="none" stroke="#D86613" stroke-width="2" stroke-dasharray="7 5" data-component="app-asg" data-view-element="app-asg-band"/>
+<rect x="414.5" y="193" width="24" height="24" rx="4" fill="#D86613"/>
+<use href="#icon-aws-ec2-auto-scaling" x="417.5" y="196" width="18" height="18"/>
+<text x="426.5" y="231" font-size="12" font-weight="600" fill="#D86613" text-anchor="middle">Auto</text>
+<text x="426.5" y="245" font-size="12" font-weight="600" fill="#D86613" text-anchor="middle">Scaling</text>
+<rect x="164" y="466" width="525" height="75" rx="6" fill="none" stroke="#D86613" stroke-width="2" stroke-dasharray="7 5" data-component="web-asg" data-view-element="web-asg-band"/>
+<rect x="414.5" y="474" width="24" height="24" rx="4" fill="#D86613"/>
+<use href="#icon-aws-ec2-auto-scaling" x="417.5" y="477" width="18" height="18"/>
+<text x="426.5" y="512" font-size="12" font-weight="600" fill="#D86613" text-anchor="middle">Auto</text>
+<text x="426.5" y="526" font-size="12" font-weight="600" fill="#D86613" text-anchor="middle">Scaling</text>
+
+<!-- ============ CONNECTORS ============ -->
+<!-- Flow reads BOTTOM-UP (view-reproduce.yaml flow.direction: up), preserving the source's own direction. Every logical turn is authored as one path with a 5-unit Q corner; buses and straight trunks remain separate only at true T-junctions, never at an elbow. Converging fans (4 instances -> 1 LB/RDS) visually merge to one shared bus + one trunk + one arrowhead (matches source.png and restyle's rule-11 idiom); diverging fans (1 LB -> 4 instances) stay as 4 separate arrowheads, also matching source. -->
+<g fill="none" stroke-width="1.5">
+  <path d="M 236.5,191 V 155 Q 236.5,150 241.5,150 H 405.5" stroke="#505863"/>
+  <path d="M 334.5,191 V 155 Q 334.5,150 339.5,150 H 405.5" stroke="#505863"/>
+  <path d="M 547.5,191 V 155 Q 547.5,150 542.5,150 H 405.5" stroke="#505863"/>
+  <path d="M 641.5,191 V 155 Q 641.5,150 636.5,150 H 405.5" stroke="#505863"/>
+  <polyline points="405.5,150 405.5,109" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <polyline points="426.5,319 426.5,284" stroke="#505863"/>
+  <path d="M 426.5,284 H 241.5 Q 236.5,284 236.5,279 V 249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,284 H 339.5 Q 334.5,284 334.5,279 V 249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,284 H 542.5 Q 547.5,284 547.5,279 V 249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,284 H 636.5 Q 641.5,284 641.5,279 V 249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 236.5,472 V 436 Q 236.5,431 241.5,431 H 426.5" stroke="#505863"/>
+  <path d="M 334.5,472 V 436 Q 334.5,431 339.5,431 H 426.5" stroke="#505863"/>
+  <path d="M 517.5,472 V 436 Q 517.5,431 512.5,431 H 426.5" stroke="#505863"/>
+  <path d="M 611.5,472 V 436 Q 611.5,431 606.5,431 H 426.5" stroke="#505863"/>
+  <polyline points="426.5,431 426.5,391" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <polyline points="426.5,656 426.5,593" stroke="#505863"/>
+  <path d="M 426.5,593 H 241.5 Q 236.5,593 236.5,588 V 530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,593 H 339.5 Q 334.5,593 334.5,588 V 530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,593 H 512.5 Q 517.5,593 517.5,588 V 530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,593 H 606.5 Q 611.5,593 611.5,588 V 530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <polyline points="74.5,446 74.5,385" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <polyline points="74.5,316 74.5,257" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <polyline points="190,697.5 103,694.5" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <polyline points="440,74.5 575,74.5" stroke="#505863" stroke-dasharray="6 4" marker-end="url(#arrow-neutral)"/>
+</g>
+<text x="507.5" y="34" font-size="11" fill="#3334B9" text-anchor="middle">Cross-AZ Replication</text>
+
+<!-- SSL padlock badges: security:security.encryption.in-transit applies to user-cdn and user-web-elb. Source draws ONE padlock on their shared first hop (user -> padlock); RELATIONSHIP_ATTACHMENT_NOT_RENDERED needs a <use> inside EACH data-relationship group, so both full polylines (sharing the first segment) and both padlock <use>s are drawn here, stacked at the identical position. -->
+<g data-relationship="user-cdn" fill="none" stroke-width="1.5">
+  <path d="M 190,697.5 H 254.5 Q 259.5,697.5 259.5,692.5 V 631 Q 259.5,626 254.5,626 H 79.5 Q 74.5,626 74.5,621 V 515" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <circle cx="259.5" cy="698" r="16" fill="#FFFFFF"/>
+  <use href="#icon-security-ssl-padlock" x="245.5" y="684" width="28" height="28"/>
+</g>
+<g data-relationship="user-web-elb" fill="none" stroke-width="1.5">
+  <path d="M 190,697.5 H 256.75 Q 259.5,697.5 259.5,694.75 H 259.5 Q 259.5,692 262.25,692 H 392" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <circle cx="259.5" cy="698" r="16" fill="#FFFFFF"/>
+  <use href="#icon-security-ssl-padlock" x="245.5" y="684" width="28" height="28"/>
+</g>
+
+<!-- ============ LEAF NODES: "icon-square" family (colored gradient background + official WHITE icon glyph, label text OUTSIDE the box) and "bare-glyph" family (colored official glyph floats directly on the canvas, no background box — EC2 instance chips, actor.user) — exactly the two visual idioms source.png itself uses. Order within each: rect (data-component anchor, invisible for bare-glyph family), use (icon), text (label) — matches final.svg's documented rect-then-text-then-use convention. ============ -->
+<g font-size="13">
+  <rect x="371" y="40" width="69" height="69" fill="url(#grad-database)" data-component="rds-master"/>
+  <use href="#icon-aws-rds" x="383" y="52" width="45" height="45"/>
+  <text x="361" y="70.5" text-anchor="end" fill="#15359E">RDS</text>
+  <text x="361" y="86.5" text-anchor="end" fill="#15359E">Master</text>
+  <rect x="575" y="40" width="69" height="69" fill="url(#grad-database)" data-component="rds-slave"/>
+  <use href="#icon-aws-rds" x="587" y="52" width="45" height="45"/>
+  <text x="654" y="70.5" text-anchor="start" fill="#15359E">RDS</text>
+  <text x="654" y="86.5" text-anchor="start" fill="#15359E">Slave</text>
+  <rect x="392" y="319" width="69" height="72" fill="url(#grad-routing)" data-component="app-elb"/>
+  <use href="#icon-aws-elb" x="402" y="329" width="49" height="52"/>
+  <text x="471" y="343" text-anchor="start" fill="#7A5010">Elastic</text>
+  <text x="471" y="359" text-anchor="start" fill="#7A5010">Load</text>
+  <text x="471" y="375" text-anchor="start" fill="#7A5010">Balancing</text>
+  <rect x="392" y="656" width="69" height="72" fill="url(#grad-routing)" data-component="web-elb"/>
+  <use href="#icon-aws-elb" x="402" y="666" width="49" height="52"/>
+  <text x="471" y="680" text-anchor="start" fill="#7A5010">Elastic</text>
+  <text x="471" y="696" text-anchor="start" fill="#7A5010">Load</text>
+  <text x="471" y="712" text-anchor="start" fill="#7A5010">Balancing</text>
+  <rect x="46" y="188" width="57" height="69" fill="url(#grad-storage)" data-component="s3"/>
+  <use href="#icon-aws-s3" x="56" y="198" width="37" height="49"/>
+  <text x="36" y="218.5" text-anchor="end" fill="#0F5C2E">Amazon</text>
+  <text x="36" y="234.5" text-anchor="end" fill="#0F5C2E">S3</text>
+  <rect x="40" y="446" width="69" height="69" fill="url(#grad-ingress)" data-component="cdn"/>
+  <use href="#icon-aws-cloudfront" x="50" y="456" width="49" height="49"/>
+  <text x="30" y="476.5" text-anchor="end" fill="#452F82">CloudFront</text>
+  <text x="30" y="492.5" text-anchor="end" fill="#452F82">CDN</text>
+  <rect x="46" y="660" width="57" height="69" fill="url(#grad-ingress)" data-component="route53"/>
+  <use href="#icon-aws-route53" x="56" y="670" width="37" height="49"/>
+  <text x="36" y="690.5" text-anchor="end" fill="#452F82">Amazon</text>
+  <text x="36" y="706.5" text-anchor="end" fill="#452F82">Route 53</text>
+  <rect x="40" y="316" width="69" height="69" fill="url(#grad-structure)" data-component="static-assets"/>
+  <use href="#icon-aws-static-assets" x="54" y="330" width="41" height="41"/>
+  <text x="30" y="346.5" text-anchor="end" fill="#232F3E">Static</text>
+  <text x="30" y="362.5" text-anchor="end" fill="#232F3E">Resources</text>
+</g>
+
+<g font-size="20" font-weight="700" text-anchor="middle">
+  <rect x="209" y="191" width="55" height="58" fill="none" stroke="none" data-component="app-instance-1"/>
+  <use href="#icon-aws-ec2-instance" x="209" y="191" width="55" height="58"/>
+  <text x="236.5" y="227" fill="#F58534">M4</text>
+  <rect x="307" y="191" width="55" height="58" fill="none" stroke="none" data-component="app-instance-2"/>
+  <use href="#icon-aws-ec2-instance" x="307" y="191" width="55" height="58"/>
+  <text x="334.5" y="227" fill="#F58534">M4</text>
+  <rect x="520" y="191" width="55" height="58" fill="none" stroke="none" data-component="app-instance-3"/>
+  <use href="#icon-aws-ec2-instance" x="520" y="191" width="55" height="58"/>
+  <text x="547.5" y="227" fill="#F58534">M4</text>
+  <rect x="614" y="191" width="55" height="58" fill="none" stroke="none" data-component="app-instance-4"/>
+  <use href="#icon-aws-ec2-instance" x="614" y="191" width="55" height="58"/>
+  <text x="641.5" y="227" fill="#F58534">M4</text>
+  <rect x="209" y="472" width="55" height="58" fill="none" stroke="none" data-component="web-instance-1"/>
+  <use href="#icon-aws-ec2-instance" x="209" y="472" width="55" height="58"/>
+  <text x="236.5" y="508" fill="#F58534">C3</text>
+  <rect x="307" y="472" width="55" height="58" fill="none" stroke="none" data-component="web-instance-2"/>
+  <use href="#icon-aws-ec2-instance" x="307" y="472" width="55" height="58"/>
+  <text x="334.5" y="508" fill="#F58534">C3</text>
+  <rect x="490" y="472" width="55" height="58" fill="none" stroke="none" data-component="web-instance-3"/>
+  <use href="#icon-aws-ec2-instance" x="490" y="472" width="55" height="58"/>
+  <text x="517.5" y="508" fill="#F58534">C3</text>
+  <rect x="584" y="472" width="55" height="58" fill="none" stroke="none" data-component="web-instance-4"/>
+  <use href="#icon-aws-ec2-instance" x="584" y="472" width="55" height="58"/>
+  <text x="611.5" y="508" fill="#F58534">C3</text>
+</g>
+<g>
+  <rect x="145" y="666" width="45" height="63" fill="none" stroke="none" data-component="user"/>
+  <use href="#icon-actor-user" x="145" y="666" width="45" height="63"/>
+</g>
+
+</svg>

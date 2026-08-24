@@ -1,0 +1,31 @@
+{
+  "version": "0.1",
+  "canvas": { "width": 880, "height": 340 },
+  "nodes": [
+    { "id": "producer", "x": 40, "y": 140, "width": 140, "height": 60, "parentId": null },
+    { "id": "message", "x": 260, "y": 140, "width": 140, "height": 60, "parentId": null },
+    { "id": "channel", "x": 480, "y": 140, "width": 140, "height": 60, "parentId": null },
+    { "id": "consumer-a", "x": 700, "y": 40, "width": 140, "height": 60, "parentId": null },
+    { "id": "consumer-b", "x": 700, "y": 140, "width": 140, "height": 60, "parentId": null },
+    { "id": "consumer-c", "x": 700, "y": 240, "width": 140, "height": 60, "parentId": null }
+  ],
+  "edges": [
+    { "id": "producer-message", "waypoints": [{ "x": 220, "y": 170 }] },
+    { "id": "message-channel", "waypoints": [{ "x": 440, "y": 170 }] },
+    {
+      "id": "channel-consumer-a",
+      "waypoints": [
+        { "x": 660, "y": 170 },
+        { "x": 660, "y": 70 }
+      ]
+    },
+    { "id": "channel-consumer-b", "waypoints": [{ "x": 660, "y": 170 }] },
+    {
+      "id": "channel-consumer-c",
+      "waypoints": [
+        { "x": 660, "y": 170 },
+        { "x": 660, "y": 270 }
+      ]
+    }
+  ]
+}

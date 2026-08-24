@@ -1,0 +1,153 @@
+kind: architecture-model
+id: microservices-c4
+name: Container diagram for Internet Banking System
+libraries: [core@0.1.0, security@0.1.0, c4@0.1.0]
+components:
+  - id: internet_banking
+    type: c4:component.boundary
+    tokens: []
+    metadata:
+      label: Internet Banking
+      description: System boundary grouping the containers that make up the Internet Banking system.
+      c4Stereotype: Container_Boundary
+
+  - id: customer
+    type: core:component.external-actor
+    tokens: []
+    metadata:
+      label: Customer
+      description: A customer of the bank, with personal bank accounts.
+      c4Stereotype: Person
+
+  - id: email_system
+    type: core:component.external-actor
+    tokens: [{ token: c4:component.external }]
+    metadata:
+      label: E-Mail System
+      description: The internal Microsoft Exchange system.
+      c4Stereotype: System_Ext
+
+  - id: banking_system
+    type: core:component.external-actor
+    tokens: [{ token: c4:component.external }]
+    metadata:
+      label: Mainframe Banking System
+      description: Stores all of the core banking information about customers, accounts, transactions, etc.
+      c4Stereotype: System_Ext
+
+  - id: spa
+    type: core:component.service
+    tokens: []
+    metadata:
+      label: Single-Page App
+      technology: JavaScript, Angular
+      description: Provides all the Internet banking functionality to customers via their web browser.
+      c4Stereotype: Container
+
+  - id: mobile_app
+    type: core:component.service
+    tokens: [{ token: c4:component.external }]
+    metadata:
+      label: Mobile App
+      technology: C#, Xamarin
+      description: Provides a limited subset of the Internet banking functionality to customers via their mobile device.
+      c4Stereotype: Container_Ext
+
+  - id: web_app
+    type: core:component.service
+    tokens: []
+    metadata:
+      label: Web Application
+      technology: Java, Spring MVC
+      description: Delivers the static content and the Internet banking SPA.
+      c4Stereotype: Container
+
+  - id: database
+    type: core:component.database
+    configuration: { engine: sql }
+    tokens: []
+    metadata:
+      label: Database
+      technology: SQL Database
+      description: Stores user registration information, hashed auth credentials, access logs, etc.
+      c4Stereotype: ContainerDb
+
+  - id: backend_api
+    type: core:component.service
+    tokens: [{ token: c4:component.external }]
+    metadata:
+      label: API Application
+      technology: Java, Docker Container
+      description: Provides Internet banking functionality via API.
+      c4Stereotype: 'ContainerDb_Ext in source (modeled as a service — see README "Simplification decisions")'
+
+relationships:
+  - id: customer-web_app
+    type: core:relationship.call.sync
+    from: customer
+    to: web_app
+    tokens: [{ token: security:security.encryption.in-transit }]
+    metadata: { label: Uses, protocol: HTTPS }
+
+  - id: customer-spa
+    type: core:relationship.call.sync
+    from: customer
+    to: spa
+    tokens: [{ token: security:security.encryption.in-transit }]
+    metadata: { label: Uses, protocol: HTTPS }
+
+  - id: customer-mobile_app
+    type: core:relationship.call.sync
+    from: customer
+    to: mobile_app
+    tokens: []
+    metadata: { label: Uses }
+
+  - id: web_app-spa
+    type: c4:relationship.delivers
+    from: web_app
+    to: spa
+    tokens: []
+    metadata: { label: Delivers }
+
+  - id: spa-backend_api
+    type: c4:relationship.call.async
+    from: spa
+    to: backend_api
+    tokens: []
+    metadata: { label: Uses, protocol: 'async, JSON/HTTPS' }
+
+  - id: mobile_app-backend_api
+    type: c4:relationship.call.async
+    from: mobile_app
+    to: backend_api
+    tokens: []
+    metadata: { label: Uses, protocol: 'async, JSON/HTTPS' }
+
+  - id: backend_api-database
+    type: c4:relationship.data.readwrite
+    from: backend_api
+    to: database
+    tokens: []
+    metadata: { label: 'Reads from and writes to', protocol: 'sync, JDBC' }
+
+  - id: email_system-customer
+    type: c4:relationship.notifies
+    from: email_system
+    to: customer
+    tokens: []
+    metadata: { label: 'Sends e-mails to' }
+
+  - id: backend_api-email_system
+    type: c4:relationship.notifies
+    from: backend_api
+    to: email_system
+    tokens: []
+    metadata: { label: 'Sends e-mails using', protocol: 'sync, SMTP' }
+
+  - id: backend_api-banking_system
+    type: core:relationship.call.sync
+    from: backend_api
+    to: banking_system
+    tokens: [{ token: security:security.encryption.in-transit }]
+    metadata: { label: Uses, protocol: 'sync/async, XML/HTTPS' }

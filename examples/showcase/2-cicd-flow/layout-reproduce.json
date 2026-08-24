@@ -1,0 +1,103 @@
+{
+  "version": "0.1",
+  "canvas": { "width": 1021, "height": 244 },
+  "nodes": [
+    { "id": "build_stage", "x": 8, "y": 8, "width": 302, "height": 228, "parentId": null },
+    { "id": "build", "x": 25, "y": 87, "width": 93, "height": 54, "parentId": "build_stage" },
+    { "id": "build_a", "x": 168, "y": 35, "width": 108, "height": 54, "parentId": "build_stage" },
+    { "id": "build_b", "x": 168, "y": 139, "width": 109, "height": 54, "parentId": "build_stage" },
+
+    { "id": "test_stage", "x": 360, "y": 8, "width": 280, "height": 228, "parentId": null },
+    { "id": "test", "x": 25, "y": 87, "width": 82, "height": 54, "parentId": "test_stage" },
+    { "id": "test_a", "x": 157, "y": 35, "width": 97, "height": 54, "parentId": "test_stage" },
+    { "id": "test_b", "x": 157, "y": 139, "width": 98, "height": 54, "parentId": "test_stage" },
+
+    { "id": "deploy_stage", "x": 690, "y": 8, "width": 323, "height": 228, "parentId": null },
+    { "id": "deploy", "x": 25, "y": 87, "width": 104, "height": 54, "parentId": "deploy_stage" },
+    { "id": "deploy_a", "x": 179, "y": 35, "width": 119, "height": 54, "parentId": "deploy_stage" },
+    { "id": "deploy_b", "x": 179, "y": 139, "width": 120, "height": 54, "parentId": "deploy_stage" }
+  ],
+  "edges": [
+    {
+      "id": "build-build_a",
+      "waypoints": [
+        { "x": 151, "y": 113 },
+        { "x": 151, "y": 70 }
+      ]
+    },
+    {
+      "id": "build-build_b",
+      "waypoints": [
+        { "x": 151, "y": 131 },
+        { "x": 151, "y": 174 }
+      ]
+    },
+    {
+      "id": "test-test_a",
+      "waypoints": [
+        { "x": 492, "y": 113 },
+        { "x": 492, "y": 70 }
+      ]
+    },
+    {
+      "id": "test-test_b",
+      "waypoints": [
+        { "x": 492, "y": 131 },
+        { "x": 492, "y": 174 }
+      ]
+    },
+    {
+      "id": "deploy-deploy_a",
+      "waypoints": [
+        { "x": 844, "y": 113 },
+        { "x": 844, "y": 70 }
+      ]
+    },
+    {
+      "id": "deploy-deploy_b",
+      "waypoints": [
+        { "x": 844, "y": 131 },
+        { "x": 844, "y": 174 }
+      ]
+    },
+
+    {
+      "id": "build_a-test",
+      "waypoints": [
+        { "x": 335, "y": 70 },
+        { "x": 335, "y": 122 }
+      ]
+    },
+    {
+      "id": "build_b-test",
+      "waypoints": [
+        { "x": 335, "y": 174 },
+        { "x": 335, "y": 122 }
+      ]
+    },
+    {
+      "id": "test_a-deploy",
+      "waypoints": [
+        { "x": 665, "y": 70 },
+        { "x": 665, "y": 122 }
+      ]
+    },
+    {
+      "id": "test_b-deploy",
+      "waypoints": [
+        { "x": 665, "y": 174 },
+        { "x": 665, "y": 122 }
+      ]
+    },
+
+    { "id": "build-in-build_stage", "waypoints": [] },
+    { "id": "build_a-in-build_stage", "waypoints": [] },
+    { "id": "build_b-in-build_stage", "waypoints": [] },
+    { "id": "test-in-test_stage", "waypoints": [] },
+    { "id": "test_a-in-test_stage", "waypoints": [] },
+    { "id": "test_b-in-test_stage", "waypoints": [] },
+    { "id": "deploy-in-deploy_stage", "waypoints": [] },
+    { "id": "deploy_a-in-deploy_stage", "waypoints": [] },
+    { "id": "deploy_b-in-deploy_stage", "waypoints": [] }
+  ]
+}

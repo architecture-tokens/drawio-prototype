@@ -1,0 +1,187 @@
+kind: token-library
+namespace: infra
+domains: [component, relationship, deployment, presentation]
+version: 0.1.0
+name: Infra (cloud-web-app showcase)
+description: >
+  Component and relationship types for cloud infrastructure concepts the
+  source AWS SaaS reference diagram needs that the built-in core library does
+  not model (core only defines database/service/external-actor components and
+  call.sync/data.read/belongs.to relationships). Also carries the multi-AZ
+  deployment marker used to flatten the source's crossing Availability-Zone
+  grouping (see model.yaml / README.md for why), the per-instance AZ marker
+  that names WHICH zone each instance sits in, and — in the "View
+  vocabulary" section below — the presentation-layer token TYPES (flow
+  direction, icon, icon position) that let the visual rework record layout
+  facts as data instead of hardcoding them in final.svg. As of the View
+  Layer Contract (view.yaml), those three are still defined here (a view
+  document has no independent token-vocabulary mechanism of its own) but are
+  no longer *applied* on any model.yaml component — view.yaml's
+  `flow.direction` / `components[].icon` / `components[].anchor` fields
+  apply them instead.
+tokens:
+  - id: component.dns
+    kind: component-type
+    name: DNS Service
+    description: Domain-name resolution / routing entry point (e.g. Amazon Route 53).
+  - id: component.cdn
+    kind: component-type
+    name: CDN
+    description: Content-delivery-network edge cache in front of origin content.
+  - id: component.load-balancer
+    kind: component-type
+    name: Load Balancer
+    description: Distributes inbound traffic across a pool of compute instances.
+  - id: component.object-storage
+    kind: component-type
+    name: Object Storage
+    description: Durable blob/object storage bucket.
+  - id: component.static-assets
+    kind: component-type
+    name: Static Assets
+    description: >
+      A named collection of static files (images, scripts, styles) served
+      through a CDN, distinct from the object-storage bucket that persists it.
+  - id: component.compute-instance
+    kind: component-type
+    name: Compute Instance
+    description: A single virtual-machine instance managed by an autoscaling group.
+  - id: component.autoscaling-group
+    kind: component-type
+    name: Autoscaling Group
+    description: A managed pool of homogeneous compute instances that scales with demand.
+  - id: relationship.routes-to
+    kind: relationship-type
+    name: Routes To
+    description: A load balancer distributing inbound traffic to a pool member.
+  - id: relationship.replicates-to
+    kind: relationship-type
+    name: Replicates To
+    description: Data replication from a primary store to a standby/replica.
+  - id: deployment.multi-az
+    kind: applied
+    name: Multi-AZ
+    description: >
+      Component is deployed redundantly across multiple cloud availability
+      zones (flattened from the source diagram's crossing AZ x autoscaling
+      grouping — see README.md).
+    appliesTo: { elementKinds: [component] }
+    valueSchema:
+      {
+        type: object,
+        required: [zoneCount],
+        properties: { zoneCount: { type: integer, minimum: 2 } },
+      }
+  - id: deployment.availability-zone
+    kind: applied
+    name: Availability Zone
+    description: >
+      Which of the two availability zones (the second axis flattened out of
+      deployment.multi-az above) this specific compute instance sits in. One
+      of the two crossing containment dimensions the source draws (AZ x
+      Autoscaling Group) that layout-contract v0.1's single-parentId model
+      can't represent as containment; deployment.multi-az records the fact on
+      the ASG container, this token records WHICH zone on each instance so
+      the visual layer can draw the AZ bands (see README.md "Restored
+      elements").
+    appliesTo: { elementKinds: [component], componentTypes: [infra:component.compute-instance] }
+    valueSchema: { type: string, enum: [a, b] }
+  # --- View vocabulary ----------------------------------------------------
+  # The three token types below are typed vocabulary owned by this library
+  # (id, valueSchema, description all still live here — a view document has
+  # no independent token-vocabulary mechanism of its own) but, as of the
+  # View Layer Contract (view.yaml), are no longer *applied* inside any
+  # model.yaml component's `tokens` array. They are applied from view.yaml
+  # instead: `flow.direction` (top-level field, no schema-gap workaround
+  # needed there), `components[<id>][].icon`, and
+  # `components[<id>][].anchor`. `appliesTo` below is retained as the
+  # authoring-time constraint a view document's fields are expected to
+  # satisfy (component ids only, per component-type where noted) — nothing
+  # in this repo mechanically re-validates a view.yaml against it yet.
+  - id: presentation.flow.direction
+    kind: applied
+    name: Flow Direction
+    description: >
+      Records the diagram's intended reading direction as data instead of
+      leaving it implicit in hand-picked coordinates. Default policy: detect
+      and preserve the source diagram's own flow direction when it reads as
+      logical (don't silently invert a source that already makes sense).
+      Applied from view.yaml's top-level `flow.direction` field (one value
+      for the whole diagram — a view document isn't constrained by the
+      architecture-model schema's component/relationship-only `tokens`
+      arrays, so this no longer needs the single-component schema-gap
+      workaround `deployment.multi-az` still uses on model.yaml).
+    appliesTo: { elementKinds: [component] }
+    valueSchema: { type: string, enum: [up, down, left, right, mixed] }
+  - id: presentation.icon
+    kind: applied
+    name: Icon
+    description: >
+      Which glyph from final.svg's shared icon set (one <symbol> per id in a
+      single <defs> block, referenced everywhere with <use>) represents this
+      component. Restores the source's AWS shape-library icons that a
+      previous rework iteration dropped in favor of plain text-only boxes.
+      Applied from view.yaml's `components[<id>][].icon` field (a list per
+      component, not a scalar — a component could in principle carry more
+      than one glyph). Not applied to the two Autoscaling Group containers:
+      the source's own small "Auto Scaling" badge icon on those containers
+      is redundant with the container's own title text ("Web/App Tier
+      Autoscaling Group"), same reasoning as the dropped pure-text
+      annotation vertices in "Flattening & simplification decisions" below.
+      Not applied to relationships either — the one edge-attached icon this
+      diagram needs (the SSL padlock) is keyed off the EXISTING
+      security:security.encryption.in-transit token's presence on an edge,
+      via view.yaml's separate `relationships[<id>][].icon` field
+      (`security.ssl-padlock`, matching final.svg's existing
+      `icon-security-ssl-padlock` symbol id — see
+      tools/rules-lint.mjs's UNKNOWN_ICON_SYMBOL check for the id<->symbol
+      mapping rule), not a second component-icon token value.
+    appliesTo: { elementKinds: [component] }
+    valueSchema:
+      {
+        type: string,
+        enum:
+          [
+            actor.user,
+            aws.route53,
+            aws.cloudfront,
+            aws.elb,
+            aws.ec2-instance,
+            aws.s3,
+            aws.static-assets,
+            aws.rds,
+          ],
+      }
+  - id: presentation.icon.position
+    kind: applied
+    name: Icon Position
+    description: >
+      Nine-grid anchor for where presentation:icon's glyph sits inside the
+      component's box, clear of the title text (diagram-rules.md T1) and the
+      box padding (T2). Chosen per component to match where the AWS icon
+      sits relative to its label in the source (icon-above-caption ->
+      top-center; icon-beside-caption -> middle-left/middle-right), except
+      where the label is long enough that the matching middle-row position
+      would collide with the centered title text — those are bumped to the
+      top row on the same side instead (see README's icon table for the
+      per-component reasoning). Applied from view.yaml's
+      `components[<id>][].anchor` field (renamed from "position" to
+      "anchor" in the view schema — same nine-grid value set, see
+      view.yaml's own comments).
+    appliesTo: { elementKinds: [component] }
+    valueSchema:
+      {
+        type: string,
+        enum:
+          [
+            top-left,
+            top-center,
+            top-right,
+            middle-left,
+            middle-center,
+            middle-right,
+            bottom-left,
+            bottom-center,
+            bottom-right,
+          ],
+      }

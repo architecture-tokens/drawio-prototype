@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.5 -0.5 1045 452" width="1045" height="452" font-family="Helvetica, Arial, sans-serif">
+<!--
+  REPRODUCE MODE. Geometry, grouping, labels, shadows, icon placement and
+  palette are transcribed from source.xml and its native draw.io export.
+  The only visual correction is normative connector treatment: all nine
+  relationships are orthogonal and every bend has a uniform 5px radius.
+
+  Semantic palette (C1, exact source colors): platform #F6F6F6; namespaces
+  #E1F5FE; tester #F3E5F5; cards #FFFFFF / #DDDDDD; shadow/text #000000;
+  platform text #717171; secondary text #9E9E9E / #999999; laptop #757575;
+  title #4DA1F5; connectors #4284F3. Source-embedded Google artwork uses
+  GKE #AECBFA/#669DF6/#4285F4 and cloud logo #E2E2E2/#FFCF48/#DC473A/#528FF5.
+-->
+<defs>
+  <marker id="arrow-gcp" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="#4284F3"/></marker>
+  <!-- Official Google Cloud glyphs are transcribed from source.xml's embedded mxgraph.gcp2 artwork. -->
+  <symbol id="icon-gcp-kubernetes-engine" viewBox="0 0 87.293 100.088">
+    <path fill="#AECBFA" d="M43.751 0 0 25.465v2.588l.01 46.92 43.752 25.115 43.531-25.121V25.473zm2.438 11.853 32.103 18.782V69.77L43.739 89.705 9 69.762V30.641l32.19-18.736v14.154L24.503 36.153l19.172 11.502 18.886-11.554-16.372-10.024z"/>
+    <path fill="#669DF6" d="M22.025 40.496l.166 19.143-13.247 7.33v2.742l2.637 1.514 12.648-6.999L41.19 74.828V51.993z"/>
+    <path fill="#4285F4" d="M65.344 40.26 46.189 51.979v22.847l16.899-10.576 12.539 6.974 2.609-1.505v-2.765l-12.784-7.112z"/>
+  </symbol>
+  <symbol id="icon-gcp-laptop" viewBox="0 0 50 34">
+    <path d="M8.46 0C6.08 0 4.17 1.9 4.17 4.26v20.43c0 2.37 1.91 4.28 4.29 4.28H0V33h50v-4.03h-8.55c2.38 0 4.29-1.91 4.29-4.28V4.26C45.74 1.9 43.83 0 41.45 0z" fill="#757575"/>
+    <path d="M8.14 4.03h33.61v20.93H8.14z" fill="#FFFFFF"/>
+  </symbol>
+  <symbol id="icon-gcp-cloud-logo" viewBox="0 0 23 20">
+    <path d="M7.97 16.03 2.17 6.04.31 9.23c-.25.46-.31 1.07.01 1.55l4.84 8.33c.24.52.72.89 1.51.89h6.04l2.31-3.97z" fill="#FFCF48"/>
+    <path d="M16.54 20h-3.83l5.82-9.98L15.03 4h4.63l3.03 5.23c.29.5.31 1.01.01 1.56l-4.79 8.22c-.3.56-.67.99-1.37.99z" fill="#DC473A"/>
+    <path d="M16.5.02c.57 0 1.04.33 1.31.83L19.66 4H7.99L4.48 10.01 2.17 6.04 5.12.95C5.48.36 5.85 0 6.84.02z" fill="#528FF5"/>
+    <path d="M7.97 16.03 4.48 10.01 7.99 4h7.04l3.5 6.02-3.51 6.01z" fill="#E2E2E2"/>
+  </symbol>
+</defs>
+
+<g>
+  <rect x="140" y="59" width="881" height="391" fill="#F6F6F6" data-view-element="gcp-platform"/>
+  <use href="#icon-gcp-cloud-logo" x="160" y="69" width="23" height="20"/>
+  <text x="190" y="84" fill="#717171" font-size="14"><tspan font-weight="700">Google </tspan>Cloud Platform</text>
+</g>
+<g data-view-element="web-app-namespace">
+  <rect x="671" y="160" width="330" height="270" rx="1" fill="#E1F5FE"/>
+  <text x="681" y="183" fill="#9E9E9E" font-size="12">Web App Namespace</text>
+</g>
+<g data-view-element="selenium-namespace">
+  <rect x="150" y="160" width="501" height="270" rx="1" fill="#E1F5FE"/>
+  <text x="160" y="183" fill="#9E9E9E" font-size="12">Selenium Namespace</text>
+</g>
+<g data-view-element="title-banner">
+  <rect x="2" y="3" width="1041" height="40" fill="#000000" opacity="0.25"/>
+  <rect x="0" y="0" width="1041" height="40" fill="#4DA1F5"/>
+  <text x="52" y="24" fill="#FFFFFF" font-size="14">Architecture: Dev Test &gt; UI Testing with Kubernetes</text>
+</g>
+
+<g fill="none" stroke="#4284F3" stroke-width="2">
+  <g data-relationship="tester-to-selenium-hub"><path d="M110 307 H155" marker-end="url(#arrow-gcp)"/></g>
+  <g data-relationship="selenium-hub-to-hub-service"><path d="M351 307 H370" marker-end="url(#arrow-gcp)"/></g>
+  <g data-relationship="hub-service-to-firefox-attribute"><path d="M398 292 V238 Q398 233 403 233 H425" marker-end="url(#arrow-gcp)"/></g>
+  <g data-relationship="hub-service-to-firefox-rc"><path d="M398 322 V374 Q398 379 403 379 H425" marker-end="url(#arrow-gcp)"/></g>
+  <g data-relationship="firefox-attribute-to-frontend"><path d="M514 259 V302 Q514 307 519 307 H690" marker-end="url(#arrow-gcp)"/></g>
+  <g data-relationship="firefox-rc-to-frontend"><path d="M514 345 V312 Q514 307 519 307 H690" marker-end="url(#arrow-gcp)"/></g>
+  <g data-relationship="frontend-to-ui-servers"><path d="M720 290.5 V238 Q720 233 725 233 H746" marker-end="url(#arrow-gcp)"/></g>
+  <g data-relationship="ui-servers-to-backend-service"><path d="M938 233 H958 Q963 233 963 238 V290.5" marker-end="url(#arrow-gcp)"/></g>
+  <g data-relationship="backend-servers-to-backend-service"><path d="M939 379 H958 Q963 379 963 374 V323.5" marker-end="url(#arrow-gcp)"/></g>
+</g>
+
+<g>
+  <rect x="20" y="250" width="90" height="114" rx="1" fill="#F3E5F5"/>
+  <text x="30" y="273" fill="#9E9E9E" font-size="12">Tester</text>
+  <rect x="32" y="287" width="70" height="70" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="30" y="284" width="70" height="70" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1" data-component="tester"/>
+  <use href="#icon-gcp-laptop" x="40" y="302.5" width="50" height="34"/>
+</g>
+
+<g>
+  <rect x="157" y="280" width="196" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="155" y="277" width="196" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1" data-component="selenium-hub-rc"/>
+  <use href="#icon-gcp-kubernetes-engine" x="171.5" y="291.5" width="26" height="30"/>
+  <text x="220" y="299" fill="#000000" font-size="12"><tspan x="220">Selenium Hub</tspan><tspan x="220" dy="14">(Replication Controller)</tspan><tspan x="220" dy="14" fill="#999999">Kubernetes Engine</tspan></text>
+</g>
+<g data-component="hub-service">
+  <rect x="372" y="295" width="55" height="30" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="370" y="292" width="55" height="30" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+  <text x="397.5" y="310" text-anchor="middle" fill="#000000" font-size="10">Hub Service</text>
+</g>
+
+<g>
+  <rect x="435" y="210" width="198" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="433" y="207" width="198" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+  <rect x="427" y="202" width="198" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="425" y="199" width="198" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1" data-component="firefox-nodes-attribute"/>
+  <use href="#icon-gcp-kubernetes-engine" x="441.5" y="213.5" width="26" height="30"/>
+  <text x="490" y="221" fill="#000000" font-size="12"><tspan x="490">Firefox Nodes</tspan><tspan x="490" dy="14">(Attribute Name)</tspan><tspan x="490" dy="14" fill="#999999">Kubernetes Engine</tspan></text>
+</g>
+<g>
+  <rect x="435" y="356" width="198" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="433" y="353" width="198" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+  <rect x="427" y="348" width="198" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="425" y="345" width="198" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1" data-component="firefox-nodes-rc"/>
+  <use href="#icon-gcp-kubernetes-engine" x="441.5" y="359.5" width="26" height="30"/>
+  <text x="490" y="367" fill="#000000" font-size="12"><tspan x="490">Firefox Nodes</tspan><tspan x="490" dy="14">(Replication Controller)</tspan><tspan x="490" dy="14" fill="#999999">Kubernetes Engine</tspan></text>
+</g>
+
+<g data-component="frontend-service">
+  <rect x="692" y="293.5" width="60" height="33" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="690" y="290.5" width="60" height="33" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+  <text x="720" y="304" text-anchor="middle" fill="#000000" font-size="10"><tspan x="720">Frontend</tspan><tspan x="720" dy="11">Service</tspan></text>
+</g>
+<g>
+  <rect x="756" y="210" width="192" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="754" y="207" width="192" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+  <rect x="748" y="202" width="192" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="746" y="199" width="192" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1" data-component="ui-servers-rc"/>
+  <use href="#icon-gcp-kubernetes-engine" x="762.5" y="213.5" width="26" height="30"/>
+  <text x="811" y="221" fill="#000000" font-size="12"><tspan x="811">UI Servers</tspan><tspan x="811" dy="14">(Replication Controller)</tspan><tspan x="811" dy="14" fill="#999999">Kubernetes Engine</tspan></text>
+</g>
+<g>
+  <rect x="756" y="356" width="193" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="754" y="353" width="193" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+  <rect x="748" y="348" width="193" height="60" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="746" y="345" width="193" height="60" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1" data-component="backend-servers-rc"/>
+  <use href="#icon-gcp-kubernetes-engine" x="762.5" y="359.5" width="26" height="30"/>
+  <text x="811" y="367" fill="#000000" font-size="12"><tspan x="811">Backend Servers</tspan><tspan x="811" dy="14">(Replication Controller)</tspan><tspan x="811" dy="14" fill="#999999">Kubernetes Engine</tspan></text>
+</g>
+<g data-component="backend-service">
+  <rect x="940" y="293.5" width="50" height="33" rx="1" fill="#000000" opacity="0.25"/>
+  <rect x="938" y="290.5" width="50" height="33" rx="1" fill="#FFFFFF" stroke="#DDDDDD" stroke-width="1"/>
+  <text x="963" y="304" text-anchor="middle" fill="#000000" font-size="10"><tspan x="963">Backend</tspan><tspan x="963" dy="11">Service</tspan></text>
+</g>
+</svg>

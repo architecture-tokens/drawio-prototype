@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  REPRODUCE MODE (view-reproduce.yaml mode: reproduce). This file is a
+  faithful redraw of source.mmd / source.png, not a rules-authored restyle
+  (compare final.svg, which demonstrates connector rule 11 by merging the
+  fan-out into one trunk (that stays the rule-11 showcase); this file
+  keeps the fan-out as three independent branches, matching source.png's
+  own "three separate arrows leaving Channel" reading). Geometry is
+  EXTRACTED from the mermaid.ink render of source.mmd (see
+  layout-reproduce.json), not re-authored: node x/y/width/height below are
+  the exact rounded-to-integer values read from that render's own
+  transform+rect attributes.
+
+  Semantic palette (C1): source's own values, read directly out of the
+  mermaid.ink-rendered SVG's embedded stylesheet (not sampled from a
+  rasterized PNG): Mermaid's default flowchart theme uses ONE domain for
+  every node (this diagram draws no per-type color distinction of its
+  own; producer/message/channel/consumer all share one style), so this
+  is a trivial one-entry palette, documented as such rather than inventing
+  per-component-type semantic colors the source itself doesn't have:
+
+  default (every component)
+    border  #9370DB  (".node rect{...stroke:#9370DB}")
+    fill    #ECECFF  (".node rect{fill:#ECECFF}")
+    text    #333333  ("#mermaid-svg{fill:#333}" / ".label{color:#333}")
+
+  connectors  #333333, uniform (".flowchart-link{stroke:#333333}" /
+    ".arrowheadPath{fill:#333333}"): every edge same color, source has
+    no C2 destination-coloring of its own to reproduce.
+
+  Box shapes match source.mmd's own node syntax exactly: `[Producer]` /
+  `[Consumer]` (square brackets) render sharp-cornered rects (rx=0);
+  `(message)` / `(Channel)` (parens) render rounded rects (rx=5, read off
+  the mermaid.ink render's own rect rx/ry attributes), NOT a uniform
+  "all rounded" treatment, because the source itself draws a real shape
+  distinction here and reproduce mode keeps it.
+
+  Connector treatment is the one thing NOT copied from source (modes
+  clause, README.md "Conversion modes"): source.mmd's Channel->Consumer
+  fan-out renders as three smooth bezier curves; rules 3/3a are normative
+  in both conversion modes, so this file routes every connector as
+  orthogonal horizontal/vertical segments with one uniform 5-unit corner
+  radius at every bend (applied via tools/round-connectors.mjs) instead.
+  The two bent branches (channel-consumer-a/c) exit Channel's right edge
+  at evenly distributed points (rule 2a: three arrows share one face) and
+  turn toward their target's row via one shared bend column (x=443),
+  the diverging-fan mirror of rule 11's converging-fan merge, same
+  precedent as final-reproduce.svg's own "1-cloud-web-app" example (LB ->
+  4 instances stays 4 separate arrowheads, not merged).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 609 278" width="609" height="278" font-family="'Trebuchet MS', Verdana, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+      <path d="M0,0 L10,5 L0,10 Z" fill="#333333"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="609" height="278" fill="#ffffff"/>
+
+  <!-- ============ CONNECTORS ============
+       Flow reads LEFT-TO-RIGHT (view-reproduce.yaml flow.direction: right),
+       matching source.mmd's own `graph LR`. producer-message/message-channel/
+       channel-consumer-b sit on the shared centre row (y=139) so those three
+       stay single straight segments; channel-consumer-a/c bend once each way
+       to reach the top/bottom Consumer rows, rounded at radius 5. -->
+  <g fill="none" stroke="#333333" stroke-width="1">
+    <polyline points="133,139 183,139" marker-end="url(#arrow)"/>
+    <polyline points="278,139 328,139" marker-end="url(#arrow)"/>
+    <path d="M 418,125 H 438 Q 443,125 443,120 V 40 Q 443,35 448,35 H 467" marker-end="url(#arrow)"/>
+    <polyline points="418,139 467,139" marker-end="url(#arrow)"/>
+    <path d="M 418,153 H 438 Q 443,153 443,158 V 238 Q 443,243 448,243 H 467" marker-end="url(#arrow)"/>
+  </g>
+
+  <!-- ============ BOXES ============
+       Sharp corners (rx=0) for square-bracket nodes (Producer, all three
+       Consumers); rx=5 for paren nodes (message, Channel), exactly
+       source.mmd's own [..] vs (..) shape distinction. -->
+  <g font-size="16" text-anchor="middle" dominant-baseline="middle">
+    <rect x="8" y="112" width="125" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="producer"/>
+    <text x="70.5" y="140" fill="#333333">Producer</text>
+
+    <rect x="183" y="112" width="95" height="54" rx="5" ry="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="message"/>
+    <text x="230.5" y="140" fill="#333333">message</text>
+
+    <rect x="328" y="112" width="90" height="54" rx="5" ry="5" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="channel"/>
+    <text x="373" y="140" fill="#333333">Channel</text>
+
+    <rect x="467" y="8" width="134" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="consumer-a"/>
+    <text x="534" y="36" fill="#333333">Consumer</text>
+
+    <rect x="467" y="112" width="134" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="consumer-b"/>
+    <text x="534" y="140" fill="#333333">Consumer</text>
+
+    <rect x="467" y="216" width="134" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="consumer-c"/>
+    <text x="534" y="244" fill="#333333">Consumer</text>
+  </g>
+</svg>

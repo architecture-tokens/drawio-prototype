@@ -1,0 +1,129 @@
+# Source census (prototype v0). One record per SOURCE element (source.mmd
+# C4 node/edge), not per model.yaml element -- machine-checked by
+# `tools/rules-lint.mjs --census` (CENSUS_MISMATCH): record count must equal
+# the source's vertex+edge count, source_ids must be a bijection against
+# `node tools/rules-lint.mjs --census-dump source.mmd`'s own element list,
+# and every target_id must resolve into model.yaml.
+#
+# This example is simple relative to 1-cloud-web-app: the C4Container source
+# has NO decorative/annotation nodes, no icon pass-through nodes, no
+# structural bands -- every one of the 9 vertices (8 leaf C4 elements + the
+# `c1` Container_Boundary) is a first-class model.yaml component, and every
+# one of the 10 Rel()/Rel_Back() edges is a first-class model.yaml
+# relationship. All 19 records are `component`/`relationship`; there are no
+# `visual`, `token`, or `drop` buckets in this census (contrast
+# 1-cloud-web-app's padlock-consolidation and AZ-band-annotation records).
+#
+# `c1` (Container_Boundary) is the one source_id whose target_id differs
+# from its own literal string -- it maps to `internet_banking`, the
+# component id model.yaml gives the boundary (see README "Boundary as a
+# component"). Every other vertex source_id is byte-identical to its
+# model.yaml component id. Every edge source_id ("edge:A->B", the
+# --census-dump tool's own id format) maps to model.yaml's "A-B"
+# relationship id -- including `edge:backend_api->database`, which is
+# `Rel_Back(database, backend_api, ...)` in source.mmd but resolves in the
+# ALREADY-REVERSED direction (see model.yaml's own comment on
+# `backend_api-database`, and the restyle README's "Simplification /
+# judgment-call decisions" #2 for the pixel evidence this direction was
+# read from) -- --census-dump's own parser already applies that resolved
+# direction, so this census does not re-litigate it.
+kind: census
+model: model.yaml
+source: source.mmd
+records:
+  - source_id: email_system
+    kind: vertex
+    label: 'E-Mail System'
+    primary_bucket: component
+    target_ids: [email_system]
+  - source_id: customer
+    kind: vertex
+    label: Customer
+    primary_bucket: component
+    target_ids: [customer]
+  - source_id: c1
+    kind: vertex
+    label: 'Internet Banking'
+    primary_bucket: component
+    target_ids: [internet_banking]
+    reason: "Container_Boundary source id 'c1' maps to model.yaml's internet_banking id (c4:component.boundary) -- the one source_id in this census whose target_id is not its own literal string."
+  - source_id: spa
+    kind: vertex
+    label: 'Single-Page App'
+    primary_bucket: component
+    target_ids: [spa]
+  - source_id: mobile_app
+    kind: vertex
+    label: 'Mobile App'
+    primary_bucket: component
+    target_ids: [mobile_app]
+  - source_id: web_app
+    kind: vertex
+    label: 'Web Application'
+    primary_bucket: component
+    target_ids: [web_app]
+  - source_id: database
+    kind: vertex
+    label: Database
+    primary_bucket: component
+    target_ids: [database]
+  - source_id: backend_api
+    kind: vertex
+    label: 'API Application'
+    primary_bucket: component
+    target_ids: [backend_api]
+  - source_id: banking_system
+    kind: vertex
+    label: 'Mainframe Banking System'
+    primary_bucket: component
+    target_ids: [banking_system]
+  - source_id: 'edge:customer->web_app'
+    kind: edge
+    label: 'Uses [HTTPS]'
+    primary_bucket: relationship
+    target_ids: [customer-web_app]
+  - source_id: 'edge:customer->spa'
+    kind: edge
+    label: 'Uses [HTTPS]'
+    primary_bucket: relationship
+    target_ids: [customer-spa]
+  - source_id: 'edge:customer->mobile_app'
+    kind: edge
+    label: Uses
+    primary_bucket: relationship
+    target_ids: [customer-mobile_app]
+  - source_id: 'edge:web_app->spa'
+    kind: edge
+    label: Delivers
+    primary_bucket: relationship
+    target_ids: [web_app-spa]
+  - source_id: 'edge:spa->backend_api'
+    kind: edge
+    label: 'Uses [async, JSON/HTTPS]'
+    primary_bucket: relationship
+    target_ids: [spa-backend_api]
+  - source_id: 'edge:mobile_app->backend_api'
+    kind: edge
+    label: 'Uses [async, JSON/HTTPS]'
+    primary_bucket: relationship
+    target_ids: [mobile_app-backend_api]
+  - source_id: 'edge:backend_api->database'
+    kind: edge
+    label: 'Reads from and writes to [sync, JDBC]'
+    primary_bucket: relationship
+    target_ids: [backend_api-database]
+  - source_id: 'edge:email_system->customer'
+    kind: edge
+    label: 'Sends e-mails to'
+    primary_bucket: relationship
+    target_ids: [email_system-customer]
+  - source_id: 'edge:backend_api->email_system'
+    kind: edge
+    label: 'Sends e-mails using [sync, SMTP]'
+    primary_bucket: relationship
+    target_ids: [backend_api-email_system]
+  - source_id: 'edge:backend_api->banking_system'
+    kind: edge
+    label: 'Uses [sync/async, XML/HTTPS]'
+    primary_bucket: relationship
+    target_ids: [backend_api-banking_system]

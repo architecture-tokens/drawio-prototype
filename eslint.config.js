@@ -8,4 +8,10 @@ export default [
   {
     rules: { '@typescript-eslint/no-explicit-any': 'off' },
   },
+  {
+    files: ['**/*.mjs'],
+    languageOptions: {
+      globals: { process: 'readonly', console: 'readonly' },
+    },
+  },
 ];

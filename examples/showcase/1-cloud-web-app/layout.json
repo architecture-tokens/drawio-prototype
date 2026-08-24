@@ -1,0 +1,204 @@
+{
+  "version": "0.1",
+  "canvas": { "width": 1200, "height": 780 },
+  "nodes": [
+    { "id": "rds-master", "x": 524, "y": 40, "width": 140, "height": 60, "parentId": null },
+    { "id": "rds-slave", "x": 704, "y": 40, "width": 140, "height": 60, "parentId": null },
+
+    { "id": "app-asg", "x": 220, "y": 140, "width": 928, "height": 120, "parentId": null },
+    { "id": "app-instance-1", "x": 30, "y": 30, "width": 140, "height": 60, "parentId": "app-asg" },
+    {
+      "id": "app-instance-2",
+      "x": 210,
+      "y": 30,
+      "width": 140,
+      "height": 60,
+      "parentId": "app-asg"
+    },
+    {
+      "id": "app-instance-3",
+      "x": 578,
+      "y": 30,
+      "width": 140,
+      "height": 60,
+      "parentId": "app-asg"
+    },
+    {
+      "id": "app-instance-4",
+      "x": 758,
+      "y": 30,
+      "width": 140,
+      "height": 60,
+      "parentId": "app-asg"
+    },
+
+    { "id": "app-elb", "x": 614, "y": 300, "width": 140, "height": 60, "parentId": null },
+    { "id": "s3", "x": 40, "y": 360, "width": 140, "height": 60, "parentId": null },
+
+    { "id": "web-asg", "x": 220, "y": 400, "width": 928, "height": 120, "parentId": null },
+    { "id": "web-instance-1", "x": 30, "y": 30, "width": 140, "height": 60, "parentId": "web-asg" },
+    {
+      "id": "web-instance-2",
+      "x": 210,
+      "y": 30,
+      "width": 140,
+      "height": 60,
+      "parentId": "web-asg"
+    },
+    {
+      "id": "web-instance-3",
+      "x": 578,
+      "y": 30,
+      "width": 140,
+      "height": 60,
+      "parentId": "web-asg"
+    },
+    {
+      "id": "web-instance-4",
+      "x": 758,
+      "y": 30,
+      "width": 140,
+      "height": 60,
+      "parentId": "web-asg"
+    },
+
+    { "id": "static-assets", "x": 40, "y": 460, "width": 140, "height": 60, "parentId": null },
+
+    { "id": "cdn", "x": 40, "y": 560, "width": 140, "height": 60, "parentId": null },
+    { "id": "web-elb", "x": 614, "y": 560, "width": 140, "height": 60, "parentId": null },
+
+    { "id": "user", "x": 374, "y": 660, "width": 140, "height": 60, "parentId": null },
+    { "id": "route53", "x": 554, "y": 660, "width": 140, "height": 60, "parentId": null }
+  ],
+  "edges": [
+    { "id": "user-route53", "waypoints": [] },
+    {
+      "id": "user-cdn",
+      "waypoints": [
+        { "x": 414, "y": 640 },
+        { "x": 110, "y": 640 }
+      ]
+    },
+    {
+      "id": "user-web-elb",
+      "waypoints": [
+        { "x": 474, "y": 640 },
+        { "x": 684, "y": 640 }
+      ]
+    },
+    { "id": "cdn-static-assets", "waypoints": [] },
+    { "id": "static-assets-s3", "waypoints": [] },
+
+    {
+      "id": "web-elb-web-instance-1",
+      "waypoints": [
+        { "x": 684, "y": 540 },
+        { "x": 320, "y": 540 }
+      ]
+    },
+    {
+      "id": "web-elb-web-instance-2",
+      "waypoints": [
+        { "x": 684, "y": 540 },
+        { "x": 500, "y": 540 }
+      ]
+    },
+    {
+      "id": "web-elb-web-instance-3",
+      "waypoints": [
+        { "x": 684, "y": 540 },
+        { "x": 868, "y": 540 }
+      ]
+    },
+    {
+      "id": "web-elb-web-instance-4",
+      "waypoints": [
+        { "x": 684, "y": 540 },
+        { "x": 1048, "y": 540 }
+      ]
+    },
+
+    {
+      "id": "web-instance-1-app-elb",
+      "waypoints": [
+        { "x": 320, "y": 380 },
+        { "x": 684, "y": 380 }
+      ]
+    },
+    {
+      "id": "web-instance-2-app-elb",
+      "waypoints": [
+        { "x": 500, "y": 380 },
+        { "x": 684, "y": 380 }
+      ]
+    },
+    {
+      "id": "web-instance-3-app-elb",
+      "waypoints": [
+        { "x": 868, "y": 380 },
+        { "x": 684, "y": 380 }
+      ]
+    },
+    {
+      "id": "web-instance-4-app-elb",
+      "waypoints": [
+        { "x": 1048, "y": 380 },
+        { "x": 684, "y": 380 }
+      ]
+    },
+
+    {
+      "id": "app-elb-app-instance-1",
+      "waypoints": [
+        { "x": 684, "y": 280 },
+        { "x": 320, "y": 280 }
+      ]
+    },
+    {
+      "id": "app-elb-app-instance-2",
+      "waypoints": [
+        { "x": 684, "y": 280 },
+        { "x": 500, "y": 280 }
+      ]
+    },
+    {
+      "id": "app-elb-app-instance-3",
+      "waypoints": [
+        { "x": 684, "y": 280 },
+        { "x": 868, "y": 280 }
+      ]
+    },
+    {
+      "id": "app-elb-app-instance-4",
+      "waypoints": [
+        { "x": 684, "y": 280 },
+        { "x": 1048, "y": 280 }
+      ]
+    },
+
+    {
+      "id": "app-instance-1-rds-master",
+      "waypoints": [
+        { "x": 320, "y": 120 },
+        { "x": 594, "y": 120 }
+      ]
+    },
+    { "id": "app-instance-2-rds-master", "waypoints": [{ "x": 594, "y": 120 }] },
+    {
+      "id": "app-instance-3-rds-master",
+      "waypoints": [
+        { "x": 868, "y": 120 },
+        { "x": 594, "y": 120 }
+      ]
+    },
+    {
+      "id": "app-instance-4-rds-master",
+      "waypoints": [
+        { "x": 1048, "y": 120 },
+        { "x": 594, "y": 120 }
+      ]
+    },
+
+    { "id": "rds-master-rds-slave", "waypoints": [] }
+  ]
+}

@@ -1,0 +1,24 @@
+%%{init: { "fontFamily": "GitLab Sans" }}%%
+graph LR
+accTitle: Basic pipelines
+accDescr: Shows a pipeline that runs sequentially through the build, test, and deploy stages.
+
+  subgraph deploy stage
+    deploy --> deploy_a
+    deploy --> deploy_b
+  end
+
+  subgraph test stage
+    test --> test_a
+    test --> test_b
+  end
+
+  subgraph build stage
+    build --> build_a
+    build --> build_b
+  end
+
+  build_a -.-> test
+  build_b -.-> test
+  test_a -.-> deploy
+  test_b -.-> deploy

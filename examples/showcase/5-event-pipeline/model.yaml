@@ -1,0 +1,55 @@
+kind: architecture-model
+id: event-pipeline
+name: AsyncAPI Channel concept - Producer, Channel, three Consumers
+libraries: [eventing@0.1.0]
+components:
+  - id: producer
+    type: eventing:component.producer
+    tokens: []
+    metadata: { label: Producer }
+  - id: message
+    type: eventing:component.message
+    tokens: []
+    metadata: { label: message }
+  - id: channel
+    type: eventing:component.channel
+    tokens: []
+    metadata: { label: Channel }
+  - id: consumer-a
+    type: eventing:component.consumer
+    tokens: []
+    metadata: { label: Consumer }
+  - id: consumer-b
+    type: eventing:component.consumer
+    tokens: []
+    metadata: { label: Consumer }
+  - id: consumer-c
+    type: eventing:component.consumer
+    tokens: []
+    metadata: { label: Consumer }
+relationships:
+  - id: producer-message
+    type: eventing:relationship.publish
+    from: producer
+    to: message
+    tokens: []
+  - id: message-channel
+    type: eventing:relationship.publish
+    from: message
+    to: channel
+    tokens: []
+  - id: channel-consumer-a
+    type: eventing:relationship.deliver
+    from: channel
+    to: consumer-a
+    tokens: []
+  - id: channel-consumer-b
+    type: eventing:relationship.deliver
+    from: channel
+    to: consumer-b
+    tokens: []
+  - id: channel-consumer-c
+    type: eventing:relationship.deliver
+    from: channel
+    to: consumer-c
+    tokens: []

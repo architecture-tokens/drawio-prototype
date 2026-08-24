@@ -1,0 +1,36 @@
+kind: token-library
+namespace: eventing
+domains: [component, relationship]
+version: 0.1.0
+name: Eventing
+description: >
+  Event-driven messaging concepts (AsyncAPI producer/channel/consumer pattern)
+  not covered by the core library: the producer/consumer application roles,
+  the addressable channel (broker topic/queue) they publish to and subscribe
+  from, the in-flight message itself, and the publish/deliver relationship
+  types that connect them.
+tokens:
+  - id: component.producer
+    kind: component-type
+    name: Producer
+    description: Application or service that publishes (produces) messages onto a channel.
+  - id: component.consumer
+    kind: component-type
+    name: Consumer
+    description: Application or service that subscribes to and consumes messages delivered through a channel.
+  - id: component.channel
+    kind: component-type
+    name: Channel
+    description: Addressable messaging construct (broker topic/queue) that a producer publishes to and consumers subscribe from.
+  - id: component.message
+    kind: component-type
+    name: Message
+    description: A discrete unit of data (event/payload) published by a producer and delivered through a channel.
+  - id: relationship.publish
+    kind: relationship-type
+    name: Publish
+    description: A producer (or the message it produces) moves onward toward the channel that will carry it.
+  - id: relationship.deliver
+    kind: relationship-type
+    name: Deliver
+    description: A channel delivers/routes a message to one subscribing consumer.

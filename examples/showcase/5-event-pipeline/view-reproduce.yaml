@@ -1,0 +1,37 @@
+# View Layer Contract (prototype v0) -- REPRODUCE MODE.
+#
+# mode: reproduce, per README.md "Conversion modes". Reason: source.mmd is
+# Mermaid's own default `graph LR` layout with nothing hand-tuned -- box
+# heights are uniform (one line of text, same formula, per B1), the
+# column/row gaps are within a few px of each other everywhere (~49-50
+# units, per B2), and connected boxes already share a centre-y (Producer/
+# message/Channel/Consumer-b all sit on one row, per B3). None of that is a
+# defect to re-author; the only thing wrong with it is its bezier fan-out
+# curves, and rule 3/3a fixes those in BOTH modes regardless (see
+# RULES-CHECK.md "Reproduce mode"). So this is a faithful redraw: geometry
+# EXTRACTED from the mermaid.ink render (see layout-reproduce.json), same
+# positions/box shapes/palette as source, orthogonal+rounded connectors
+# instead of the source's smooth curves.
+mode: reproduce
+reason: >
+  Source is Mermaid's own clean default layout (uniform box heights,
+  near-equal gaps, already grid-aligned); nothing here is a layout defect
+  except its bezier connector routing, which both modes fix per rule 3/3a.
+kind: view
+id: event-pipeline
+model: model.yaml
+
+# Direction computed the same way final.svg's restyle documents (dominant
+# axis-aligned projection of edge displacement vectors): source is a
+# Mermaid `graph LR` and every one of the 5 edges has a net positive dx
+# (rightward) -- 100% agreement, well over the 60% threshold -- so this is
+# an unambiguous `right`, matching the source's own declared LR direction.
+flow:
+  direction: right
+
+# No icon attachments: source.mmd is a bare Mermaid flowchart with no icon
+# glyphs of any kind (default node/label rendering only), so there is
+# nothing for `components:`/`relationships:` to attach here -- the same
+# "when the source shows icons" gate the task brief states. Likewise no
+# `visualElements:`: source has no subgraphs/clusters/boundaries, so there
+# is no container for this section to declare.

@@ -1,0 +1,139 @@
+# View Layer Contract (prototype v0). A view document is presentation-only:
+# every id it references (component, relationship, and visual-element member
+# ids) must resolve into model.yaml — this file adds nothing to what exists,
+# it only says where a glyph sits or where a band is drawn. Everything that
+# used to be an infra:presentation.* applied token directly on a model.yaml
+# component now lives here instead (see model.yaml / tokens.yaml "View
+# vocabulary" section for why, and RULES-CHECK.md / README.md for the prior
+# rendering that this file now describes as data).
+#
+# mode: restyle, per README.md "Conversion modes" (added retroactively --
+# this was the only mode before 2026-08-24). Reason: the cloud-web-app
+# example is the case study that motivated adding the mode gate in the
+# first place -- source.xml already conveyed deliberate structure (see
+# view-reproduce.yaml), and this restyle's own re-layout, while
+# Diagram-rules-clean, discards that structure (flattens the crossing AZ x
+# Autoscaling-Group grouping into two separate single-parent containers,
+# widens gaps, moves the AZ bands from crossing rectangles to a
+# bounding-box overlay). Kept as a second, alternate view of the SAME
+# model/census (nothing here changed) rather than deleted, per "one model
+# may carry both views" -- but reproduce.yaml is primary; see README.md.
+mode: restyle
+reason: >
+  Predates the reproduce/restyle mode split; kept as the Diagram-rules
+  re-layout alternative to view-reproduce.yaml's faithful redraw. Not the
+  primary view for this example -- see README.md "Conversion modes".
+kind: view
+id: cloud-web-app
+model: model.yaml
+
+# Which way the arrows POINT on the rendered canvas. One of: up, down, left,
+# right, mixed (mixed = no single dominant reading direction; skips the
+# rules-lint DIRECTION_GEOMETRY_CONFLICT check). This diagram reads
+# bottom-to-top, matching the source (see README.md "Direction token"):
+# user/route53 at the bottom, rds-master/rds-slave at the top, every
+# arrowhead's final segment pointing toward smaller y.
+flow:
+  direction: up
+
+# Per-component visual attachments. A LIST per component (not a scalar) —
+# a component could in principle carry more than one glyph; this diagram
+# never needs more than one, but the shape shouldn't foreclose it. Anchor is
+# a nine-grid position (top/middle/bottom x left/center/right) for where the
+# glyph sits inside the component's rendered box, clear of the title text
+# and box padding (diagram-rules.md T1/T2). Position choices and the "why"
+# per component are unchanged from README.md's "Icon tokens and the
+# nine-grid" table — only the file that records them moved.
+components:
+  user:
+    - icon: actor.user
+      anchor: top-center
+  route53:
+    - icon: aws.route53
+      anchor: top-right
+  web-elb:
+    - icon: aws.elb
+      anchor: middle-left
+  cdn:
+    - icon: aws.cloudfront
+      anchor: middle-right
+  static-assets:
+    - icon: aws.static-assets
+      anchor: top-right
+  s3:
+    - icon: aws.s3
+      anchor: middle-right
+  web-instance-1:
+    - icon: aws.ec2-instance
+      anchor: top-center
+  web-instance-2:
+    - icon: aws.ec2-instance
+      anchor: top-center
+  web-instance-3:
+    - icon: aws.ec2-instance
+      anchor: top-center
+  web-instance-4:
+    - icon: aws.ec2-instance
+      anchor: top-center
+  app-elb:
+    - icon: aws.elb
+      anchor: middle-left
+  app-instance-1:
+    - icon: aws.ec2-instance
+      anchor: top-center
+  app-instance-2:
+    - icon: aws.ec2-instance
+      anchor: top-center
+  app-instance-3:
+    - icon: aws.ec2-instance
+      anchor: top-center
+  app-instance-4:
+    - icon: aws.ec2-instance
+      anchor: top-center
+  rds-master:
+    - icon: aws.rds
+      anchor: middle-right
+  rds-slave:
+    - icon: aws.rds
+      anchor: middle-left
+  # web-asg / app-asg intentionally carry no attachment: the source's own
+  # small "Auto Scaling" badge icon on those group shapes is redundant with
+  # the container's own title text (see README.md "Icon tokens").
+
+# Per-relationship visual attachments. The one edge-attached icon this
+# diagram needs is the SSL padlock, keyed off the two relationships that
+# carry model.yaml's security:security.encryption.in-transit token —
+# `icon` here is `security.ssl-padlock` (not `security.padlock`) to match
+# the glyph id already documented in final.svg's ICONS comment/symbol set
+# (`icon-security-ssl-padlock`); see tools/rules-lint.mjs's
+# UNKNOWN_ICON_SYMBOL check for the id<->symbol mapping rule. `anchor:
+# edge-midpoint` is the 50%-by-path-length point along the relationship's
+# rendered polyline (from layout.json's waypoints, falling back to the
+# straight line between the two components' centers when a relationship has
+# none); `offset` is an additional {dx,dy} pixel nudge in canvas space, {0,0}
+# reproducing the current final.svg placement exactly for both edges here.
+relationships:
+  user-cdn:
+    - icon: security.ssl-padlock
+      anchor: edge-midpoint
+      offset: { dx: 0, dy: 0 }
+  user-web-elb:
+    - icon: security.ssl-padlock
+      anchor: edge-midpoint
+      offset: { dx: 0, dy: 0 }
+
+# Visual-layer elements: things final.svg draws that are not a model
+# component or relationship at all — a crossing grouping the layout-contract
+# schema has no containment for (see model.yaml "Flattening & simplification
+# decisions" #3 / README.md "Restored elements" (a)). `members` are model
+# component ids; a band's rendered extent is the union of its members'
+# boxes, inset per README.md's documented margins.
+visualElements:
+  - id: az-band-a
+    kind: availability-zone-band
+    label: Availability Zone A
+    members: [web-instance-1, web-instance-2, app-instance-1, app-instance-2]
+  - id: az-band-b
+    kind: availability-zone-band
+    label: Availability Zone B
+    members: [web-instance-3, web-instance-4, app-instance-3, app-instance-4]

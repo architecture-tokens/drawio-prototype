@@ -1,0 +1,2 @@
+Wrote examples/showcase/2-cicd-flow/out.drawio.
+exit=0

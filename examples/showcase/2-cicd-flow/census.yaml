@@ -1,0 +1,139 @@
+# Source census (prototype v0). One record per SOURCE element (source.mmd
+# vertex/edge, as `node tools/rules-lint.mjs --census-dump source.mmd`
+# inventories them) -- not per model.yaml element. CENSUS_MISMATCH parses
+# `source` below and asserts len(records) == vertex_count + edge_count (12
+# vertex + 10 edge = 22, matching --census-dump's own tally), that every
+# component/relationship target_id resolves into `model`, and that every
+# drop carries a reason.
+#
+# Unlike 1-cloud-web-app's AWS source, every element here maps cleanly onto
+# a first-class model.yaml id -- there is no drop, token, or (component-less)
+# visual bucket in this example. The 3 subgraph headers ("build stage" /
+# "test stage" / "deploy stage") are primary_bucket=component, not =visual,
+# because model.yaml already promotes each stage to a real
+# cicd:pipeline.stage component (README.md "What the semantic model
+# captures") -- unlike az-band-a/b in the AWS example, which had no backing
+# model component. That still leaves one fidelity gap the census alone
+# can't close: source.mmd draws containment purely as subgraph NESTING (a
+# job physically inside its stage's box), with no visual arrow at all for
+# it -- the 9 core:relationship.belongs.to edges in model.yaml are pure
+# semantic bookkeeping that no source vertex/edge maps to, so they don't
+# (and shouldn't) appear as census records here. view-reproduce.yaml closes
+# that gap with 3 visualElements entries (one per stage) that dual-tag each
+# stage's own rendered rect as its container's data-view-element, with a
+# members list naming the 3 jobs nested inside -- see view-reproduce.yaml's
+# header comment and RULES-CHECK.md's "Reproduce mode" section.
+kind: census
+model: model.yaml
+source: source.mmd
+records:
+  - source_id: 'deploy stage'
+    kind: vertex
+    label: 'deploy stage'
+    primary_bucket: component
+    target_ids: [deploy_stage]
+  - source_id: 'deploy'
+    kind: vertex
+    label: 'deploy'
+    primary_bucket: component
+    target_ids: [deploy]
+  - source_id: 'deploy_a'
+    kind: vertex
+    label: 'deploy_a'
+    primary_bucket: component
+    target_ids: [deploy_a]
+  - source_id: 'edge:deploy->deploy_a'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [deploy-deploy_a]
+  - source_id: 'deploy_b'
+    kind: vertex
+    label: 'deploy_b'
+    primary_bucket: component
+    target_ids: [deploy_b]
+  - source_id: 'edge:deploy->deploy_b'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [deploy-deploy_b]
+  - source_id: 'test stage'
+    kind: vertex
+    label: 'test stage'
+    primary_bucket: component
+    target_ids: [test_stage]
+  - source_id: 'test'
+    kind: vertex
+    label: 'test'
+    primary_bucket: component
+    target_ids: [test]
+  - source_id: 'test_a'
+    kind: vertex
+    label: 'test_a'
+    primary_bucket: component
+    target_ids: [test_a]
+  - source_id: 'edge:test->test_a'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [test-test_a]
+  - source_id: 'test_b'
+    kind: vertex
+    label: 'test_b'
+    primary_bucket: component
+    target_ids: [test_b]
+  - source_id: 'edge:test->test_b'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [test-test_b]
+  - source_id: 'build stage'
+    kind: vertex
+    label: 'build stage'
+    primary_bucket: component
+    target_ids: [build_stage]
+  - source_id: 'build'
+    kind: vertex
+    label: 'build'
+    primary_bucket: component
+    target_ids: [build]
+  - source_id: 'build_a'
+    kind: vertex
+    label: 'build_a'
+    primary_bucket: component
+    target_ids: [build_a]
+  - source_id: 'edge:build->build_a'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [build-build_a]
+  - source_id: 'build_b'
+    kind: vertex
+    label: 'build_b'
+    primary_bucket: component
+    target_ids: [build_b]
+  - source_id: 'edge:build->build_b'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [build-build_b]
+  - source_id: 'edge:build_a->test'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [build_a-test]
+  - source_id: 'edge:build_b->test'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [build_b-test]
+  - source_id: 'edge:test_a->deploy'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [test_a-deploy]
+  - source_id: 'edge:test_b->deploy'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [test_b-deploy]
