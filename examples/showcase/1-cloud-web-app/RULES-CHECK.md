@@ -32,7 +32,7 @@ found and fixed during that process (see below).
    edges, both diverging fan-out buses, both converging merge trunks) were
    converted from sharp `<polyline>` elbows to `<path>` with a 5-unit `Q`
    arc at every bend — one radius, uniform across the whole file (rules-lint
-   rule 3a: 10 rounded connectors, 20 bends, radius 5, PASS). Verified
+   rule 3a: 18 rounded connectors, 28 bends, radius 5, PASS). Verified
    visually at 2x-render zoom on four different bend shapes (a badge-run
    elbow, a diverging fan-out riser, a converging merge trunk, and a
    terminal arrowhead landing) — see `final.png`: every corner is smooth,
@@ -254,7 +254,7 @@ bands end-to-end (title clearance, connector clearance, corridor gap to
 both ELBs) — per the skill's "render, crop, look" verification rule.
 
 **Rule 3a pass (2026-08-24):** re-rendered `final.svg` -> `final.png` after
-converting the 10 bent connectors to rounded `<path>`s, then cropped and
+converting all 18 bent connectors to rounded `<path>`s, then cropped and
 looked at four distinct bend shapes at 2-3x zoom: the padlock-badge elbow
 (User -> CDN/Web ELB), a diverging fan-out riser (App ELB -> App
 instances), a converging merge-trunk bend (App instances -> App ELB), and
@@ -266,10 +266,11 @@ edge — no marker distortion, no overshoot into the box.
 
 **32 PASS, 0 FAIL, 1 N/A** (rule 5, no badges in this diagram — unchanged
 from the previous iteration; +1 PASS vs. the previous iteration for the new
-rule 3a). `node tools/rules-lint.mjs final.svg` exits 0 (10 PASS / 0 FAIL /
+rule 3a). `node tools/rules-lint.mjs final.svg` exits 0 (11 PASS / 0 FAIL /
 22 NOT-CHECKABLE or out-of-scope for the mechanical subset it can evaluate
-— rule 3a is now part of that 10, confirming all 10 rounded connectors
-share one 5-unit radius; the render-dependent and semantic-judgement rules
+— rule 3a confirms all 18 rounded connectors / 28 bends share one 5-unit
+radius, while `VISUAL_TOPOLOGY` confirms 52 straight connector legs have
+no unintended crossing or invalid T-junction; the render-dependent and semantic-judgement rules
 above were checked manually per the table).
 
 ---
@@ -475,4 +476,4 @@ target:
 
 ## Summary
 
-**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 14 PASS, 0 FAIL, 1 WARN (unused decorative `<symbol>`, non-blocking), 23 NOT-CHECKABLE. Rule 3a reports 18 rounded connectors / 21 bends, including the 16 fan elbows missed by the first visual pass. Two documented, disclosed reproduce-mode exemptions remain (B1's size quantization, C2's arrow-color-by-domain) — both are documentation-only calls; no `rules-lint.mjs` code changed to accommodate either, since both checks are already `NOT-CHECKABLE` for every file regardless of mode.
+**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 15 PASS, 0 FAIL, 1 WARN (unused decorative `<symbol>`, non-blocking), 23 NOT-CHECKABLE. Rule 3a reports 18 rounded connectors / 21 bends, including the 16 fan elbows missed by the first visual pass; `VISUAL_TOPOLOGY` checks 46 exact straight legs and reports no unintended crossing or invalid T-junction. Two documented, disclosed reproduce-mode exemptions remain (B1's size quantization, C2's arrow-color-by-domain) — both are documentation-only calls; no `rules-lint.mjs` code changed to accommodate either, since both checks are already `NOT-CHECKABLE` for every file regardless of mode.

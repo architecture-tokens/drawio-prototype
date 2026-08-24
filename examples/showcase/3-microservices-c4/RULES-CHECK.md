@@ -157,8 +157,12 @@ node tools/rules-lint.mjs final-reproduce.svg --full \
   --layout layout-reproduce.json
 ```
 
-Result: **15 PASS, 0 FAIL, 0 WARN** across the mechanically and cross-layer checkable
+Result: **16 PASS, 0 FAIL, 0 WARN** across the mechanically and cross-layer checkable
 rules. Census is 19/19, direction is 6/10 downward (the declared 60% threshold), all 9
 components and the boundary view element bind exactly once, all ten connectors share
-stroke width 1, and all 20 bends use radius 5. The 2x `final-reproduce.png` was inspected
-after rendering; no node text overflows and relationship labels remain readable.
+stroke width 1, and all 20 bends use radius 5. `VISUAL_TOPOLOGY` checks 32 exact straight
+legs. Eight relationship pairs cross in Mermaid's source-faithful right routing gutter;
+because geometry cannot infer their intent, `layout-reproduce.json` declares those exact
+pairs under `topology.allowEdgeCrossings` rather than disabling the gate. The 2x
+`final-reproduce.png` was inspected after rendering; no node text overflows and
+relationship labels remain readable.

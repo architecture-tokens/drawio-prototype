@@ -44,6 +44,11 @@
 //   B2-lite   - vertical gaps between stacked sibling leaf rects have <=2
 //               distinct values (reported, not asserted as ground truth)
 //   T2-lite   - a node-label <text> anchor falls inside its paired leaf rect
+//   VISUAL_TOPOLOGY - connector segments have no unintended interior X
+//               crossings or unrelated T-junctions; semantic shared buses,
+//               component attachment areas, and exact layout-declared
+//               crossing pairs remain allowed. Also feeds rule 3a's
+//               split-element repeated-fan-elbow detector.
 //
 // Everything else in diagram-rules.md is reported as NOT-CHECKABLE, either
 // because it is inherently render-dependent (rules 1-3,5,6,11,12,T1,B3,B5-B10)
@@ -572,14 +577,22 @@ function checkRule3a(root) {
 
   const sharpEls = elements.filter((e) => e.kind === 'sharp');
   const roundedEls = elements.filter((e) => e.kind === 'rounded');
+  const splitFanElbows = findSplitSharpFanElbows(root);
 
-  if (roundedEls.length === 0 && sharpEls.length === 0) {
+  if (roundedEls.length === 0 && sharpEls.length === 0 && splitFanElbows.length === 0) {
     return { status: 'NOT-CHECKABLE', message: 'no connector bends found (nothing to round)' };
   }
   if (roundedEls.length === 0) {
     return {
       status: 'WARN',
-      message: `rule 3a adopted 2026-08-24; ${sharpEls.length} connector(s) with sharp (unrounded) bends predate it — not hard-failed`,
+      message: `rule 3a adopted 2026-08-24; ${sharpEls.length + splitFanElbows.length} connector bend(s), including ${splitFanElbows.length} split fan elbow(s), are sharp and predate it — not hard-failed`,
+    };
+  }
+  if (splitFanElbows.length > 0) {
+    return {
+      status: 'FAIL',
+      message: `${splitFanElbows.length} split sharp fan elbow(s) terminate perpendicularly on a separately-authored bus; the singleton opposite-side trunk/T-junction remains allowed, but every repeated fan branch must author its logical turn as one rounded path`,
+      snippet: truncate(splitFanElbows[0].branch.element.raw),
     };
   }
   if (sharpEls.length > 0) {
@@ -654,6 +667,241 @@ function checkRule3a(root) {
   return {
     status: 'PASS',
     message: `${roundedEls.length} rounded connector(s), ${allBends.length} bend(s) total, all one uniform radius ${round(R, 2)}${clampNote}`,
+  };
+}
+
+// VISUAL_TOPOLOGY: exact, renderer-independent orthogonal segment
+// intersections in the authored SVG. Curved Q/A corner fragments are not
+// approximated; their adjoining straight legs are exact and sufficient to
+// distinguish a real X crossing from endpoint junctions and shared buses.
+const TOPOLOGY_EPS = 0.01;
+
+function relationshipOwner(node) {
+  for (let current = node; current; current = current.parent) {
+    if (current.attrs?.['data-relationship']) return current.attrs['data-relationship'];
+  }
+  return null;
+}
+
+function segment(a, b, element, owner) {
+  const horizontal = Math.abs(a[1] - b[1]) <= TOPOLOGY_EPS;
+  const vertical = Math.abs(a[0] - b[0]) <= TOPOLOGY_EPS;
+  if (!horizontal && !vertical) return null;
+  return {
+    a: horizontal ? [a[0], (a[1] + b[1]) / 2] : [(a[0] + b[0]) / 2, a[1]],
+    b: horizontal ? [b[0], (a[1] + b[1]) / 2] : [(a[0] + b[0]) / 2, b[1]],
+    axis: horizontal ? 'horizontal' : 'vertical',
+    element,
+    owner,
+  };
+}
+
+function pathStraightSegments(node) {
+  const commands = tokenizePathD(node.attrs.d);
+  if (!commands || commands[0].cmd !== 'M' || commands[0].args.length < 2) return [];
+  let current = [commands[0].args[0], commands[0].args[1]];
+  const segments = [];
+  const owner = relationshipOwner(node);
+  for (const { cmd, args } of commands.slice(1)) {
+    let next = null;
+    if (cmd === 'L' && args.length >= 2) next = [args[0], args[1]];
+    else if (cmd === 'H' && args.length >= 1) next = [args[0], current[1]];
+    else if (cmd === 'V' && args.length >= 1) next = [current[0], args[0]];
+    else if (cmd === 'Q' && args.length >= 4) {
+      current = [args[2], args[3]];
+      continue;
+    } else if (cmd === 'A' && args.length >= 7) {
+      current = [args[5], args[6]];
+      continue;
+    } else continue;
+    const straight = segment(current, next, node, owner);
+    if (straight) segments.push(straight);
+    current = next;
+  }
+  return segments;
+}
+
+function collectConnectorSegments(root) {
+  const segments = [];
+  for (const node of collectAll(root, 'line')) {
+    if (isInsideDefsOrMarker(node)) continue;
+    const values = ['x1', 'y1', 'x2', 'y2'].map((name) => num(node.attrs[name]));
+    if (values.some((value) => value === undefined)) continue;
+    const item = segment(values.slice(0, 2), values.slice(2), node, relationshipOwner(node));
+    if (item) segments.push(item);
+  }
+  for (const node of collectAll(root, 'polyline')) {
+    if (isInsideDefsOrMarker(node)) continue;
+    const points = parsePoints(node.attrs.points);
+    for (let index = 0; index + 1 < points.length; index += 1) {
+      const item = segment(points[index], points[index + 1], node, relationshipOwner(node));
+      if (item) segments.push(item);
+    }
+  }
+  for (const node of collectAll(root, 'path')) {
+    if (isInsideDefsOrMarker(node)) continue;
+    segments.push(...pathStraightSegments(node));
+  }
+  return segments;
+}
+
+function segmentEndpointOnBus(branch, bus) {
+  if (branch.axis === bus.axis) return null;
+  for (const endpointName of ['a', 'b']) {
+    const endpoint = branch[endpointName];
+    const other = branch[endpointName === 'a' ? 'b' : 'a'];
+    const onBus =
+      bus.axis === 'horizontal'
+        ? Math.abs(endpoint[1] - bus.a[1]) <= TOPOLOGY_EPS &&
+          topologyBetween(endpoint[0], bus.a[0], bus.b[0])
+        : Math.abs(endpoint[0] - bus.a[0]) <= TOPOLOGY_EPS &&
+          topologyBetween(endpoint[1], bus.a[1], bus.b[1]);
+    if (!onBus) continue;
+    const delta = bus.axis === 'horizontal' ? other[1] - endpoint[1] : other[0] - endpoint[0];
+    if (Math.abs(delta) <= TOPOLOGY_EPS) continue;
+    return { point: endpoint, side: Math.sign(delta) };
+  }
+  return null;
+}
+
+/**
+ * Finds the blind spot where a fan bus and each perpendicular branch are
+ * separate straight SVG elements. Two-or-more branches on one side prove a
+ * repeated fan pattern; a singleton on the opposite side is the real shared
+ * trunk/T-junction and is intentionally not returned.
+ */
+function findSplitSharpFanElbows(root) {
+  const segments = collectConnectorSegments(root);
+  const offenders = [];
+  for (const bus of segments) {
+    const bySide = new Map();
+    for (const branch of segments) {
+      if (branch.element === bus.element) continue;
+      const junction = segmentEndpointOnBus(branch, bus);
+      if (!junction) continue;
+      const side = bySide.get(junction.side) ?? new Map();
+      // Several logical routes can deliberately overlap into one physical
+      // shared ray before meeting a trunk. Count that once; fan elbows are
+      // repeated junction POSITIONS along a bus, not repeated markup.
+      const physicalJunction = `${round(junction.point[0], 4)},${round(junction.point[1], 4)}`;
+      if (!side.has(physicalJunction))
+        side.set(physicalJunction, { branch, bus, point: junction.point });
+      bySide.set(junction.side, side);
+    }
+    for (const side of bySide.values()) if (side.size >= 2) offenders.push(...side.values());
+  }
+  // A bus may itself be authored as multiple overlapping collinear elements;
+  // count each physical branch junction once.
+  const unique = new Map();
+  for (const offender of offenders) {
+    const [x, y] = offender.point;
+    const key = `${x},${y}:${offender.branch.element.raw}`;
+    if (!unique.has(key)) unique.set(key, offender);
+  }
+  return [...unique.values()];
+}
+
+const topologyBetween = (value, a, b) =>
+  value >= Math.min(a, b) - TOPOLOGY_EPS && value <= Math.max(a, b) + TOPOLOGY_EPS;
+const topologyStrictlyBetween = (value, a, b) =>
+  value > Math.min(a, b) + TOPOLOGY_EPS && value < Math.max(a, b) - TOPOLOGY_EPS;
+
+function topologyIntersection(a, b) {
+  if (a.axis === b.axis) return null;
+  const horizontal = a.axis === 'horizontal' ? a : b;
+  const vertical = a.axis === 'vertical' ? a : b;
+  const point = [vertical.a[0], horizontal.a[1]];
+  if (
+    !topologyBetween(point[0], horizontal.a[0], horizontal.b[0]) ||
+    !topologyBetween(point[1], vertical.a[1], vertical.b[1])
+  )
+    return null;
+  return {
+    point,
+    proper:
+      topologyStrictlyBetween(point[0], horizontal.a[0], horizontal.b[0]) &&
+      topologyStrictlyBetween(point[1], vertical.a[1], vertical.b[1]),
+  };
+}
+
+function componentBoxes(root) {
+  return collectAll(root, 'rect')
+    .filter((node) => node.attrs['data-component'] !== undefined)
+    .map(rectBBox)
+    .filter(Boolean);
+}
+
+function pointInBox(point, box) {
+  return topologyBetween(point[0], box.x, box.x2) && topologyBetween(point[1], box.y, box.y2);
+}
+
+function crossingAllowance(layout) {
+  return new Set(
+    (layout?.topology?.allowEdgeCrossings ?? []).map(({ edgeIds }) =>
+      [...edgeIds].sort().join('\0'),
+    ),
+  );
+}
+
+function topologyRelationshipEndpoints(model) {
+  return new Map(
+    (model?.relationships ?? []).map((relationship) => [
+      String(relationship.id),
+      new Set([String(relationship.from), String(relationship.to)]),
+    ]),
+  );
+}
+
+function topologyOwnersShareEndpoint(left, right, endpoints) {
+  if (!left || !right) return false;
+  const a = endpoints.get(left);
+  const b = endpoints.get(right);
+  return Boolean(a && b && [...a].some((id) => b.has(id)));
+}
+
+function checkVisualTopology(root, layout, model) {
+  const segments = collectConnectorSegments(root);
+  const boxes = componentBoxes(root);
+  const allowed = crossingAllowance(layout);
+  const endpoints = topologyRelationshipEndpoints(model);
+  const crossings = [];
+  const invalidJunctions = [];
+  for (let left = 0; left < segments.length; left += 1) {
+    for (let right = left + 1; right < segments.length; right += 1) {
+      const a = segments[left];
+      const b = segments[right];
+      if (a.element === b.element) continue;
+      const intersection = topologyIntersection(a, b);
+      if (!intersection || boxes.some((box) => pointInBox(intersection.point, box))) continue;
+      const ownerPair = a.owner && b.owner ? [a.owner, b.owner].sort().join('\0') : null;
+      const semanticJunction = topologyOwnersShareEndpoint(a.owner, b.owner, endpoints);
+      if (semanticJunction || (intersection.proper && ownerPair && allowed.has(ownerPair)))
+        continue;
+      if (intersection.proper) crossings.push({ a, b, point: intersection.point });
+      else if (a.owner && b.owner && endpoints.size > 0)
+        invalidJunctions.push({ a, b, point: intersection.point });
+    }
+  }
+  if (crossings.length > 0 || invalidJunctions.length > 0) {
+    const offenders = [...crossings, ...invalidJunctions];
+    const first = offenders[0];
+    const locations = offenders
+      .slice(0, 3)
+      .map(({ point }) => `(${round(point[0])}, ${round(point[1])})`)
+      .join(', ');
+    const parts = [];
+    if (crossings.length) parts.push(`${crossings.length} unintended orthogonal crossing(s)`);
+    if (invalidJunctions.length)
+      parts.push(`${invalidJunctions.length} unrelated endpoint T-junction(s)`);
+    return {
+      status: 'FAIL',
+      message: `${parts.join(' and ')} at ${locations}${offenders.length > 3 ? ', …' : ''}; first pair${first.a.owner || first.b.owner ? ` (${first.a.owner ?? 'unbound'} / ${first.b.owner ?? 'unbound'})` : ' is unbound'}`,
+      snippet: truncate(first.a.element.raw),
+    };
+  }
+  return {
+    status: 'PASS',
+    message: `${segments.length} straight connector segment(s) have no unintended orthogonal crossings; endpoint junctions, shared buses, component attachment areas, and ${allowed.size} declared crossing pair(s) are allowed`,
   };
 }
 
@@ -2005,6 +2253,7 @@ function lintSource(text, label, crossLayer = {}) {
   const root = buildTree(stripped);
   const allCommentsText = comments.join('\n');
 
+  const { model, view, census, censusFilePath, layout, full } = crossLayer;
   const checkResults = new Map([
     ['4', checkRule4(root)],
     ['3a', checkRule3a(root)],
@@ -2016,9 +2265,9 @@ function lintSource(text, label, crossLayer = {}) {
     ['B4', checkB4(root)],
     ['B2-lite', checkB2Lite(root)],
     ['T2-lite', checkT2Lite(root)],
+    ['VISUAL_TOPOLOGY', checkVisualTopology(root, layout, model)],
   ]);
 
-  const { model, view, census, censusFilePath, layout, full } = crossLayer;
   if (view) checkResults.set('UNKNOWN_ICON_SYMBOL', checkUnknownIconSymbol(root, view));
   if (model)
     checkResults.set(
@@ -2223,6 +2472,14 @@ A cross-layer check only runs when ALL of the flags it needs are supplied:
                                      relationship id or attachment shape
                                      VIEW_REF_UNRESOLVED already rejects is
                                      skipped here, not double-reported.
+  VISUAL_TOPOLOGY                    always scans exact straight SVG legs for
+                                     interior orthogonal crossings. With
+                                     --model, unrelated relationship-owned
+                                     endpoint T-junctions also FAIL while
+                                     relationships sharing a semantic endpoint
+                                     remain a valid bus. With --layout, exact
+                                     topology.allowEdgeCrossings pairs are
+                                     honored; no diagram/type ids are built in.
 
 --full requires --model, --view, --census, and --layout together
 (FULL_GATE_INCOMPLETE if any is missing) and additionally treats any

@@ -1,5 +1,6 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { Layout, Report } from './types.js';
+import { validateVisualTopology } from './topology.js';
 
 /** Strict-schema-compatible wire contract sent to OpenAI and validated locally. */
 export const layoutSchema = {
@@ -50,6 +51,29 @@ export const layoutSchema = {
               properties: {
                 x: { type: 'integer', minimum: 0 },
                 y: { type: 'integer', minimum: 0 },
+              },
+            },
+          },
+        },
+      },
+    },
+    topology: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['allowEdgeCrossings'],
+      properties: {
+        allowEdgeCrossings: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['edgeIds'],
+            properties: {
+              edgeIds: {
+                type: 'array',
+                minItems: 2,
+                maxItems: 2,
+                prefixItems: [{ type: 'string' }, { type: 'string' }],
               },
             },
           },
@@ -111,6 +135,17 @@ export function validateLayout(value: unknown, model: any): Report {
   };
   checkIds(layout.nodes, expectedNodes, 'node');
   checkIds(layout.edges, expectedEdges, 'edge');
+  for (const [index, allowance] of (layout.topology?.allowEdgeCrossings ?? []).entries()) {
+    const [left, right] = allowance.edgeIds;
+    if (left === right || !expectedEdges.has(left) || !expectedEdges.has(right))
+      diagnostics.push(
+        error(
+          'INVALID_TOPOLOGY_ALLOWANCE',
+          `allowEdgeCrossings must name two different model relationships; got ${left}, ${right}`,
+          `/layout/topology/allowEdgeCrossings/${index}/edgeIds`,
+        ),
+      );
+  }
   const nodeIds = new Set(layout.nodes.map((node) => node.id));
   for (const node of layout.nodes)
     if (node.parentId !== null && (!nodeIds.has(node.parentId) || node.parentId === node.id))
@@ -136,5 +171,6 @@ export function validateLayout(value: unknown, model: any): Report {
       cursor = parent.get(cursor);
     }
   }
+  if (!diagnostics.length) diagnostics.push(...validateVisualTopology(layout, model));
   return { valid: !diagnostics.length, diagnostics };
 }

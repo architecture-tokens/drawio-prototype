@@ -176,11 +176,10 @@
   <!-- web-instance-{1..4} -> app-elb (CONVERGING: risers + one merged trunk, one arrowhead, rule 11).
        Merge bus sits at y=380, centered in the 360-400 gap: 20px clear of app-elb's
        bottom border below and 20px clear of the web-asg container above (rule 6). -->
-  <polyline points="320,430 320,380" stroke="#B7791F"/>
-  <polyline points="500,430 500,380" stroke="#B7791F"/>
-  <polyline points="868,430 868,380" stroke="#B7791F"/>
-  <polyline points="1048,430 1048,380" stroke="#B7791F"/>
-  <polyline points="1048,380 320,380" stroke="#B7791F"/>
+  <path d="M 320,430 V 385 Q 320,380 325,380 H 684" stroke="#B7791F"/>
+  <path d="M 500,430 V 385 Q 500,380 505,380 H 684" stroke="#B7791F"/>
+  <path d="M 868,430 V 385 Q 868,380 863,380 H 684" stroke="#B7791F"/>
+  <path d="M 1048,430 V 385 Q 1048,380 1043,380 H 684" stroke="#B7791F"/>
   <polyline points="684,380 684,360" stroke="#B7791F" marker-end="url(#arrow-routing)"/>
 
   <!-- app-elb -> app-instance-{1..4} (diverging fan-out bus) -->
@@ -191,11 +190,10 @@
 
   <!-- app-instance-{1..4} -> rds-master (CONVERGING: risers + one merged trunk, one arrowhead).
        Merge bus at y=120, centered in the 100-140 gap for the same reason as above. -->
-  <polyline points="320,170 320,120" stroke="#1D4ED8"/>
-  <polyline points="500,170 500,120" stroke="#1D4ED8"/>
-  <polyline points="868,170 868,120" stroke="#1D4ED8"/>
-  <polyline points="1048,170 1048,120" stroke="#1D4ED8"/>
-  <polyline points="1048,120 320,120" stroke="#1D4ED8"/>
+  <path d="M 320,170 V 125 Q 320,120 325,120 H 594" stroke="#1D4ED8"/>
+  <path d="M 500,170 V 125 Q 500,120 505,120 H 594" stroke="#1D4ED8"/>
+  <path d="M 868,170 V 125 Q 868,120 863,120 H 594" stroke="#1D4ED8"/>
+  <path d="M 1048,170 V 125 Q 1048,120 1043,120 H 594" stroke="#1D4ED8"/>
   <polyline points="594,120 594,100" stroke="#1D4ED8" marker-end="url(#arrow-database)"/>
 
   <!-- rds-master -> rds-slave (replication: dashed carries real meaning, rule 10) -->

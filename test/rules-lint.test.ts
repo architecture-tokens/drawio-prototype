@@ -85,6 +85,32 @@ const clampedBendConnectorFixture = `<svg xmlns="http://www.w3.org/2000/svg" vie
 </svg>
 `;
 
+// The rounded path establishes the diagram's normative radius. The two
+// lower fan branches each terminate perpendicularly on a separately-authored
+// bus, so the logical 90-degree turns are sharp even though no individual
+// SVG element contains a bend. The single upper trunk is a true T-junction
+// and must remain allowed.
+const splitFanElbowsFixture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130" width="220" height="130">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#FF0000"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="220" height="130" fill="#ffffff"/>
+<path d="M190,10 H205 Q210,10 210,15 V40" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+<polyline points="20,50 180,50" stroke="#FF0000" fill="none"/>
+<polyline points="40,50 40,100" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+<polyline points="80,50 80,100" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+<polyline points="100,50 100,10" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+</svg>
+`;
+
+const unrelatedTJunctionFixture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 130" width="220" height="130">
+<g data-relationship="left-right"><path d="M20,50 H180" stroke="#333333" fill="none"/></g>
+<g data-relationship="bottom-top"><path d="M100,100 V50" stroke="#333333" fill="none"/></g>
+</svg>
+`;
+
 describe('tools/rules-lint.mjs', () => {
   it('finds the five showcase directories (sanity check on the fixture list)', () => {
     expect(showcaseSvgs.length).toBe(5);
@@ -172,6 +198,65 @@ describe('tools/rules-lint.mjs', () => {
     expect(rule3a?.status).toBe('PASS');
     expect(rule3a?.message).toMatch(/radius 5/);
     expect(rule3a?.message).toMatch(/2 bend\(s\) clamped/);
+  });
+
+  it('visual topology: rejects the historical cloud ingress crossing at y=560', async () => {
+    const corrected = fs.readFileSync(
+      path.join(showcaseDir, '1-cloud-web-app', 'final-reproduce.svg'),
+      'utf8',
+    );
+    const broken = corrected.replace(
+      'V 631 Q 259.5,626 254.5,626 H 79.5 Q 74.5,626 74.5,621 V 515',
+      'V 565 Q 259.5,560 254.5,560 H 79.5 Q 74.5,560 74.5,555 V 515',
+    );
+    const fixturePath = path.join(os.tmpdir(), `rules-lint-crossing-${Date.now()}.svg`);
+    fs.writeFileSync(fixturePath, broken);
+
+    const result = await runCli([fixturePath, '--format', 'json']);
+    const [report] = JSON.parse(result.stdout) as Array<{
+      checks: Array<{ id: string; status: string; message: string }>;
+    }>;
+    const topology = report.checks.find((check) => check.id === 'VISUAL_TOPOLOGY');
+    expect(topology?.status).toBe('FAIL');
+    expect(topology?.message).toMatch(/2 unintended orthogonal crossing/i);
+    expect(topology?.message).toMatch(/259\.5, 593.*236\.5, 560/i);
+  });
+
+  it('rule 3a: detects sharp fan elbows split across separate SVG elements while allowing the true trunk T-junction', async () => {
+    const fixturePath = path.join(os.tmpdir(), `rules-lint-split-fan-${Date.now()}.svg`);
+    fs.writeFileSync(fixturePath, splitFanElbowsFixture);
+
+    const result = await runCli([fixturePath, '--format', 'json']);
+    const [report] = JSON.parse(result.stdout) as Array<{
+      checks: Array<{ id: string; status: string; message: string }>;
+    }>;
+    const corners = report.checks.find((check) => check.id === '3a');
+    expect(corners?.status).toBe('FAIL');
+    expect(corners?.message).toMatch(/2 split sharp fan elbow/i);
+  });
+
+  it('visual topology: rejects an unrelated T-junction but permits the same geometry for relationships sharing an endpoint', async () => {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-t-junction-'));
+    const svgPath = path.join(directory, 'fixture.svg');
+    const modelPath = path.join(directory, 'model.yaml');
+    fs.writeFileSync(svgPath, unrelatedTJunctionFixture);
+    const writeModel = (shared: boolean) =>
+      fs.writeFileSync(
+        modelPath,
+        `components:\n  - { id: left }\n  - { id: right }\n  - { id: bottom }\n  - { id: top }\nrelationships:\n  - { id: left-right, from: left, to: right }\n  - { id: bottom-top, from: ${shared ? 'left' : 'bottom'}, to: top }\n`,
+      );
+
+    writeModel(false);
+    const unrelated = await runJson([svgPath, '--model', modelPath]);
+    expect(unrelated.reports[0].checks.find((check) => check.id === 'VISUAL_TOPOLOGY')).toEqual(
+      expect.objectContaining({ status: 'FAIL', message: expect.stringMatching(/T-junction/i) }),
+    );
+
+    writeModel(true);
+    const shared = await runJson([svgPath, '--model', modelPath]);
+    expect(shared.reports[0].checks.find((check) => check.id === 'VISUAL_TOPOLOGY')).toEqual(
+      expect.objectContaining({ status: 'PASS' }),
+    );
   });
 
   it('exits 2 with usage text when no files are given', async () => {
