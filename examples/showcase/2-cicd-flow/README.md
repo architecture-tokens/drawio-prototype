@@ -135,8 +135,8 @@ Two views of the same `model.yaml` live in this directory, per
   radius 5. Two rule exemptions are disclosed (B1 per-label box sizing,
   C2 uniform `#333333` connector color, both matching source exactly) —
   see `RULES-CHECK.md`'s "Reproduce mode" section for the full per-rule
-  pass and a third, differently-kinded disclosure (a `--full` gate
-  coverage gap for this icon-less source — not a rules exemption).
+  pass. The icon-less view now receives explicit vacuous PASS results for
+  icon and relationship-attachment checks under `--full`.
 
 ## Reproduce-mode census summary
 
@@ -183,23 +183,12 @@ the extracted (non-uniform) coordinates.
   (`validate.txt`).
 - `node tools/offline-generate.mjs model.yaml layout.json --out out.drawio
 --library tokens.yaml` → **exit 0, first try, no repair** (`generate.txt`).
-- `node tools/offline-generate.mjs model.yaml layout-reproduce.json --out
-out-reproduce.drawio --library tokens.yaml` → **exit 0, first try, no
-  repair.**
-- `node tools/rules-lint.mjs final-reproduce.svg --model model.yaml --view
-view-reproduce.yaml --census census.yaml --layout layout-reproduce.json`
-  (no `--full`) → **exit 0**: 13 PASS, 0 FAIL, 0 WARN, 25 NOT-CHECKABLE.
-- Same command **with `--full`** → **exit 1**: 13 PASS, 2 FAIL, 23
-  NOT-CHECKABLE. Both FAILs are `FULL_GATE_NOT_CHECKABLE` promotions of
-  the two icon-only cross-layer checks (`UNKNOWN_ICON_SYMBOL`,
-  `RELATIONSHIP_ATTACHMENT_NOT_RENDERED`) — this source has zero icons,
-  so both are structurally NOT-CHECKABLE (by the tool's own design, not a
-  defect), and `--full` promotes any NOT-CHECKABLE cross-layer result to
-  FAIL unconditionally. See `RULES-CHECK.md`'s "Reproduce-mode `--full`
-  gate limitation" section for the full root-cause writeup; this is a
-  disclosed gate coverage gap, not a fidelity or model/view/layout defect.
+- `npm run pipeline -- --example examples/showcase/2-cicd-flow --out-dir
+/tmp/cicd-pipeline` → **exit 0**: source import 12 vertices / 10 edges,
+  draw.io generation PASS, full gate **16 PASS / 0 FAIL / 0 WARN / 23
+  NOT-CHECKABLE**.
 
 See `RULES-CHECK.md` for the full diagram-rules.md compliance pass —
 restyle: **26 PASS, 4 N/A, 0 FAIL**; reproduce: 34 PASS/N-A across
 Connectors/Boxes/Colors/Text (2 documented rule exemptions, matching
-1-cloud-web-app's precedent), plus the disclosed `--full` gate gap above.
+1-cloud-web-app's precedent), and the cross-layer full gate is green.
