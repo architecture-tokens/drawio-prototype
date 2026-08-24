@@ -1,9 +1,9 @@
 {
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "canvas", "nodes", "edges"],
+  "required": ["version", "canvas", "nodes", "edges", "topology"],
   "properties": {
-    "version": { "const": "0.1" },
+    "version": { "type": "string", "const": "0.1" },
     "canvas": {
       "type": "object",
       "additionalProperties": false,
@@ -68,7 +68,7 @@
                 "type": "array",
                 "minItems": 2,
                 "maxItems": 2,
-                "prefixItems": [{ "type": "string" }, { "type": "string" }]
+                "items": { "type": "string" }
               }
             }
           }
