@@ -1,6 +1,18 @@
 {
   "version": "0.1",
   "canvas": { "width": 1023, "height": 1953 },
+  "topology": {
+    "allowEdgeCrossings": [
+      { "edgeIds": ["customer-mobile_app", "customer-web_app"] },
+      { "edgeIds": ["customer-web_app", "spa-backend_api"] },
+      { "edgeIds": ["customer-web_app", "mobile_app-backend_api"] },
+      { "edgeIds": ["backend_api-banking_system", "customer-web_app"] },
+      { "edgeIds": ["backend_api-banking_system", "customer-spa"] },
+      { "edgeIds": ["customer-mobile_app", "spa-backend_api"] },
+      { "edgeIds": ["backend_api-banking_system", "customer-mobile_app"] },
+      { "edgeIds": ["mobile_app-backend_api", "spa-backend_api"] }
+    ]
+  },
   "nodes": [
     { "id": "email_system", "x": 150, "y": 166, "width": 269, "height": 86, "parentId": null },
     { "id": "customer", "x": 150, "y": 352, "width": 348, "height": 134, "parentId": null },

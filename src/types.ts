@@ -13,6 +13,10 @@ export type Layout = {
   canvas: { width: number; height: number };
   nodes: LayoutNode[];
   edges: LayoutEdge[];
+  topology?: {
+    /** Exact relationship pairs whose source-faithful crossing is intentional. */
+    allowEdgeCrossings: Array<{ edgeIds: [string, string] }>;
+  };
 };
 export type ViewAnchor =
   | 'top-left'

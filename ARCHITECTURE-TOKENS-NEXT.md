@@ -8,11 +8,11 @@
 
 | 示例                 | `rules-lint --full` 实测结果                 |
 | -------------------- | -------------------------------------------- |
-| `1-cloud-web-app`    | 14 PASS / 0 FAIL / 1 WARN / 23 NOT-CHECKABLE |
-| `2-cicd-flow`        | 15 PASS / 0 FAIL / 0 WARN / 23 NOT-CHECKABLE |
-| `3-microservices-c4` | 15 PASS / 0 FAIL / 0 WARN / 23 NOT-CHECKABLE |
-| `4-kubernetes`       | 16 PASS / 0 FAIL / 0 WARN / 22 NOT-CHECKABLE |
-| `5-event-pipeline`   | 16 PASS / 0 FAIL / 0 WARN / 22 NOT-CHECKABLE |
+| `1-cloud-web-app`    | 15 PASS / 0 FAIL / 1 WARN / 23 NOT-CHECKABLE |
+| `2-cicd-flow`        | 16 PASS / 0 FAIL / 0 WARN / 23 NOT-CHECKABLE |
+| `3-microservices-c4` | 16 PASS / 0 FAIL / 0 WARN / 23 NOT-CHECKABLE |
+| `4-kubernetes`       | 17 PASS / 0 FAIL / 0 WARN / 22 NOT-CHECKABLE |
+| `5-event-pipeline`   | 17 PASS / 0 FAIL / 0 WARN / 22 NOT-CHECKABLE |
 
 证据入口：[`examples/showcase/README.md`](examples/showcase/README.md)、[`tools/rules-lint.mjs`](tools/rules-lint.mjs)。
 
@@ -30,20 +30,21 @@
 - CLI 支持显式 `--view`，并在调用 planner/renderer 前完成 schema、引用和 attachment 校验。
 - 用一个 model 生成两种合法 view 的集成测试，且输出保留 `data-component`、`data-relationship`、`data-view-element` 绑定。
 
-### 2. 将视觉拓扑纳入通用 Layout 校验
+### 2. 将视觉拓扑纳入通用 Layout 校验（已完成）
 
-**缺口：** [`src/layout.ts`](src/layout.ts) 目前只检查 schema、ID、单一 `parentId` 和父子环；不会发现节点碰撞、无语义线交叉、错误 T-junction 或拆段后漏掉的尖角。
+**原缺口：** [`src/layout.ts`](src/layout.ts) 原先只检查 schema、ID、单一 `parentId` 和父子环；不会发现节点碰撞、无语义线交叉、错误 T-junction 或拆段后漏掉的尖角。
 
 **今天的证据：**
 
 - `cloud-web-app` 的 CDN 路径曾在 `y=560` 穿过 Web 汇流总线和第一条分支，layout 仍合法；恢复到源图对应的 `y=626` 后两个交叉才消失（提交 `013f6a9`）。
 - 16 个扇入/扇出直角因分散在多个单段 polyline 中绕过 rule 3a；改成统一半径 5 的 path 后，检查结果才变为 18 条圆角连接线、21 个弯（提交 `f0dab8e`）。
 
-**完成标准：**
+**完成证据：**
 
-- 新增通用诊断：节点/容器碰撞、非节点位置的边交叉、错误 T-junction、逻辑折角未圆角化。
-- 允许显式声明“有意义的交叉/共享总线”，避免把 AZ×ASG 或真实 T-junction 当错误。
-- 将今天新增的 example-specific 断言升级为最小对抗 fixture；五个 showcase 继续保持 0 FAIL。
+- `src/topology.ts` 新增 `NODE_COLLISION`、`EDGE_CROSSING`、`INVALID_EDGE_JUNCTION`；`tools/rules-lint.mjs` 新增 `VISUAL_TOPOLOGY`，并让 rule 3a 识别拆在多个 SVG 元素中的扇形尖角。
+- 历史 `y=560` fixture 会报告 `(259.5,593)`、`(236.5,560)` 两处交叉；当前 `y=626` 通过。
+- 共享语义端点、真正总线/T-junction、父子包含、包含至少两个节点的结构 overlay 自动允许；无法推断的 source-faithful 交叉只能用精确 edge-pair 声明。
+- 五例完整门禁保持 0 FAIL。详见 [`docs/visual-topology.md`](docs/visual-topology.md)。
 
 ### 3. 让 renderer 真正由 token + view 驱动
 
