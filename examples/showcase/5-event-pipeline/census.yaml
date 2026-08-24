@@ -1,0 +1,67 @@
+# Source census (prototype v0). One record per SOURCE element (source.mmd
+# flowchart node/edge), matching `node tools/rules-lint.mjs --census-dump
+# source.mmd`'s exact { id, kind } inventory: 6 vertex, 5 edge, 11 total.
+# This example is the simplest possible case for the census machinery --
+# every source vertex/edge maps 1:1 onto a model.yaml component/relationship,
+# nothing is inexpressible (no groups/subgraphs, no icons, no annotation
+# text nodes), so every record's primary_bucket is component/relationship
+# and no drop/token/visual record exists.
+kind: census
+model: model.yaml
+source: source.mmd
+records:
+  - source_id: A
+    kind: vertex
+    label: Producer
+    primary_bucket: component
+    target_ids: [producer]
+  - source_id: B
+    kind: vertex
+    label: message
+    primary_bucket: component
+    target_ids: [message]
+  - source_id: 'edge:A->B'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [producer-message]
+  - source_id: C
+    kind: vertex
+    label: Channel
+    primary_bucket: component
+    target_ids: [channel]
+  - source_id: 'edge:B->C'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [message-channel]
+  - source_id: D
+    kind: vertex
+    label: Consumer
+    primary_bucket: component
+    target_ids: [consumer-a]
+  - source_id: 'edge:C->D'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [channel-consumer-a]
+  - source_id: E
+    kind: vertex
+    label: Consumer
+    primary_bucket: component
+    target_ids: [consumer-b]
+  - source_id: 'edge:C->E'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [channel-consumer-b]
+  - source_id: F
+    kind: vertex
+    label: Consumer
+    primary_bucket: component
+    target_ids: [consumer-c]
+  - source_id: 'edge:C->F'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [channel-consumer-c]

@@ -182,3 +182,27 @@ Colors: 5 PASS. Text: 3 PASS.
 **28 PASS, 4 N/A, 0 FAIL** (32 applicable rules total; +1 PASS vs. the
 previous iteration for the new rule 3a). `node tools/rules-lint.mjs
 final.svg` exits 0.
+
+---
+
+## Reproduce mode
+
+`final-reproduce.svg` preserves the native draw.io source's platform, namespace, actor,
+service-pill, stacked workload-card, title-band, label, shadow, palette, and original
+`mxgraph.gcp2` vector icon language. The nine connector routes keep their source axes;
+the seven bent routes replace sharp elbows with the shared 5px rule-3a corner radius.
+
+Full-gate verification:
+
+```bash
+node tools/rules-lint.mjs final-reproduce.svg --full \
+  --model model.yaml --view view-reproduce.yaml --census census.yaml \
+  --layout layout-reproduce.json
+```
+
+Result: **16 PASS, 0 FAIL, 0 WARN** across the mechanically and cross-layer checkable
+rules. Census is 30/30, direction is 9/9 rightward, all 9 components and 4 view elements
+bind exactly once, all 3 declared icons resolve and render in their owning element, and
+all 9 connectors share stroke width 2. The 2x `final-reproduce.png` was inspected at
+original resolution: labels, icon cards, arrowheads, namespace margins, and rounded
+elbows render cleanly.

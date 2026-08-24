@@ -1,0 +1,220 @@
+# Source census (prototype v0). One record per SOURCE element (source.xml
+# mxCell) -- see examples/showcase/1-cloud-web-app/census.yaml for the
+# mechanics this mirrors (tools/rules-lint.mjs --census enforces record
+# count == vertex_count + edge_count, target_ids resolution, and a reason
+# on every drop). This source has no drops and no standalone tokens: every
+# vertex is either a first-class model component or a view-only visual
+# container, and every edge is a first-class relationship.
+kind: census
+model: model.yaml
+source: source.xml
+records:
+  - source_id: '14'
+    kind: vertex
+    label: 'Google Cloud Platform'
+    primary_bucket: visual
+    target_ids: [gcp-platform]
+
+  - source_id: '866'
+    kind: vertex
+    label: 'Web App Namespace'
+    primary_bucket: visual
+    target_ids: [web-app-namespace]
+
+  - source_id: '865'
+    kind: vertex
+    label: 'Selenium Namespace'
+    primary_bucket: visual
+    target_ids: [selenium-namespace]
+
+  - source_id: '881'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [tester-to-selenium-hub]
+
+  - source_id: '734'
+    kind: vertex
+    label: 'Tester'
+    primary_bucket: component
+    target_ids: [tester]
+
+  - source_id: '732'
+    kind: vertex
+    label: null
+    primary_bucket: component
+    target_ids: [tester]
+    reason: >
+      White icon-card background nested inside the Tester box (734),
+      hosting the laptop glyph (733). Part of Tester's own visual identity,
+      not a separate model concept -- traces to the same component as 734
+      and 733 (model.yaml's tester.metadata.sourceIds lists all three).
+
+  - source_id: '733'
+    kind: vertex
+    label: null
+    primary_bucket: component
+    target_ids: [tester]
+    reason: >
+      Laptop glyph (shape=mxgraph.gcp2.laptop), child of 732, drawn as
+      Tester's icon attachment (view-reproduce.yaml components.tester).
+      Traces to the same component as 734/732.
+
+  - source_id: '818'
+    kind: vertex
+    label: 'Architecture: Dev Test &gt; UI Testing with Kubernetes'
+    primary_bucket: visual
+    target_ids: [title-banner]
+
+  - source_id: '882'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [selenium-hub-to-hub-service]
+
+  - source_id: '883'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [hub-service-to-firefox-attribute]
+
+  - source_id: '884'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [hub-service-to-firefox-rc]
+
+  - source_id: '869'
+    kind: vertex
+    label: 'Hub Service'
+    primary_bucket: component
+    target_ids: [hub-service]
+
+  - source_id: '886'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [firefox-attribute-to-frontend]
+
+  - source_id: '887'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [firefox-rc-to-frontend]
+
+  - source_id: '888'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [frontend-to-ui-servers]
+
+  - source_id: '875'
+    kind: vertex
+    label: 'Frontend Service'
+    primary_bucket: component
+    target_ids: [frontend-service]
+
+  - source_id: '889'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [ui-servers-to-backend-service]
+
+  - source_id: '890'
+    kind: edge
+    label: null
+    primary_bucket: relationship
+    target_ids: [backend-servers-to-backend-service]
+
+  - source_id: '880'
+    kind: vertex
+    label: 'Backend Service'
+    primary_bucket: component
+    target_ids: [backend-service]
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-920'
+    kind: vertex
+    label: null
+    primary_bucket: component
+    target_ids: [selenium-hub-rc]
+    reason: >
+      Container cell for the "Selenium Hub (Replication Controller)"
+      workload card; its icon child (-921) traces to the same component
+      (model.yaml's selenium-hub-rc.metadata.sourceIds lists both).
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-921'
+    kind: vertex
+    label: 'Selenium Hub (Replication Controller) / Kubernetes Engine'
+    primary_bucket: component
+    target_ids: [selenium-hub-rc]
+    reason: >
+      Kubernetes Engine hexagon icon + label, child of -920, both part of
+      the same workload card.
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-922'
+    kind: vertex
+    label: null
+    primary_bucket: component
+    target_ids: [firefox-nodes-attribute]
+    reason: 'Container cell for the "Firefox Nodes (Attribute Name)" workload card; icon child is -923.'
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-923'
+    kind: vertex
+    label: 'Firefox Nodes (Attribute Name) / Kubernetes Engine'
+    primary_bucket: component
+    target_ids: [firefox-nodes-attribute]
+    reason: 'Kubernetes Engine hexagon icon + label, child of -922, same workload card.'
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-924'
+    kind: vertex
+    label: null
+    primary_bucket: component
+    target_ids: [firefox-nodes-rc]
+    reason: 'Container cell for the "Firefox Nodes (Replication Controller)" workload card; icon child is -925.'
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-925'
+    kind: vertex
+    label: 'Firefox Nodes (Replication Controller) / Kubernetes Engine'
+    primary_bucket: component
+    target_ids: [firefox-nodes-rc]
+    reason: 'Kubernetes Engine hexagon icon + label, child of -924, same workload card.'
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-926'
+    kind: vertex
+    label: null
+    primary_bucket: component
+    target_ids: [ui-servers-rc]
+    reason: 'Container cell for the "UI Servers (Replication Controller)" workload card; icon child is -927.'
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-927'
+    kind: vertex
+    label: 'UI Servers (Replication Controller) / Kubernetes Engine'
+    primary_bucket: component
+    target_ids: [ui-servers-rc]
+    reason: 'Kubernetes Engine hexagon icon + label, child of -926, same workload card.'
+
+  - source_id: '15'
+    kind: vertex
+    label: null
+    primary_bucket: visual
+    target_ids: [gcp-platform]
+    reason: >
+      Small "Google Cloud Platform" logo glyph (shape=mxgraph.gcp2.google_cloud_platform)
+      drawn in the platform box's own title, next to id 14's "Google Cloud
+      Platform" label -- both trace to the same view-only container
+      (gcp-platform), same pattern as example 1's source_id 3 + 42 both
+      tracing to az-band-a.
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-928'
+    kind: vertex
+    label: null
+    primary_bucket: component
+    target_ids: [backend-servers-rc]
+    reason: 'Container cell for the "Backend Servers (Replication Controller)" workload card; icon child is -929.'
+
+  - source_id: 'sPo4FSZVrLmGvF_m1t0P-929'
+    kind: vertex
+    label: 'Backend Servers (Replication Controller) / Kubernetes Engine'
+    primary_bucket: component
+    target_ids: [backend-servers-rc]
+    reason: 'Kubernetes Engine hexagon icon + label, child of -928, same workload card.'

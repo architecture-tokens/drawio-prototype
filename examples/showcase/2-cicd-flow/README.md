@@ -110,12 +110,96 @@ No flattening or simplification was needed beyond the containment
 representation described above — every node and edge from `source.mmd`
 is present in `model.yaml`, `layout.json`, and `final.svg`.
 
+## Conversion modes
+
+Two views of the same `model.yaml` live in this directory, per
+`examples/showcase/README.md`'s "Conversion modes" contract:
+
+- **`final.svg` / `layout.json` (no view.yaml)** — a **restyle**. The
+  source SVG already used a clean 3-column layout, but `layout.json`
+  re-derives every measurement from a B1/B2/B3 grid formula rather than
+  keeping the source's own numbers (see "What the layout improved over
+  the source" above) and colors every job/connector by its own stage
+  (rule C2), a restyle-only authoring choice.
+- **`final-reproduce.svg` / `layout-reproduce.json` / `view-reproduce.yaml`
+  / `census.yaml`** — a **reproduce**. `source.mmd`'s 3-lane grid already
+  passes every applicable Diagram rule this genre exercises (B1/B2/B3/B9
+  spacing, rule 11 converging trunks), so `layout-reproduce.json`'s node
+  positions/sizes are EXTRACTED from the mermaid.ink-rendered SVG of
+  `source.mmd` (see "Reproduce-mode provenance" below), not re-derived.
+  The one thing NOT copied from the source's own render is connector
+  treatment: mermaid draws every edge as a smooth diagonal bezier curve,
+  but rule 3/3a (orthogonal routing, uniform rounded corners) is
+  normative in BOTH modes (owner decision 2026-08-24), so every connector
+  is an orthogonal polyline rounded via `tools/round-connectors.mjs` at
+  radius 5. Two rule exemptions are disclosed (B1 per-label box sizing,
+  C2 uniform `#333333` connector color, both matching source exactly) —
+  see `RULES-CHECK.md`'s "Reproduce mode" section for the full per-rule
+  pass and a third, differently-kinded disclosure (a `--full` gate
+  coverage gap for this icon-less source — not a rules exemption).
+
+## Reproduce-mode census summary
+
+`census.yaml` carries **22 records** biject onto `source.mmd`'s own 12
+vertex + 10 edge inventory (`node tools/rules-lint.mjs --census-dump
+source.mmd`): **12 `component`** (3 stage subgraphs + 9 jobs — every
+subgraph promotes to a real `cicd:pipeline.stage` model component, unlike
+1-cloud-web-app's AWS Availability-Zone bands, which had no backing
+component) and **10 `relationship`** (every source edge). **0 `token`, 0
+`visual`, 0 `drop`** — unlike the AWS example, nothing in this source
+needed dropping or token-only preservation. The 9
+`core:relationship.belongs.to` containment edges in `model.yaml` have no
+source-edge counterpart at all (`source.mmd` draws containment purely as
+subgraph nesting, no arrow) — closed instead by `view-reproduce.yaml`'s 3
+`visualElements` entries (`build_stage_container` /
+`test_stage_container` / `deploy_stage_container`), each dual-tagging its
+stage's own rendered rect with `data-view-element` and a `members` list
+naming the 3 nested jobs (same pattern as 1-cloud-web-app's
+`web-asg-band`/`app-asg-band`).
+
+## Reproduce-mode provenance
+
+Node/container geometry in `layout-reproduce.json` was extracted from
+`mermaid-render.svg` (kept in this directory as the provenance record),
+fetched via `curl https://mermaid.ink/svg/<base64url-of-source.mmd>` and
+parsed for each `<g class="node">`'s `transform="translate(cx,cy)"` +
+child `<rect x= y= width= height=>` (absolute = `cx+x, cy+y`) and each
+`<g class="cluster">`'s `<rect>` (already absolute). Job-node coordinates
+in `layout-reproduce.json` are PARENT-RELATIVE (subtracted from their
+stage's own extracted origin), matching the layout contract's drawio-style
+`parentId` convention (`tools/rules-lint.mjs`'s `resolveLayoutCenters`).
+All values rounded to integers per the task brief. Connector waypoints
+are NOT extracted from the source's bezier control points (mermaid's
+`data-points` attributes) — those are diagonal and rule 3/3a explicitly
+excludes bezier routing from what reproduce mode copies — instead
+authored as orthogonal bend points between the extracted box edges,
+matching the same rule-2 (distributed fan-out exits) / rule-11 (merged
+convergent trunks) idioms `layout.json`'s restyle already uses, just at
+the extracted (non-uniform) coordinates.
+
 ## Gate results
 
 - `node dist/cli.js validate model.yaml --library tokens.yaml` → **exit 0**
   (`validate.txt`).
 - `node tools/offline-generate.mjs model.yaml layout.json --out out.drawio
 --library tokens.yaml` → **exit 0, first try, no repair** (`generate.txt`).
+- `node tools/offline-generate.mjs model.yaml layout-reproduce.json --out
+out-reproduce.drawio --library tokens.yaml` → **exit 0, first try, no
+  repair.**
+- `node tools/rules-lint.mjs final-reproduce.svg --model model.yaml --view
+view-reproduce.yaml --census census.yaml --layout layout-reproduce.json`
+  (no `--full`) → **exit 0**: 13 PASS, 0 FAIL, 0 WARN, 25 NOT-CHECKABLE.
+- Same command **with `--full`** → **exit 1**: 13 PASS, 2 FAIL, 23
+  NOT-CHECKABLE. Both FAILs are `FULL_GATE_NOT_CHECKABLE` promotions of
+  the two icon-only cross-layer checks (`UNKNOWN_ICON_SYMBOL`,
+  `RELATIONSHIP_ATTACHMENT_NOT_RENDERED`) — this source has zero icons,
+  so both are structurally NOT-CHECKABLE (by the tool's own design, not a
+  defect), and `--full` promotes any NOT-CHECKABLE cross-layer result to
+  FAIL unconditionally. See `RULES-CHECK.md`'s "Reproduce-mode `--full`
+  gate limitation" section for the full root-cause writeup; this is a
+  disclosed gate coverage gap, not a fidelity or model/view/layout defect.
 
-See `RULES-CHECK.md` for the full diagram-rules.md compliance pass:
-**26 PASS, 4 N/A, 0 FAIL.**
+See `RULES-CHECK.md` for the full diagram-rules.md compliance pass —
+restyle: **26 PASS, 4 N/A, 0 FAIL**; reproduce: 34 PASS/N-A across
+Connectors/Boxes/Colors/Text (2 documented rule exemptions, matching
+1-cloud-web-app's precedent), plus the disclosed `--full` gate gap above.

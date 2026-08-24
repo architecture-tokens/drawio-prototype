@@ -198,6 +198,15 @@ type JsonReport = {
   checks: Array<{ id: string; status: string; message: string }>;
 };
 
+const CROSS_LAYER_IDS = [
+  'UNKNOWN_ICON_SYMBOL',
+  'UNTRACEABLE_VISUAL / MISSING_COMPONENT',
+  'VIEW_REF_UNRESOLVED',
+  'DIRECTION_GEOMETRY_CONFLICT',
+  'CENSUS_MISMATCH',
+  'RELATIONSHIP_ATTACHMENT_NOT_RENDERED',
+];
+
 async function runJson(args: string[]) {
   const result = await runCli([...args, '--format', 'json']);
   const reports = result.exitCode === 2 ? [] : (JSON.parse(result.stdout) as JsonReport[]);
@@ -282,6 +291,54 @@ describe('tools/rules-lint.mjs cross-layer checks', () => {
     expect(result.exitCode).toBe(0);
     expect(reports[0].summary.FAIL).toBe(0);
   });
+
+  it('treats an iconless view as a decisive --full PASS for both attachment checks', async () => {
+    const example2 = path.join(showcaseDir, '2-cicd-flow');
+    const { result, reports } = await runJson([
+      path.join(example2, 'final-reproduce.svg'),
+      '--full',
+      '--model',
+      path.join(example2, 'model.yaml'),
+      '--view',
+      path.join(example2, 'view-reproduce.yaml'),
+      '--census',
+      path.join(example2, 'census.yaml'),
+      '--layout',
+      path.join(example2, 'layout-reproduce.json'),
+    ]);
+    expect(result.exitCode).toBe(0);
+    for (const id of ['UNKNOWN_ICON_SYMBOL', 'RELATIONSHIP_ATTACHMENT_NOT_RENDERED']) {
+      const check = reports[0].checks.find((c) => c.id === id);
+      expect(check?.status, `${id}: ${check?.message}`).toBe('PASS');
+      expect(check?.message).toMatch(/0 .*attachments/);
+    }
+  });
+
+  it.each(['2-cicd-flow', '3-microservices-c4', '4-kubernetes', '5-event-pipeline'])(
+    'keeps showcase reproduce artifact %s green under the complete cross-layer gate',
+    async (name) => {
+      const dir = path.join(showcaseDir, name);
+      const { result, reports } = await runJson([
+        path.join(dir, 'final-reproduce.svg'),
+        '--full',
+        '--model',
+        path.join(dir, 'model.yaml'),
+        '--view',
+        path.join(dir, 'view-reproduce.yaml'),
+        '--census',
+        path.join(dir, 'census.yaml'),
+        '--layout',
+        path.join(dir, 'layout-reproduce.json'),
+      ]);
+      expect(result.exitCode).toBe(0);
+      expect(reports[0].summary.FAIL).toBe(0);
+      expect(reports[0].summary.WARN).toBe(0);
+      for (const id of CROSS_LAYER_IDS) {
+        const check = reports[0].checks.find((c) => c.id === id);
+        expect(check?.status, `${name} ${id}: ${check?.message}`).toBe('PASS');
+      }
+    },
+  );
 
   it('exits 1 and names UNKNOWN_ICON_SYMBOL when view.yaml references an icon with no matching <symbol>', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-icon-'));

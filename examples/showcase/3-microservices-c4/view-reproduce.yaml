@@ -1,0 +1,96 @@
+# View Layer Contract (prototype v0) -- REPRODUCE MODE.
+#
+# mode: reproduce, per README.md "Conversion modes". Reason: this is the
+# canonical `C4Container` example straight from mermaid's own docs (see
+# README.md "Source"), and its layout -- three top-level elements stacked in
+# declaration order (E-Mail System, Customer, Mainframe Banking System),
+# then the Internet Banking boundary containing its five children ALSO in
+# declaration order (SPA, Mobile App, Web Application, Database, API
+# Application) -- is the mermaid C4 renderer's own deliberate,
+# reproducible output, not an accident to fix. Per the conversion-modes
+# contract this is a coordinator-assigned view (the task brief for this
+# example explicitly requires a reproduce deliverable); the model already
+# carries the restyle view (final.svg, a redesigned grid layout) as the
+# OTHER view of the same model.yaml -- this file is the second view, not a
+# replacement. Geometry in layout-reproduce.json is EXTRACTED from
+# mermaid.ink's own SVG render of source.mmd (node rects/cylinder paths +
+# text positions, not re-authored) -- see layout-reproduce.json's own
+# header comment for the extraction method. Per the modes contract, what is
+# NOT copied is connector routing: source.mmd's 10 relationships render as
+# bezier curves in mermaid's output; final-reproduce.svg re-routes every one
+# as an orthogonal polyline with rule-3a rounded corners (owner decision
+# 2026-08-24 -- connector treatment is normative in both modes). Because the
+# extracted node layout is a single narrow stacked column (by design, not a
+# defect -- see layout-reproduce.json's header), several of those orthogonal
+# routes must actively detour around intervening boxes that the source's
+# bezier curves simply crossed through; see RULES-CHECK.md "Reproduce mode"
+# for the corridor routing this required and why it's still "extracted, not
+# re-authored" (node positions are the source's; connector paths are
+# authored ON TOP of them, same as every reproduce-mode file needs to do
+# for rule 3/3a).
+mode: reproduce
+reason: >
+  Canonical mermaid C4Container docs example; its declaration-order stacked
+  layout is the renderer's own deliberate output. Coordinator brief assigns
+  this example a reproduce view alongside the existing restyle view of the
+  same model. See RULES-CHECK.md "Reproduce mode" for the full rationale.
+kind: view
+id: microservices-c4
+model: model.yaml
+
+# Direction computed the same way the restyle view (implicit in final.svg)
+# and the task brief both describe: dominant axis-aligned projection of
+# edge displacement vectors, using layout-reproduce.json's own node centers
+# (see tools/rules-lint.mjs DIRECTION_GEOMETRY_THRESHOLD = 0.6). 6 of the
+# 10 relationships have a net-downward center-to-center displacement
+# (customer->web_app, customer->spa, customer->mobile_app,
+# spa->backend_api, mobile_app->backend_api, email_system->customer); the
+# other 4 run upward against declaration order (web_app->spa,
+# backend_api->database, backend_api->email_system,
+# backend_api->banking_system -- API Application is declared LAST inside
+# the boundary but is the source of 3 of its 4 outbound relationships, all
+# reaching UP to earlier-declared elements). 6/10 = exactly the 60%
+# threshold -- "down" is the diagram's genuine dominant reading (matching a
+# human skim: title -> actors -> boundary -> containers, top to bottom),
+# not a coin-flip call; the 4 upward edges are real, kept as upward
+# connectors in final-reproduce.svg; no global-direction violation is
+# claimed for them.
+flow:
+  direction: down
+
+# No icon attachments in this view: mermaid.ink's own render of source.mmd
+# has zero <use> elements anywhere in the SVG (verified by fetching
+# https://mermaid.ink/svg/<base64url(source.mmd)> and grepping for `<use` --
+# none found). This C4Container renderer draws every node as a plain
+# colored box (rect or DB-cylinder path) with stereotype/title/tech/
+# description text; no Person glyph, no container-type glyph, unlike a
+# full C4-PlantUML render or 1-cloud-web-app's AWS icon squares. There is
+# therefore nothing for `components:`/`relationships:` attachment lists to
+# declare here, and consequently no data-relationship binding requirement
+# either (RELATIONSHIP_ATTACHMENT_NOT_RENDERED only fires for a
+# relationship this file actually attaches an icon to -- see
+# tools/rules-lint.mjs's own comment on that check). Node identity in
+# final-reproduce.svg is carried entirely by the C1 palette (fill/stroke
+# per C4 stereotype tier, extracted verbatim from the source's own
+# fillColor/stroke values) plus each box's own stereotype text line
+# (`<<container>>`, `<<person>>`, etc.) -- both reproduced faithfully, see
+# RULES-CHECK.md.
+components: {}
+relationships: {}
+
+# One visual-layer element: the Container_Boundary. Deliberately a
+# DIFFERENT id from the model component it decorates (internet_banking) --
+# same precedent as 1-cloud-web-app's web-asg-band/app-asg-band entries:
+# `internet_banking` is already committed to the `component` bucket in
+# census.yaml (source_id c1), so it renders via data-component exactly as
+# any other component does; this entry exists so the SAME <g> can ALSO
+# carry data-view-element (dual-tagged in final-reproduce.svg), satisfying
+# "data-view-element on declared containers" without re-bucketing an
+# already-committed census record. `members` lists the boundary's five
+# children in source declaration order, matching source.mmd's own
+# `Container_Boundary(c1, "Internet Banking") { ... }` block.
+visualElements:
+  - id: internet-banking-boundary
+    kind: c4-container-boundary
+    label: Internet Banking
+    members: [spa, mobile_app, web_app, database, backend_api]

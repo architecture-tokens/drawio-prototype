@@ -1,0 +1,130 @@
+# View Layer Contract (prototype v0) -- REPRODUCE MODE.
+#
+# mode: reproduce, per ../README.md "Conversion modes". Reason: this
+# source already conveys deliberate structure -- a genuine jgraph/
+# drawio-diagrams GCP reference-architecture template (Selenium grid in
+# front of a two-tier web app, split across two Kubernetes namespaces
+# inside one GCP platform boundary), laid out on one clean horizontal
+# grid with every box's connectors entering/leaving on axis (no crossed
+# lines, no ad hoc placement) -- there is no layout defect here for a
+# restyle pass to fix. Per the conversion-modes contract, geometry below
+# is EXTRACTED (see layout-reproduce.json; raw source.xml mxGeometry
+# values, no offset needed -- the source's own bounding box already
+# starts near the canvas origin, min x=69/y=40), and the Diagram rules
+# act only as a defect lint (RULES-CHECK.md "Reproduce mode" carries the
+# one disclosed exemption, B1, for the same "different box families have
+# different natural sizes" reason example 1 documents).
+mode: reproduce
+reason: >
+  Source is a clean, deliberately laid-out GCP reference-architecture
+  template (one horizontal grid, axis-aligned connectors, no crossed
+  lines); target is a faithful redraw, not a rules-authored re-layout.
+kind: view
+id: kubernetes-ui-testing
+model: model.yaml
+
+# Direction computed the same way as example 1 (dominant axis-aligned
+# projection of edge displacement vectors, from layout-reproduce.json's
+# extracted node centers): all 9 relationships have positive x-displacement
+# (Tester on the far left -> Backend Service on the far right), 9/9 = 100%
+# rightward -- well past the 60% majority threshold, so direction is
+# "right", not "mixed".
+flow:
+  direction: right
+
+# Icon attachments matching the source's own placements exactly.
+#
+# The 5 workload cards (selenium-hub-rc, firefox-nodes-attribute,
+# firefox-nodes-rc, ui-servers-rc, backend-servers-rc) each carry the
+# SAME hexagon "Kubernetes Engine" icon in source.xml (byte-identical
+# base64 payload on all 5, e.g. sPo4FSZVrLmGvF_m1t0P-921) -- source
+# does not visually distinguish "workload" sub-kinds, so this reproduce
+# view doesn't invent that distinction either. Anchor middle-left:
+# source's own style (labelPosition=right, spacingLeft=20) draws the
+# icon at the box's left edge with the two-line title + "Kubernetes
+# Engine" caption running to its right, inside the same box -- this is a
+# reproduce-only convention (final.svg's convert-mode restyle uses a
+# small top-left corner badge instead, a different authored idiom).
+components:
+  selenium-hub-rc:
+    - icon: gcp.kubernetes-engine
+      anchor: middle-left
+  firefox-nodes-attribute:
+    - icon: gcp.kubernetes-engine
+      anchor: middle-left
+  firefox-nodes-rc:
+    - icon: gcp.kubernetes-engine
+      anchor: middle-left
+  ui-servers-rc:
+    - icon: gcp.kubernetes-engine
+      anchor: middle-left
+  backend-servers-rc:
+    - icon: gcp.kubernetes-engine
+      anchor: middle-left
+  # Tester's own icon: source draws a small white icon-card (732) nested
+  # inside the Tester box (734), holding a laptop glyph (733,
+  # shape=mxgraph.gcp2.laptop) -- see census.yaml source_id 732/733.
+  # anchor middle-center matches source: the white card sits centered
+  # inside Tester's own box, and the laptop glyph fills that card.
+  tester:
+    - icon: gcp.laptop
+      anchor: middle-center
+  # hub-service / frontend-service / backend-service intentionally carry
+  # no icon attachment: source draws these 3 as plain white text-only
+  # pills (869/875/880 have no icon child cell at all) -- adding one
+  # would be an unrequested visual edit under the conversion-modes
+  # contract ("a clean source gets zero visual edits").
+
+relationships: {}
+# No edge-attached icons: source draws every one of the 9 connectors as a
+# plain arrow with no badge/glyph on the wire itself (contrast example 1's
+# SSL padlock). Nothing to declare here.
+
+# Visual-layer elements: the platform boundary, the two namespace
+# corridors, and the title bar -- all four are pure UI chrome in
+# source.xml (none has a matching model.yaml component; see README.md
+# "Containment: flattened, not modeled as parent components" for why the
+# convert-mode model already made this call, reused unchanged here).
+# Geometry for all four is drawn directly from source.xml's own
+# mxGeometry in final-reproduce.svg (no separate layout-reproduce.json
+# entries -- layout-reproduce.json's nodes are model.yaml component ids
+# only, same as example 1's az-band-a/b).
+visualElements:
+  - id: gcp-platform
+    kind: platform-boundary
+    label: 'Google Cloud Platform'
+    members:
+      [
+        selenium-hub-rc,
+        hub-service,
+        firefox-nodes-attribute,
+        firefox-nodes-rc,
+        frontend-service,
+        ui-servers-rc,
+        backend-servers-rc,
+        backend-service,
+      ]
+    # The small GCP logo glyph (source_id 15, shape=mxgraph.gcp2.google_cloud_platform)
+    # sits in this container's own title, immediately left of the "Google
+    # Cloud Platform" text -- both trace to this same visualElement
+    # (census.yaml source_id 14 + 15).
+    attachments:
+      - icon: gcp.cloud-logo
+        anchor: top-left
+  - id: selenium-namespace
+    kind: namespace-boundary
+    label: 'Selenium Namespace'
+    members: [selenium-hub-rc, hub-service, firefox-nodes-attribute, firefox-nodes-rc]
+  - id: web-app-namespace
+    kind: namespace-boundary
+    label: 'Web App Namespace'
+    members: [frontend-service, ui-servers-rc, backend-servers-rc, backend-service]
+  - id: title-banner
+    kind: title-band
+    label: 'Architecture: Dev Test > UI Testing with Kubernetes'
+    # Pure UI chrome (dark banner across the top of the whole diagram,
+    # source_id 818) -- no component sits "inside" it the way namespace
+    # members do, so members is empty (rules-lint's VIEW_REF_UNRESOLVED
+    # only loops over members; an empty list is valid, same shape as an
+    # empty relationships map above).
+    members: []

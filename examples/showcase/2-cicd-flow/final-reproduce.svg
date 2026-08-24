@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -12 1045 268" width="1045" height="268" font-family="'GitLab Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif">
+<!--
+  REPRODUCE MODE (view-reproduce.yaml mode: reproduce). This file is a
+  faithful redraw of source.mmd's own mermaid render, not a rules-authored
+  restyle (compare final.svg, this example's restyle view): node/container
+  positions and sizes are EXTRACTED from the mermaid.ink SVG render of
+  source.mmd (see layout-reproduce.json for the exact numbers and the
+  fetch method), not re-derived from a B1/B2 grid formula the way final.svg's
+  restyle is. The one thing NOT copied from the source's own render is
+  connector treatment: source.mmd's mermaid theme draws every edge as a
+  smooth diagonal bezier curve; rule 3/3a (orthogonal routing, uniform
+  rounded corners) is normative in BOTH conversion modes (owner decision
+  2026-08-24, see README.md "Conversion modes"), so every connector below
+  is authored as an orthogonal polyline and then rounded via
+  tools/round-connectors.mjs at this diagram's uniform radius, 5.
+
+  Semantic palette (C1) — source's own mermaid default-theme values,
+  extracted from the fetched render's <style> block, not invented:
+  domain      | meaning                          | fill    | stroke   | text
+  job          | pipeline job (leaf node)         | #ECECFF | #9370DB  | #333333
+  stage        | pipeline stage (subgraph/container) | #FFFFDE | #AAAA33 | #333333
+  connector    | trigger / stage-transition edge  | n/a     | #333333  | n/a
+
+  There is no per-stage/domain arrow coloring here (contrast final.svg's
+  restyle, which colors every job box and connector by its own stage).
+  source.mmd's mermaid render uses ONE uniform edge/marker color
+  (#333333, grepped from the render's own `.marker{fill:#333333}` /
+  `.flowchart-link{stroke:#333333}` rules) for all 10 edges, in-stage and
+  cross-stage alike — applying the restyle's C2 "arrow = destination
+  domain" convention here would be exactly the kind of unrequested visual
+  edit the conversion-modes contract forbids. This is a disclosed
+  reproduce-mode exemption from C2, the same one 1-cloud-web-app's
+  final-reproduce.svg documents for the same reason (see RULES-CHECK.md
+  "Reproduce mode").
+
+  Dashed class (rule 10): source.mmd draws the 4 cross-stage handoff edges
+  (build_a/build_b to test, test_a/test_b to deploy, mermaid's dotted-arrow
+  syntax) extracted here as stroke-dasharray="2,2" (source's own
+  `.edge-pattern-dotted{stroke-dasharray:2}` value) — the dash marks "this
+  triggers the NEXT stage", matching cicd:pipeline.stage-transition in
+  model.yaml. The 6 in-stage fan-out edges stay solid, matching source's
+  solid-arrow syntax exactly.
+
+  Box corners: sharp (rx omitted / 0) on every container and job box,
+  matching source.mmd's own mermaid render (no rounded-rectangle node
+  shape was used in the source) — contrast final.svg's restyle, which
+  rounds job boxes (rx=6) as its own authored choice.
+
+  Reproduce-mode exemptions (documented, disclosed — see RULES-CHECK.md
+  "Reproduce mode" for the full per-rule pass): B1 (quantized/shared box
+  size) does not apply as a defect-lint the way it does to a re-authored
+  layout — source.mmd's own auto-sized job boxes are 82-120px wide
+  because mermaid sizes each box to fit its own label text, not a
+  structural difference to normalize away. C2 (arrow colored by
+  destination domain) is not applied, per the palette comment above.
+-->
+
+<defs>
+  <marker id="arrow-neutral" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#333333"/>
+  </marker>
+</defs>
+
+<rect x="-12" y="-12" width="1045" height="268" fill="#FFFFFF"/>
+
+<!-- ============ STAGE CONTAINERS (extracted from source.mmd's subgraph
+     rects; dual-tagged data-component (the stage IS a model component)
+     and data-view-element (view-reproduce.yaml's visualElements entry for
+     the same rect, so containment — which source.mmd draws purely as
+     subgraph nesting, no arrow — is machine-traceable both ways). ============ -->
+<g font-size="15" font-weight="600" fill="#333333">
+  <rect x="8" y="8" width="302" height="228" fill="#FFFFDE" stroke="#AAAA33" stroke-width="1" data-component="build_stage" data-view-element="build_stage_container"/>
+  <text x="159" y="24" text-anchor="middle" dominant-baseline="central">build stage</text>
+
+  <rect x="360" y="8" width="280" height="228" fill="#FFFFDE" stroke="#AAAA33" stroke-width="1" data-component="test_stage" data-view-element="test_stage_container"/>
+  <text x="500" y="24" text-anchor="middle" dominant-baseline="central">test stage</text>
+
+  <rect x="690" y="8" width="323" height="228" fill="#FFFFDE" stroke="#AAAA33" stroke-width="1" data-component="deploy_stage" data-view-element="deploy_stage_container"/>
+  <text x="851.5" y="24" text-anchor="middle" dominant-baseline="central">deploy stage</text>
+</g>
+
+<!-- ============ CONNECTORS ============
+     Flow reads LEFT-TO-RIGHT (view-reproduce.yaml flow.direction: right,
+     matching source.mmd's own `graph LR`). Orthogonal polylines only
+     (rule 3); every bent one below gets rounded to a rule-3a <path> by
+     tools/round-connectors.mjs in a follow-up pass (see README/
+     RULES-CHECK "Verification"). In-stage fan-out: each entry job's two
+     outgoing edges exit its right edge at 1/3 and 2/3 height (rule 2 —
+     two arrows, two different meanings, so distributed rather than
+     stacked at the midpoint). Cross-stage handoff: the 2 parallel jobs'
+     dotted edges converge into ONE shared trunk with ONE arrowhead on the
+     next stage's entry job (rule 11), same idiom as final.svg's restyle,
+     now at the extracted (non-uniform) coordinates. -->
+<g fill="none" stroke-width="1">
+  <!-- build -> build_a / build_b (solid, distributed exits) -->
+  <path d="M 126,113 H 146 Q 151,113 151,108 V 75 Q 151,70 156,70 H 176" stroke="#333333" marker-end="url(#arrow-neutral)"/>
+  <path d="M 126,131 H 146 Q 151,131 151,136 V 169 Q 151,174 156,174 H 176" stroke="#333333" marker-end="url(#arrow-neutral)"/>
+  <!-- test -> test_a / test_b (solid, distributed exits) -->
+  <path d="M 467,113 H 487 Q 492,113 492,108 V 75 Q 492,70 497,70 H 517" stroke="#333333" marker-end="url(#arrow-neutral)"/>
+  <path d="M 467,131 H 487 Q 492,131 492,136 V 169 Q 492,174 497,174 H 517" stroke="#333333" marker-end="url(#arrow-neutral)"/>
+  <!-- deploy -> deploy_a / deploy_b (solid, distributed exits) -->
+  <path d="M 819,113 H 839 Q 844,113 844,108 V 75 Q 844,70 849,70 H 869" stroke="#333333" marker-end="url(#arrow-neutral)"/>
+  <path d="M 819,131 H 839 Q 844,131 844,136 V 169 Q 844,174 849,174 H 869" stroke="#333333" marker-end="url(#arrow-neutral)"/>
+
+  <!-- build_a/build_b -> test: two dotted risers merge into one dashed trunk, one arrowhead -->
+  <path d="M 284,70 H 330 Q 335,70 335,75 V 122" stroke="#333333" stroke-dasharray="2,2"/>
+  <path d="M 285,174 H 330 Q 335,174 335,169 V 122" stroke="#333333" stroke-dasharray="2,2"/>
+  <polyline points="335,122 385,122" stroke="#333333" stroke-dasharray="2,2" marker-end="url(#arrow-neutral)"/>
+
+  <!-- test_a/test_b -> deploy: two dotted risers merge into one dashed trunk, one arrowhead -->
+  <path d="M 614,70 H 660 Q 665,70 665,75 V 122" stroke="#333333" stroke-dasharray="2,2"/>
+  <path d="M 615,174 H 660 Q 665,174 665,169 V 122" stroke="#333333" stroke-dasharray="2,2"/>
+  <polyline points="665,122 715,122" stroke="#333333" stroke-dasharray="2,2" marker-end="url(#arrow-neutral)"/>
+</g>
+
+<!-- ============ JOB BOXES (extracted per-box size from source.mmd's own
+     auto-fit-to-label mermaid render — deliberately NOT quantized to one
+     shared size, see header comment's B1 exemption). Title-only, centered
+     both axes (T3), matching source exactly. ============ -->
+<g font-size="15" fill="#333333">
+  <rect x="33" y="95" width="93" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="build"/>
+  <text x="79.5" y="122" text-anchor="middle" dominant-baseline="central">build</text>
+
+  <rect x="176" y="43" width="108" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="build_a"/>
+  <text x="230" y="70" text-anchor="middle" dominant-baseline="central">build_a</text>
+
+  <rect x="176" y="147" width="109" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="build_b"/>
+  <text x="230.5" y="174" text-anchor="middle" dominant-baseline="central">build_b</text>
+
+  <rect x="385" y="95" width="82" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="test"/>
+  <text x="426" y="122" text-anchor="middle" dominant-baseline="central">test</text>
+
+  <rect x="517" y="43" width="97" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="test_a"/>
+  <text x="565.5" y="70" text-anchor="middle" dominant-baseline="central">test_a</text>
+
+  <rect x="517" y="147" width="98" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="test_b"/>
+  <text x="566" y="174" text-anchor="middle" dominant-baseline="central">test_b</text>
+
+  <rect x="715" y="95" width="104" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="deploy"/>
+  <text x="767" y="122" text-anchor="middle" dominant-baseline="central">deploy</text>
+
+  <rect x="869" y="43" width="119" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="deploy_a"/>
+  <text x="928.5" y="70" text-anchor="middle" dominant-baseline="central">deploy_a</text>
+
+  <rect x="869" y="147" width="120" height="54" fill="#ECECFF" stroke="#9370DB" stroke-width="1" data-component="deploy_b"/>
+  <text x="929" y="174" text-anchor="middle" dominant-baseline="central">deploy_b</text>
+</g>
+</svg>

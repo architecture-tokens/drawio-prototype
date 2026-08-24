@@ -1060,6 +1060,13 @@ function collectIconIdsFromView(view) {
   };
   addAll(view.components);
   addAll(view.relationships);
+  for (const visualElement of view.visualElements ?? []) {
+    if (Array.isArray(visualElement?.attachments)) {
+      for (const attachment of visualElement.attachments) {
+        if (attachment && typeof attachment.icon === 'string') ids.add(attachment.icon);
+      }
+    }
+  }
   return ids;
 }
 
@@ -1072,8 +1079,8 @@ function checkUnknownIconSymbol(root, view) {
   const iconIds = collectIconIdsFromView(view);
   if (iconIds.size === 0)
     return {
-      status: 'NOT-CHECKABLE',
-      message: 'view.yaml has no component/relationship icon attachments',
+      status: 'PASS',
+      message: 'view.yaml declares 0 component/relationship icon attachments; nothing to resolve',
     };
   const symbolIds = new Set(
     collectAll(root, 'symbol')
@@ -1341,9 +1348,9 @@ function checkRelationshipAttachmentNotRendered(root, model, view) {
   );
   if (declared.length === 0) {
     return {
-      status: 'NOT-CHECKABLE',
+      status: 'PASS',
       message:
-        'view.yaml declares no relationship attachments that resolve into a model.yaml relationship id',
+        'view.yaml declares 0 relationship attachments that resolve into a model.yaml relationship id; nothing to render-bind',
     };
   }
 

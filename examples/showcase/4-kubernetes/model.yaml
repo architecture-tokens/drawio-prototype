@@ -9,7 +9,13 @@ components:
     metadata:
       label: Tester
       note: Outside the cluster; not deployed into any namespace.
-      sourceIds: ['734']
+      sourceIds: ['734', '732', '733']
+      sourceIdsNote: >
+        '734' is the labeled Tester card; '732'/'733' are the nested
+        white icon-card and laptop glyph (shape=mxgraph.gcp2.laptop) drawn
+        inside it -- added for the reproduce-mode census (view-reproduce.yaml
+        declares the laptop as tester's icon attachment); the convert-mode
+        model this file also serves never needed the distinction.
 
   - id: selenium-hub-rc
     type: k8s:workload.replication-controller

@@ -137,3 +137,28 @@ zoom: smooth corner, arrowhead still lands on the box edge.
 
 **Summary: 31 PASS, 2 N/A, 0 FAIL.** (+1 PASS vs. the previous iteration for the new rule
 3a.) `node tools/rules-lint.mjs final.svg` exits 0.
+
+---
+
+## Reproduce mode
+
+`final-reproduce.svg` retains Mermaid's 1023×2023 C4 stack exactly: the eight leaf
+elements, `Internet Banking` boundary, box/cylinder families, stereotypes, descriptions,
+and Mermaid C4 palette all keep their extracted coordinates. The ten source bezier
+relationships are the sole structural correction: each uses an unobscured side corridor
+and uniform 5px `Q` corners. White knockout backgrounds keep every relationship label
+clear of the corridor trunks without changing its text.
+
+Full-gate verification:
+
+```bash
+node tools/rules-lint.mjs final-reproduce.svg --full \
+  --model model.yaml --view view-reproduce.yaml --census census.yaml \
+  --layout layout-reproduce.json
+```
+
+Result: **15 PASS, 0 FAIL, 0 WARN** across the mechanically and cross-layer checkable
+rules. Census is 19/19, direction is 6/10 downward (the declared 60% threshold), all 9
+components and the boundary view element bind exactly once, all ten connectors share
+stroke width 1, and all 20 bends use radius 5. The 2x `final-reproduce.png` was inspected
+after rendering; no node text overflows and relationship labels remain readable.

@@ -1,0 +1,40 @@
+{
+  "version": "0.1",
+  "canvas": { "width": 1130, "height": 510 },
+  "nodes": [
+    { "id": "tester", "x": 89, "y": 290, "width": 90, "height": 114, "parentId": null },
+    { "id": "selenium-hub-rc", "x": 224, "y": 317, "width": 196, "height": 60, "parentId": null },
+    { "id": "hub-service", "x": 439, "y": 332, "width": 55, "height": 30, "parentId": null },
+    {
+      "id": "firefox-nodes-attribute",
+      "x": 494,
+      "y": 239,
+      "width": 206,
+      "height": 68,
+      "parentId": null
+    },
+    { "id": "firefox-nodes-rc", "x": 494, "y": 385, "width": 206, "height": 68, "parentId": null },
+    { "id": "frontend-service", "x": 759, "y": 331, "width": 60, "height": 33, "parentId": null },
+    { "id": "ui-servers-rc", "x": 815, "y": 239, "width": 200, "height": 68, "parentId": null },
+    {
+      "id": "backend-servers-rc",
+      "x": 815,
+      "y": 385,
+      "width": 201,
+      "height": 68,
+      "parentId": null
+    },
+    { "id": "backend-service", "x": 1007, "y": 331, "width": 50, "height": 33, "parentId": null }
+  ],
+  "edges": [
+    { "id": "tester-to-selenium-hub", "waypoints": [] },
+    { "id": "selenium-hub-to-hub-service", "waypoints": [] },
+    { "id": "hub-service-to-firefox-attribute", "waypoints": [{ "x": 467, "y": 273 }] },
+    { "id": "hub-service-to-firefox-rc", "waypoints": [{ "x": 467, "y": 419 }] },
+    { "id": "firefox-attribute-to-frontend", "waypoints": [{ "x": 583, "y": 347 }] },
+    { "id": "firefox-rc-to-frontend", "waypoints": [{ "x": 583, "y": 347 }] },
+    { "id": "frontend-to-ui-servers", "waypoints": [{ "x": 789, "y": 273 }] },
+    { "id": "ui-servers-to-backend-service", "waypoints": [{ "x": 982, "y": 273 }] },
+    { "id": "backend-servers-to-backend-service", "waypoints": [{ "x": 982, "y": 419 }] }
+  ]
+}

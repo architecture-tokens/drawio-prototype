@@ -13,6 +13,22 @@
 estimated) but **10** `Rel()`/`Rel_Back()` relationships, not 11 — counted directly with
 `grep -nE "^(Rel|Rel_Back)\(" source.mmd`; the model below captures all 10.
 
+## Views and reproducible artifacts
+
+This directory carries two views of the same `model.yaml`:
+
+- `view.yaml` / `layout.json` / `final.svg` — the rules-authored restyle.
+- `view-reproduce.yaml` / `layout-reproduce.json` / `final-reproduce.svg` — the
+  source-faithful reproduce view. Node, boundary, label, stereotype, shape, and palette
+  geometry are extracted from `mermaid-render.svg`; only Mermaid's curved relationship
+  routes are replaced with rule-3/3a rounded orthogonal corridors. The editable
+  `out-reproduce.drawio` is regenerated offline with `--library tokens.yaml`.
+
+`final-reproduce.png` is the 2x headless-Chrome verification render. The relationship
+labels use source-colored white knockout backgrounds where corridor trunks pass behind
+them; this fixes a line-strikethrough defect without changing the source wording or node
+layout.
+
 ## What the semantic model captures
 
 `model.yaml` has **9 components** (the 8 source nodes plus one 9th: the `Internet

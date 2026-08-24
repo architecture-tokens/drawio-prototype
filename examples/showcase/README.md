@@ -38,6 +38,12 @@ material to final render:
 | `RULES-CHECK.md`                | A manual checklist confirming the Diagram rules (shapes, styling, token-driven decoration) were applied correctly to this example. |
 | `README.md`                     | A short write-up of what this example demonstrates and any notable modeling decisions.                                             |
 
+Examples with a second source-faithful view add `view-reproduce.yaml`,
+`layout-reproduce.json`, `out-reproduce.drawio`, `final-reproduce.svg`, and
+`final-reproduce.png`. Mermaid sources also keep `mermaid-render.svg` as the geometry
+extraction record. Both views share `model.yaml`; `census.yaml` accounts for the original
+source independently of either presentation.
+
 ## Regenerating an example
 
 Examples are regenerated offline, from the checked-in `layout.json`, without ever

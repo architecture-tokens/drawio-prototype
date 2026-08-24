@@ -19,6 +19,21 @@ two Kubernetes namespaces. See `meta.json` for the full substitution note.
 Apache-2.0 requires no share-alike attribution beyond preserving the license
 and copyright notice; there is no CC-BY-SA obligation for this source.
 
+## Views and icon provenance
+
+This directory carries a rules-authored restyle (`view.yaml`, `layout.json`,
+`final.svg`) and a source-faithful reproduce view (`view-reproduce.yaml`,
+`layout-reproduce.json`, `final-reproduce.svg`). The reproduce geometry is transcribed
+from the native draw.io export of `source.xml`; only connector elbows change, to the
+uniform 5px rounded orthogonal treatment required in both conversion modes.
+
+The reproduce view does not substitute generic icons. Its Kubernetes Engine, laptop,
+and Google Cloud Platform symbols are vector transcriptions of the `mxgraph.gcp2`
+artwork embedded in the Apache-2.0 `jgraph/drawio-diagrams` source file named above.
+`data-component`, `data-view-element`, and `<use href="#icon-gcp-…">` bindings make the
+provenance and attachment contract machine-checkable. `final-reproduce.png` is the 2x
+headless-Chrome verification render.
+
 ## What the source diagram shows
 
 9 nodes / 9 edges (drawio node/edge count, i.e. excluding the two namespace
