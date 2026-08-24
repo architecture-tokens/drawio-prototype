@@ -61,6 +61,28 @@ const uniformRadiiConnectorFixture = `<svg xmlns="http://www.w3.org/2000/svg" vi
 </svg>
 `;
 
+// Rule 3a clamp-clause fixture: connector 1 is the same unclamped
+// radius-5 single bend as the uniform-radii fixture above (legs 40/80,
+// well over 2x5=10) -- it establishes the file's uniform radius R=5.
+// Connector 2 has TWO bends sharing a short 4-unit middle segment
+// (original vertices (100,10)->(100,42)->(100,46)->(190,46), matching the
+// real final-reproduce.svg micro-jog this fixture models): since 4 < 2x5,
+// both bends clamp to r_eff = min(5, 4/2) = 2. The `d` below is exactly
+// what tools/round-connectors.mjs would emit for that geometry at r=5
+// (the middle straight run between the two clamped Q's is zero-length,
+// "V44", since both r_eff's exactly consume the whole 4-unit segment).
+const clampedBendConnectorFixture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 100" width="220" height="100">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#FF0000"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="220" height="100" fill="#ffffff"/>
+<path d="M10,10 H45 Q50,10 50,15 V90" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+<path d="M100,10 V40 Q100,42 100,44 V44 Q100,46 102,46 H190" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+</svg>
+`;
+
 describe('tools/rules-lint.mjs', () => {
   it('finds the five showcase directories (sanity check on the fixture list)', () => {
     expect(showcaseSvgs.length).toBe(5);
@@ -133,6 +155,21 @@ describe('tools/rules-lint.mjs', () => {
     expect(rule3a).toBeDefined();
     expect(rule3a?.status).toBe('PASS');
     expect(rule3a?.message).toMatch(/radius 5/);
+  });
+
+  it('rule 3a: PASSes and reports the clamped bend count when a short adjacent segment justifies a smaller radius (clamp clause)', async () => {
+    const fixturePath = path.join(os.tmpdir(), `rules-lint-3a-clamped-fixture-${Date.now()}.svg`);
+    fs.writeFileSync(fixturePath, clampedBendConnectorFixture);
+
+    const result = await runCli([fixturePath, '--format', 'json']);
+    const [report] = JSON.parse(result.stdout) as Array<{
+      checks: Array<{ id: string; status: string; message: string }>;
+    }>;
+    const rule3a = report.checks.find((c) => c.id === '3a');
+    expect(rule3a).toBeDefined();
+    expect(rule3a?.status).toBe('PASS');
+    expect(rule3a?.message).toMatch(/radius 5/);
+    expect(rule3a?.message).toMatch(/2 bend\(s\) clamped/);
   });
 
   it('exits 2 with usage text when no files are given', async () => {

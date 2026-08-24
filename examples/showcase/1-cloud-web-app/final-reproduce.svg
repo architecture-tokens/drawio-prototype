@@ -119,12 +119,12 @@
 
 <!-- SSL padlock badges: security:security.encryption.in-transit applies to user-cdn and user-web-elb. Source draws ONE padlock on their shared first hop (user -> padlock); RELATIONSHIP_ATTACHMENT_NOT_RENDERED needs a <use> inside EACH data-relationship group, so both full polylines (sharing the first segment) and both padlock <use>s are drawn here, stacked at the identical position. -->
 <g data-relationship="user-cdn" fill="none" stroke-width="1.5">
-  <polyline points="190,697.5 259.5,697.5 259.5,560 74.5,560 74.5,515" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 190,697.5 H 254.5 Q 259.5,697.5 259.5,692.5 V 565 Q 259.5,560 254.5,560 H 79.5 Q 74.5,560 74.5,555 V 515" stroke="#505863" marker-end="url(#arrow-neutral)"/>
   <circle cx="259.5" cy="698" r="16" fill="#FFFFFF"/>
   <use href="#icon-security-ssl-padlock" x="245.5" y="684" width="28" height="28"/>
 </g>
 <g data-relationship="user-web-elb" fill="none" stroke-width="1.5">
-  <polyline points="190,697.5 259.5,697.5 259.5,692 392,692" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 190,697.5 H 256.75 Q 259.5,697.5 259.5,694.75 H 259.5 Q 259.5,692 262.25,692 H 392" stroke="#505863" marker-end="url(#arrow-neutral)"/>
   <circle cx="259.5" cy="698" r="16" fill="#FFFFFF"/>
   <use href="#icon-security-ssl-padlock" x="245.5" y="684" width="28" height="28"/>
 </g>

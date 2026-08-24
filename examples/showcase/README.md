@@ -117,8 +117,12 @@ Assess the SOURCE's quality before authoring any layout, and record the verdict 
   is a faithful reproduction: geometry EXTRACTED from the source (not re-authored),
   original visual language kept (icons, palette, containers — crossing groupings
   included). The tokens methodology runs underneath unchanged: model, census, bindings,
-  and every blocking diagnostic. Diagram rules act only as a defect lint; a clean source
-  gets zero visual edits.
+  and every blocking diagnostic. What reproduce does NOT copy is connector treatment:
+  rules 3/3a (orthogonal routing, uniform rounded corners) are normative in both modes
+  (owner decision 2026-08-24 — line treatment is presentation quality, not content), so
+  a bezier-routed Mermaid source reproduces with its positions, shapes, and palette, but
+  with orthogonal rounded connectors. Beyond that, Diagram rules act only as a defect
+  lint; a clean source gets zero visual edits.
 - **`restyle`** — the source has real layout/style defects (uneven grids, bezier
   spaghetti, undocumented color). Layout is re-authored per Diagram rules. This was the
   only mode before 2026-08-24; the cloud-web-app example showed it degrades high-quality

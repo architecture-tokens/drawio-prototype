@@ -26,7 +26,13 @@
 //   rule 3a   - every 90° bend in an orthogonal connector uses ONE uniform
 //               small arc radius, once any connector in the file adopts
 //               rounded corners (a diagram still fully sharp-cornered is
-//               WARN, not FAIL — the rule postdates it)
+//               WARN, not FAIL — the rule postdates it). A bend whose
+//               reconstructed original adjacent segment is under 2x the
+//               uniform radius may clamp to a smaller radius (rule 3a's
+//               clamp clause, added 2026-08-24 alongside removing the
+//               reproduce-mode exemption — rounding is now normative in
+//               BOTH conversion modes); a smaller radius with no such
+//               short-segment justification still FAILs
 //   rule 7    - every <marker> uses markerUnits="userSpaceOnUse" and one
 //               shared markerWidth/markerHeight
 //   rule 8    - every connector (<polyline>/<line>) shares one stroke-width
@@ -360,15 +366,24 @@ function checkRule4(root) {
 }
 
 // rule 3a: every 90° bend in an orthogonal connector gets ONE uniform small
-// arc radius (rule adopted 2026-08-24, diagram-rules.md). Checkable subset
-// (deliberately narrower than the full rule text, per the task brief that
-// introduced this check): once ANY connector bend in the file is rounded,
-// EVERY bend across EVERY connector must share that same radius — a mix of
-// sharp and rounded bends anywhere (even within one connector) is a FAIL,
-// and rounded bends at different radii are a FAIL. A diagram whose
-// connectors are still all sharp-cornered predates the rule and is
-// reported WARN, not FAIL — old diagrams are not hard-failed retroactively
-// (only the showcase files a task explicitly upgrades need to reach PASS).
+// arc radius (rule adopted 2026-08-24, diagram-rules.md; amended
+// 2026-08-24 — the original reproduce-mode exemption was REMOVED, rounding
+// is now normative in both conversion modes, and a clamp clause was
+// added). Checkable subset (deliberately narrower than the full rule text,
+// per the task brief that introduced this check): once ANY connector bend
+// in the file is rounded, EVERY bend across EVERY connector must share
+// that same radius — a mix of sharp and rounded bends anywhere (even
+// within one connector) is a FAIL — UNLESS a smaller radius is justified
+// by the clamp clause: an adjacent original segment shorter than 2x the
+// diagram's uniform radius clamps that bend's arc to
+// min(uniformRadius, leg/2) for the short leg (see checkRule3a's own doc
+// comment below for how the original, pre-trim leg lengths are
+// reconstructed from a rounded path's `d` alone). A rounded bend smaller
+// than the uniform radius with NO such short-leg justification is still a
+// FAIL. A diagram whose connectors are still all sharp-cornered predates
+// the rule and is reported WARN, not FAIL — old diagrams are not
+// hard-failed retroactively (only the showcase files a task explicitly
+// upgrades need to reach PASS).
 //
 // "Connector", for this check, means:
 //   - a <polyline> with >=1 real (non-collinear) interior vertex — a sharp
@@ -403,14 +418,28 @@ function tokenizePathD(d) {
 }
 
 // Walks a tokenized path (see tokenizePathD) into {type: 'straight'|'arc',
-// radius?} segments and classifies its bends. Returns null when the shape
-// isn't a connector this heuristic can classify (see checkRule3a's doc
-// comment). For a Q command, the radius is the distance from the point
-// reached by the PRECEDING straight run to the Q's control point — exact
-// by construction for the "trim each leg by r, curve through the original
-// sharp vertex" technique this tool's own converter uses (see
-// scratchpad/round-connectors.mjs in the branch that added rule 3a). For
-// an A command, the radius is read directly off its rx parameter.
+// radius?, length?} segments and classifies its bends. Returns null when
+// the shape isn't a connector this heuristic can classify (see
+// checkRule3a's doc comment). For a Q command, the radius is the distance
+// from the point reached by the PRECEDING straight run to the Q's control
+// point — exact by construction for the "trim each leg by r, curve through
+// the original sharp vertex" technique this tool's own converter uses (see
+// tools/round-connectors.mjs). For an A command, the radius is read
+// directly off its rx parameter.
+//
+// Clamp-clause support: for a PURE rounded path (no sharp corners
+// interleaved — the only shape the clamp justification below needs), also
+// returns `bends`, one entry per arc with its RECONSTRUCTED original
+// (pre-trim) adjacent leg lengths. round-connectors.mjs's clamp trims each
+// leg touching a bend by that bend's own r_eff, so a straight run's
+// rendered length is (original leg length - the r_eff trimmed off each end
+// that touches it) — meaning the original leg length is recoverable as
+// (rendered run length + the r_eff(s) trimmed off its end(s)), walking the
+// straight/arc/straight/arc/.../straight sequence in order. This is exact
+// by construction for this tool's own converter output, and is what lets
+// checkRule3a verify a clamped bend's smaller radius against the ORIGINAL
+// segment (as rule 3a's clamp clause is written), not the already-trimmed
+// visible run.
 function classifyConnectorPathSegments(cmds) {
   if (!cmds || cmds[0].cmd !== 'M' || cmds[0].args.length < 2) return null;
   let cur = [cmds[0].args[0], cmds[0].args[1]];
@@ -420,16 +449,19 @@ function classifyConnectorPathSegments(cmds) {
     if (cmd === 'M') return null; // a second subpath -- not a simple connector shape
     if (cmd === 'L') {
       if (args.length < 2) return null;
-      segs.push({ type: 'straight' });
-      cur = [args[0], args[1]];
+      const next = [args[0], args[1]];
+      segs.push({ type: 'straight', length: Math.hypot(next[0] - cur[0], next[1] - cur[1]) });
+      cur = next;
     } else if (cmd === 'H') {
       if (args.length < 1) return null;
-      segs.push({ type: 'straight' });
-      cur = [args[0], cur[1]];
+      const next = [args[0], cur[1]];
+      segs.push({ type: 'straight', length: Math.abs(next[0] - cur[0]) });
+      cur = next;
     } else if (cmd === 'V') {
       if (args.length < 1) return null;
-      segs.push({ type: 'straight' });
-      cur = [cur[0], args[0]];
+      const next = [cur[0], args[0]];
+      segs.push({ type: 'straight', length: Math.abs(next[1] - cur[1]) });
+      cur = next;
     } else if (cmd === 'Q') {
       if (args.length < 4) return null;
       const radius = Math.hypot(args[0] - cur[0], args[1] - cur[1]);
@@ -440,7 +472,7 @@ function classifyConnectorPathSegments(cmds) {
       segs.push({ type: 'arc', radius: args[0] });
       cur = [args[5], args[6]];
     } else if (cmd === 'Z') {
-      segs.push({ type: 'straight' });
+      segs.push({ type: 'straight', length: 0 });
     } else {
       return null;
     }
@@ -460,7 +492,29 @@ function classifyConnectorPathSegments(cmds) {
   for (let i = 0; i + 1 < segs.length; i += 1) {
     if (segs[i].type === 'straight' && segs[i + 1].type === 'straight') sharpBends += 1;
   }
-  return { sharpBends, roundedBends, radii };
+
+  let bends = null;
+  if (sharpBends === 0 && roundedBends > 0) {
+    const straightLens = segs.filter((s) => s.type === 'straight').map((s) => s.length ?? 0);
+    const arcs = segs.filter((s) => s.type === 'arc');
+    const k = arcs.length;
+    // legs[j] = original length of the segment between original vertices
+    // (j-1) and j, 1-indexed (legs[1]..legs[k+1]); rebuilt per the doc
+    // comment above.
+    const legs = new Array(k + 2);
+    legs[1] = straightLens[0] + arcs[0].radius;
+    for (let j = 1; j <= k - 1; j += 1) {
+      legs[j + 1] = straightLens[j] + arcs[j - 1].radius + arcs[j].radius;
+    }
+    legs[k + 1] = straightLens[k] + arcs[k - 1].radius;
+    bends = arcs.map((a, idx) => ({
+      radius: a.radius,
+      legIn: legs[idx + 1],
+      legOut: legs[idx + 2],
+    }));
+  }
+
+  return { sharpBends, roundedBends, radii, bends };
 }
 
 // A <polyline> interior vertex is a real bend only if it actually turns —
@@ -478,6 +532,8 @@ function polylineHasRealBend(pts) {
   return false;
 }
 
+const RADIUS_EPS = 0.05;
+
 function checkRule3a(root) {
   const elements = [];
 
@@ -485,7 +541,7 @@ function checkRule3a(root) {
     if (isInsideDefsOrMarker(p)) continue;
     const pts = parsePoints(p.attrs.points);
     if (pts.length < 3 || !polylineHasRealBend(pts)) continue;
-    elements.push({ node: p, kind: 'sharp', radii: [] });
+    elements.push({ node: p, kind: 'sharp', radii: [], bends: null });
   }
 
   const mixedElementOffenders = [];
@@ -493,13 +549,13 @@ function checkRule3a(root) {
     if (isInsideDefsOrMarker(p)) continue;
     const classified = classifyConnectorPathSegments(tokenizePathD(p.attrs.d));
     if (!classified) continue; // not a connector shape this heuristic understands
-    const { sharpBends, roundedBends, radii } = classified;
+    const { sharpBends, roundedBends, radii, bends } = classified;
     if (sharpBends === 0 && roundedBends === 0) continue; // no bend (single straight run)
     if (sharpBends > 0 && roundedBends > 0) {
       mixedElementOffenders.push(p);
       continue;
     }
-    elements.push({ node: p, kind: roundedBends > 0 ? 'rounded' : 'sharp', radii });
+    elements.push({ node: p, kind: roundedBends > 0 ? 'rounded' : 'sharp', radii, bends });
   }
 
   if (mixedElementOffenders.length > 0) {
@@ -530,21 +586,70 @@ function checkRule3a(root) {
     };
   }
 
-  const allRadii = roundedEls.flatMap((e) => e.radii);
-  const uniqueRadii = [];
-  for (const r of allRadii) {
-    if (!uniqueRadii.some((u) => Math.abs(u - r) < 0.05)) uniqueRadii.push(r);
+  // Every element is rounded. Flatten every bend and determine the
+  // diagram's uniform radius R as the LARGEST radius present — the clamp
+  // clause only ever shrinks a bend's radius below R (r_eff =
+  // min(R, leg/2) <= R always), so at least one un-clamped bend should
+  // carry the full R.
+  const allBends = [];
+  for (const e of roundedEls) {
+    if (e.bends) {
+      for (const b of e.bends) allBends.push({ ...b, node: e.node });
+    } else {
+      // A rounded <path> this tool couldn't reduce to leg lengths (e.g. an
+      // interior sharp corner already routed to mixedElementOffenders
+      // above, so this is defensive only) still contributes its radius to
+      // the uniform-radius comparison, just without clamp-justification
+      // evidence.
+      for (const r of e.radii) {
+        allBends.push({ radius: r, legIn: undefined, legOut: undefined, node: e.node });
+      }
+    }
   }
-  if (uniqueRadii.length > 1) {
+
+  const R = Math.max(...allBends.map((b) => b.radius));
+
+  const unjustified = [];
+  const clamped = [];
+  for (const b of allBends) {
+    if (Math.abs(b.radius - R) < RADIUS_EPS) continue; // at the uniform radius -- fine
+    // Smaller than R: rule 3a's clamp clause permits this ONLY when an
+    // adjacent ORIGINAL segment is under 2xR, and only at exactly the
+    // clamped value the formula produces -- not merely "some smaller
+    // number".
+    const hasShortLeg =
+      b.legIn !== undefined &&
+      b.legOut !== undefined &&
+      Math.min(b.legIn, b.legOut) < 2 * R - RADIUS_EPS;
+    const expectedClamp = hasShortLeg ? Math.min(R, b.legIn / 2, b.legOut / 2) : undefined;
+    const matchesClamp =
+      expectedClamp !== undefined && Math.abs(b.radius - expectedClamp) < RADIUS_EPS;
+    if (hasShortLeg && matchesClamp) clamped.push(b);
+    else unjustified.push(b);
+  }
+
+  if (unjustified.length > 0) {
+    const uniqueRadii = [];
+    for (const b of allBends) {
+      if (!uniqueRadii.some((u) => Math.abs(u - b.radius) < RADIUS_EPS)) uniqueRadii.push(b.radius);
+    }
     return {
       status: 'FAIL',
-      message: `${roundedEls.length} rounded connector(s) use ${uniqueRadii.length} different corner radii: ${uniqueRadii.map((r) => round(r, 2)).join(', ')}`,
-      snippet: truncate(roundedEls[0].node.raw),
+      message:
+        `${roundedEls.length} rounded connector(s) use ${uniqueRadii.length} different corner radii: ` +
+        `${uniqueRadii.map((r) => round(r, 2)).join(', ')} (${unjustified.length} bend(s) smaller than the ` +
+        `uniform radius ${round(R, 2)} with no adjacent original segment under 2x${round(R, 2)} to justify ` +
+        `the clamp — rule 3a's clamp clause requires that justification, not just a smaller number)`,
+      snippet: truncate(unjustified[0].node.raw),
     };
   }
+
+  const clampNote = clamped.length
+    ? `, ${clamped.length} bend(s) clamped below ${round(R, 2)} for a short adjacent segment (rule 3a clamp clause)`
+    : '';
   return {
     status: 'PASS',
-    message: `${roundedEls.length} rounded connector(s), ${allRadii.length} bend(s) total, all one uniform radius ${round(uniqueRadii[0], 2)}`,
+    message: `${roundedEls.length} rounded connector(s), ${allBends.length} bend(s) total, all one uniform radius ${round(R, 2)}${clampNote}`,
   };
 }
 

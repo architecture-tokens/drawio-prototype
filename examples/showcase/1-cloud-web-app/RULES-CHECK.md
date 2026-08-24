@@ -37,9 +37,12 @@ found and fixed during that process (see below).
    elbow, a diverging fan-out riser, a converging merge trunk, and a
    terminal arrowhead landing) — see `final.png`: every corner is smooth,
    every arrowhead still lands exactly on its box edge, no marker
-   distortion. `final-reproduce.svg` is untouched (reproduce-mode is
-   explicitly exempt from rule 3a — it follows the source's own corner
-   treatment instead).
+   distortion. `final-reproduce.svg` is now ALSO converted, at this same
+   5-unit radius (with 2 bends clamped smaller per rule 3a's clamp clause)
+   — the reproduce-mode exemption recorded here in an earlier iteration of
+   this file was REMOVED (owner decision 2026-08-24); see this file's
+   "Reproduce mode" section below for that conversion's own check-by-check
+   pass.
 4. **Arrowhead follows the final segment.** PASS, checked edge by edge —
    flow reads bottom-up (`infra:presentation.flow.direction = up`, now
    view.yaml's top-level `flow.direction`, not a model.yaml token on
@@ -293,22 +296,55 @@ share `stroke-width="1.5"`, one dashed class (RDS replication + the two
 Availability-Zone/Autoscaling-Group band borders — rule 10 requires the
 word "dash" appear in a documenting comment; the palette comment does).
 
-**3a EXEMPT (task brief: reproduce-mode conversions follow the SOURCE's own
-corner treatment instead of rule 3a).** `source.xml`'s connectors are all
-sharp-cornered, so `final-reproduce.svg` stayed untouched by the rule-3a
-restyle pass applied to `final.svg` above — this is faithfulness winning
-over 3a, exactly as diagram-rules.md's rule 3a text and this task's brief
-both call for, not an oversight. `rules-lint` itself reports this
-correctly as WARN, not FAIL (`node tools/rules-lint.mjs
-final-reproduce.svg`: `3a: rule 3a adopted 2026-08-24; 2 connector(s) with
-sharp (unrounded) bends predate it — not hard-failed`) — WARN doesn't
-affect the exit code (still 0), consistent with the rule's own design for
-diagrams that predate its adoption.
+**3a PASS (reproduce-mode exemption REMOVED, owner decision 2026-08-24:
+corner-rounding is line treatment, not content, so rule 3a is now
+normative in BOTH conversion modes — the earlier "reproduce follows the
+source's own corner treatment" exemption recorded below no longer
+applies).** `source.xml`'s connectors are all sharp-cornered, so
+`final-reproduce.svg` was converted with `tools/round-connectors.mjs`
+(promoted from a scratchpad script to a checked-in tool by this same
+task) at the diagram's uniform radius, 5 — matching `final.svg`'s restyle
+pass exactly, per the amended rule's "one radius for the whole diagram"
+requirement spanning both modes. 2 of the file's 30 connectors are
+multi-bend (the two SSL-badge edges, which share their `user->padlock`
+first hop): `user->cdn`'s bend gets the full 5-unit radius (its legs — 69.5
+and 137.5 — are both well over 2x5=10), but `user->web-elb` has a genuine
+micro-jog in the extracted geometry (`259.5,697.5 -> 259.5,692`, a
+5.5-unit vertical leg, under 2x5=10), so rule 3a's clamp clause applies to
+BOTH of that bend pair: r_eff = min(5, 5.5/2) = 2.75 at each, not the
+diagram's full 5. `rules-lint` accepts this mechanically as PASS, not
+FAIL, and reports the clamp count in its message (`node
+tools/rules-lint.mjs final-reproduce.svg`: `3a: 2 rounded connector(s), 5
+bend(s) total, all one uniform radius 5, 2 bend(s) clamped below 5 for a
+short adjacent segment (rule 3a clamp clause)`) — the clamp is accepted
+because rule 3a's own text ties it to a mechanical constraint (an
+adjacent segment under 2x the uniform radius), not a second declared
+radius, and `rules-lint`'s check reconstructs that original 5.5-unit leg
+from the rounded path's own geometry to verify the clamp is exact, not
+merely "some smaller number."
+
+Re-rendered `final-reproduce.png` (headless Chrome, `--window-size=899,809
+--force-device-scale-factor=2`, matching the SVG's own `viewBox`/
+`width`/`height`) and looked at the converted region. Both bends sit
+directly under the SSL-padlock badge mask (a 16-radius white disc + icon,
+part of the source's own design, masking the two edges' shared first hop)
+— the exact corner curvature is therefore not itself visible, by design,
+same as before this change. What IS visible and was checked: both
+connectors enter and exit the badge cleanly with no doubled lines, no
+visible kink or offset where the clamped bend sits, and the arrowhead
+landing on `Web ELB` (the clamped connector's destination) is a clean,
+undistorted triangle exactly on the box edge — the clamp introduces no
+visible defect. `git diff` on this change touches exactly the file's 2
+bent `<polyline>` elements (now rule-3a `<path>`s) and nothing else — no
+other connector, box, icon, or color changed.
 
 Rules 1/2/3/5/6/11/12 are the render-dependent/semantic-judgement ones
 `rules-lint` marks NOT-CHECKABLE for every file (restyle included);
 checked here the same way restyle's check documents (render → crop →
-look): every connector is a `<polyline>` (rule 3), converging fans (4
+look): every connector routes in axis-aligned horizontal/vertical
+segments (rule 3) — 28 single-segment `<polyline>`s plus the 2 bent
+connectors now rounded to `<path>`s per rule 3a above, never a smooth
+bezier route. Converging fans (4
 instances → 1 LB/RDS, rule 11) merge to one shared bus + one trunk + one
 arrowhead, diverging fans (1 LB → 4 instances) stay as 4 separate
 arrowheads — exactly `source.png`'s own visual idiom, extracted rather
@@ -441,4 +477,4 @@ target:
 
 ## Summary
 
-**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 13 PASS, 0 FAIL, 2 WARN (unused decorative `<symbol>`, non-blocking; plus rule 3a — 2 sharp-cornered connectors predating the rule, exempt per the task brief since reproduce mode follows the source's own corner treatment), 23 NOT-CHECKABLE. Three documented, disclosed reproduce-mode exemptions (B1's size quantization, C2's arrow-color-by-domain, and now 3a's corner-rounding) — all are documentation-only calls; no `rules-lint.mjs` code changed to accommodate any of them, since B1/C2 are already `NOT-CHECKABLE` for every file and 3a's own design already reports a pre-existing sharp diagram as WARN, not FAIL.
+**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 14 PASS, 0 FAIL, 1 WARN (unused decorative `<symbol>`, non-blocking), 23 NOT-CHECKABLE. Rule 3a is now among the 14 PASS (previously a 2-connector WARN under the since-removed reproduce-mode exemption — see "Connectors" above for the clamp-clause application that made this a real, non-exempted conversion, not a documentation call). Two documented, disclosed reproduce-mode exemptions remain (B1's size quantization, C2's arrow-color-by-domain) — both are documentation-only calls; no `rules-lint.mjs` code changed to accommodate either, since both checks are already `NOT-CHECKABLE` for every file regardless of mode.
