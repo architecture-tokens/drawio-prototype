@@ -22,6 +22,22 @@ The layout is validated before scoring. Any invalid layout or failed score/gate
 causes exactly one repair request. The repaired result is evaluated once and the
 run then stops: a second failure writes a failed report and exits `1`.
 
+Planner prompts make the geometry contract explicit: root coordinates are
+canvas-absolute, child coordinates are parent-relative, and every child must fit
+fully inside its parent. Unrelated boxes may not overlap. Connector waypoints
+use absolute canvas coordinates and orthogonal segments which must follow the
+declared flow direction while avoiding boxes, unintended crossings, and
+unrelated T-junctions. Crossing allowances may express verified source intent;
+they are never a mechanism for hiding a newly created crossing.
+
+Repair prompts receive only stable, local diagnostics. Each item has a sanitized
+code, path, and generic message, plus a model-whitelisted `elementId` and up to
+eight `relatedIds` when the validator can identify the involved elements. For
+example, a child containment failure can identify
+`/layout/nodes/2`, `build_a`, and its related parent `build_stage`; a collision
+identifies both node IDs. Raw linter messages and provider content are never
+forwarded.
+
 The full gate uses the example's checked-in `final-reproduce.svg` as the
 renderer baseline and substitutes the candidate layout for the layout-dependent
 checks. Candidate geometry is validated independently first. When the fixed SVG
