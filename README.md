@@ -16,9 +16,13 @@ Validation accepts YAML or JSON and uses the immutable specification dependency 
 ```text
 archtokens validate <model.yaml|json> [--library file] [--policy file] [--format human|json]
 archtokens generate <model> --out <diagram.drawio> [--view view.yaml|json] [--library file] [--policy file] [--format human|json] [--ai-model name]
+archtokens import-source <source.drawio|xml|mmd> --out <inventory.json> [--layout-out <source-layout.json>]
+archtokens scaffold-census <source.drawio|xml|mmd> --out <census.yaml> --model <model.yaml> [--classifications <mappings.yaml>] [--inventory-out <inventory.json>] [--layout-out <source-layout.json>]
 ```
 
 Exit codes are stable: `0` success, `1` schema/semantic validation diagnostics, `2` usage/input/I/O, `3` AI provider error or refusal, `4` invalid AI layout after its one repair attempt, and `5` output generation/write failure. Human reports include severity, code, path, element/rule when supplied, message, and remediation. `--format json` prints the specification report.
+
+Source import accepts uncompressed or compressed draw.io files, bare mxGraph XML, Mermaid flowcharts, and Mermaid C4 diagrams. It writes a byte-deterministic inventory and optional source-layout projection with stable source IDs, exact element counts, declared/inferred direction, containment, mxGraph geometry, and edge control points. `scaffold-census` emits one record for every imported source element. Unclassified semantics remain explicit `primary_bucket: TODO` records and `SOURCE_CLASSIFICATION_TODO` diagnostics; they are never silently dropped. A separate classification mapping turns the scaffold into a normal five-bucket census. See [source import and census scaffolding](docs/source-import.md) for formats and verified examples.
 
 Generation checks every model, library, policy, and optional architecture-view schema before semantic validation. A view is presentation-only and must use version `0.1.0`, declare `reproduce` or `restyle`, resolve its component/relationship attachment owners and visual-element members against the model, and use owner-appropriate anchors. Invalid input never reaches the planner. The planner interface receives only normalized renderer input, the validated optional view, and the local version-0.1 layout schema. Omitting `--view` preserves the original model-only behavior. The default uses the official OpenAI JavaScript SDK Responses API with structured output; model precedence is `--ai-model`, `ARCHTOKENS_OPENAI_MODEL`, then `gpt-5.6`. Set `OPENAI_API_KEY` only for a real generation. Keys, full models/prompts, and full provider responses are not logged.
 

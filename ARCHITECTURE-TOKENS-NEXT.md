@@ -56,13 +56,15 @@
 
 ## P1：把转换和 AI 规划变成可重复能力
 
-### 4. 产品化 source → census → model/view/layout 的导入流程
+### 4. 产品化 source → census → model/view/layout 的导入流程（已完成首版）
 
 **缺口：** `--census-dump` 已能枚举 draw.io/Mermaid 源元素，但 census 分类、model/view 绑定和 layout 提取仍是逐例手工工作。
 
 **例子：** `cloud-web-app` 的 51 个源元素已经证明“一源元素一个 primary bucket + trace links”可行；今天的错误也说明人工坐标提取会把源 edge 38 的 `y=760` 错译成 `y=560`。
 
 **完成标准：** 提供 import/scaffold 命令，生成稳定 source id 清单、census 草稿和未决项；机器可确定的节点、边、坐标与方向自动提取，所有无法判断的分类必须显式留为待决，禁止静默 drop。
+
+**完成证据：** `archtokens import-source` 现可读取 draw.io/mxGraph XML、Mermaid flowchart 与 Mermaid C4，输出 byte-deterministic inventory/source-layout；`archtokens scaffold-census` 把未分类元素保留为 `TODO`，完整 mappings 则生成可通过 `CENSUS_MISMATCH` 的正式 census。真实 cloud 源实测为 28 vertex + 23 edge = 51，并由回归测试锁定 edge 38 的 `{x:230,y:760}`，禁止退回历史错误 `y=560`。详见 [`docs/source-import.md`](docs/source-import.md)。
 
 ### 5. 建立 planner 基准，而不是继续手写 layout
 
