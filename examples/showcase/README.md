@@ -51,3 +51,48 @@ Add `--library <file>` / `--policy <file>` flags for examples that need extra to
 libraries or policy sets beyond the built-in ones. `tools/offline-generate.mjs` never
 reads `OPENAI_API_KEY` and never makes a network call — see the comment at the top of
 that script for why.
+
+## Conversion methodology (the actual product of these examples)
+
+The examples exist to harden the method, not to perfect any one picture. Each conversion
+feeds defects back into the layer that caused them. The rules below were extracted from
+real failures in this directory; every future example must follow them and extend them.
+
+### Fidelity contract
+
+Every element of the source diagram must land in exactly one of four buckets, and the
+example's README must carry the census:
+
+| Bucket                       | Meaning                                                                              | Example                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| **component / relationship** | First-class in `model.yaml`                                                          | a service box, an edge                                       |
+| **token**                    | Meaning kept, geometry given up — recorded as an applied token                       | SSL padlock -> `security:encryption.in-transit` on its edges |
+| **visual-layer element**     | Not expressible in the model schema, drawn at the SVG layer and traceable to a token | AZ bands, namespace containers                               |
+| **explicit drop**            | Dropped with a one-line reason                                                       | a letter annotation duplicating a label                      |
+
+A silent drop is a methodology bug: `source census = model + tokens + visual + drops`
+must reconcile, count for count. (Origin: example 1 dropped the AZ containers and all
+icons without the loss being visible in any artifact.)
+
+### Source-fidelity defaults
+
+1. **Direction**: detect the source's flow direction; when it has logic, preserve it.
+   Record it as `presentation.flow.direction` so downstream layers consume a token, never
+   a guess. (Origin: example 1's bottom-up source silently became top-down.)
+2. **Icons**: when the source carries icon identity, keep it — `presentation.icon` names
+   the glyph, the render layer resolves it from a `<defs>` symbol set. Dropping icons is
+   an explicit-drop decision, never a default.
+3. **Icon placement**: from the nine-grid enum (`top-left` .. `bottom-right`; typical:
+   `top-center`, `middle-left`, `middle-right`), matched to the source's placement —
+   positions are chosen from the enum, never freehand.
+4. **Improvements are layout-layer only**: grid, gaps, quantized sizes, merged trunks —
+   the Diagram-rules cleanups — must not change what the diagram says (direction,
+   membership, icons, labels).
+
+### Feedback routing
+
+A defect found in a finished diagram routes to the layer that owns it: missing concept ->
+spec issue (containment, presentation tokens); undeclared contract semantics -> layout
+contract issue (parent-relative coordinates); style violation -> `diagram-rules.md` +
+`tools/rules-lint.mjs` when statically checkable. The diagram itself is only patched as a
+side effect of fixing the layer.

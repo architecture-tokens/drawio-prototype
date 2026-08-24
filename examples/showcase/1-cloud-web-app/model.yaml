@@ -6,29 +6,59 @@ components:
   # --- Ingress ---
   - id: user
     type: core:component.external-actor
-    tokens: []
+    tokens:
+      [
+        { token: infra:presentation.flow.direction, value: up },
+        { token: infra:presentation.icon, value: actor.user },
+        { token: infra:presentation.icon.position, value: top-center },
+      ]
     metadata: { label: User }
   - id: route53
     type: infra:component.dns
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.route53 },
+        { token: infra:presentation.icon.position, value: top-right },
+      ]
     metadata: { label: 'Amazon Route 53' }
   - id: web-elb
     type: infra:component.load-balancer
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.elb },
+        { token: infra:presentation.icon.position, value: middle-left },
+      ]
     metadata: { label: 'Web ELB' }
 
   # --- CDN / static-content path ---
   - id: cdn
     type: infra:component.cdn
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.cloudfront },
+        { token: infra:presentation.icon.position, value: middle-right },
+      ]
     metadata: { label: CloudFront }
   - id: static-assets
     type: infra:component.static-assets
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.static-assets },
+        { token: infra:presentation.icon.position, value: top-right },
+      ]
     metadata: { label: 'Static Assets' }
   - id: s3
     type: infra:component.object-storage
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.s3 },
+        { token: infra:presentation.icon.position, value: middle-right },
+      ]
     metadata: { label: 'Amazon S3' }
 
   # --- Web tier ---
@@ -42,25 +72,54 @@ components:
     metadata: { label: 'Web Tier Autoscaling Group' }
   - id: web-instance-1
     type: infra:component.compute-instance
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.ec2-instance },
+        { token: infra:presentation.icon.position, value: top-center },
+        { token: infra:deployment.availability-zone, value: a },
+      ]
     metadata: { label: 'Web 1' }
   - id: web-instance-2
     type: infra:component.compute-instance
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.ec2-instance },
+        { token: infra:presentation.icon.position, value: top-center },
+        { token: infra:deployment.availability-zone, value: a },
+      ]
     metadata: { label: 'Web 2' }
   - id: web-instance-3
     type: infra:component.compute-instance
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.ec2-instance },
+        { token: infra:presentation.icon.position, value: top-center },
+        { token: infra:deployment.availability-zone, value: b },
+      ]
     metadata: { label: 'Web 3' }
   - id: web-instance-4
     type: infra:component.compute-instance
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.ec2-instance },
+        { token: infra:presentation.icon.position, value: top-center },
+        { token: infra:deployment.availability-zone, value: b },
+      ]
     metadata: { label: 'Web 4' }
 
   # --- App tier ---
   - id: app-elb
     type: infra:component.load-balancer
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.elb },
+        { token: infra:presentation.icon.position, value: middle-left },
+      ]
     metadata: { label: 'App ELB' }
   - id: app-asg
     type: infra:component.autoscaling-group
@@ -72,31 +131,65 @@ components:
     metadata: { label: 'App Tier Autoscaling Group' }
   - id: app-instance-1
     type: infra:component.compute-instance
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.ec2-instance },
+        { token: infra:presentation.icon.position, value: top-center },
+        { token: infra:deployment.availability-zone, value: a },
+      ]
     metadata: { label: 'App 1' }
   - id: app-instance-2
     type: infra:component.compute-instance
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.ec2-instance },
+        { token: infra:presentation.icon.position, value: top-center },
+        { token: infra:deployment.availability-zone, value: a },
+      ]
     metadata: { label: 'App 2' }
   - id: app-instance-3
     type: infra:component.compute-instance
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.ec2-instance },
+        { token: infra:presentation.icon.position, value: top-center },
+        { token: infra:deployment.availability-zone, value: b },
+      ]
     metadata: { label: 'App 3' }
   - id: app-instance-4
     type: infra:component.compute-instance
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.ec2-instance },
+        { token: infra:presentation.icon.position, value: top-center },
+        { token: infra:deployment.availability-zone, value: b },
+      ]
     metadata: { label: 'App 4' }
 
   # --- Data tier ---
   - id: rds-master
     type: core:component.database
     configuration: { engine: amazon-rds }
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.rds },
+        { token: infra:presentation.icon.position, value: middle-right },
+      ]
     metadata: { label: 'RDS Master' }
   - id: rds-slave
     type: core:component.database
     configuration: { engine: amazon-rds }
-    tokens: [{ token: environment:environment.production }]
+    tokens:
+      [
+        { token: environment:environment.production },
+        { token: infra:presentation.icon, value: aws.rds },
+        { token: infra:presentation.icon.position, value: middle-left },
+      ]
     metadata: { label: 'RDS Slave' }
 
 relationships:
