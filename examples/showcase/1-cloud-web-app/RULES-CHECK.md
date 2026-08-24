@@ -240,3 +240,164 @@ from the previous iteration). `node tools/rules-lint.mjs final.svg` exits
 0 (9 PASS / 0 FAIL / 22 NOT-CHECKABLE or out-of-scope for the mechanical
 subset it can evaluate; the render-dependent and semantic-judgement rules
 above were checked manually per the table).
+
+---
+
+# Diagram rules check — 1-cloud-web-app (reproduce mode, `final-reproduce.svg`)
+
+Per `examples/showcase/README.md`'s "Conversion modes": in `reproduce`
+mode, "Diagram rules act only as a defect lint; a clean source gets zero
+visual edits." This section checks `final-reproduce.svg` against the same
+rule set the restyle pass above used, and records where a rule's
+_static-check machinery_ doesn't apply the way it does for a re-authored
+layout — not because the reproduction is sloppier, but because several
+rules (B1's shared-size quantization, B2's single uniform gap) are
+explicitly about layout the AUTHOR chose, and this file's layout is
+extracted, not chosen.
+
+## Connectors
+
+Mechanically re-verified by `node tools/rules-lint.mjs final-reproduce.svg`
+(see "Verification" below for the exact run): rules 4/7/8/9/10 all PASS —
+one marker (`#505863`, matching every single edge color in `source.xml` —
+grepped, confirmed no other edge stroke color exists), all 30 connectors
+share `stroke-width="1.5"`, one dashed class (RDS replication + the two
+Availability-Zone/Autoscaling-Group band borders — rule 10 requires the
+word "dash" appear in a documenting comment; the palette comment does).
+Rules 1/2/3/5/6/11/12 are the render-dependent/semantic-judgement ones
+`rules-lint` marks NOT-CHECKABLE for every file (restyle included);
+checked here the same way restyle's check documents (render → crop →
+look): every connector is a `<polyline>` (rule 3), converging fans (4
+instances → 1 LB/RDS, rule 11) merge to one shared bus + one trunk + one
+arrowhead, diverging fans (1 LB → 4 instances) stay as 4 separate
+arrowheads — exactly `source.png`'s own visual idiom, extracted rather
+than re-derived.
+
+## Boxes
+
+**B1 (quantized/shared size) does not apply as a defect-lint the way it
+does to a re-authored layout, and that is the reproduce-mode point, not
+an exemption from anything.** Source deliberately uses _different_ sizes
+per resource family — 55×58 EC2-instance chips, 57×69 S3, 69×69
+CloudFront/RDS/Static-Resources, 69×72 ELB, 525×75 Autoscaling-Group
+bands, 225×356 Availability-Zone bands — because each glyph's own AWS
+artwork has a different natural aspect ratio; forcing one uniform leaf
+size (as the restyle above correctly does for ITS OWN invented layout)
+would mean redrawing the source's own icons at the wrong proportions,
+which is a fidelity loss B1 exists to prevent elsewhere, not one it's
+asking for here. **This is the one documented, disclosed exemption for
+reproduce mode** — recorded here per the task brief ("If a Diagram-rules
+static check conflicts with faithful reproduction... document the
+exemption... under a 'reproduce mode' section"). `rules-lint.mjs`'s B1
+check is itself `NOT-CHECKABLE` for every file regardless (its own
+comment: "needs semantic/typographic judgement beyond mechanical SVG
+inspection") — so no code gate needed changing; this is a documentation
+exemption, not a code exemption.
+
+B2/B2-lite: source's own inter-tier gaps are NOT uniform (76px RDS↔ASG,
+70/81/126px around the two ELBs) — same reasoning as B1, extracted not
+chosen. `rules-lint`'s mechanical B2-lite check reports "no
+vertically-stacked sibling leaf rects found" (NOT a FAIL) because the 4
+leaf-node rects it can classify (the 4 crossing bands) don't share both
+x and width with each other by construction (crossing, not stacked) — it
+correctly has nothing to flag, not a false pass.
+
+B4 (uniform border weight): PASS, mechanically verified — all 4
+classified leaf-node rects (`az-band-a`, `az-band-b`, `app-asg`,
+`web-asg`) share `stroke-width="2"`.
+
+B3/B5–B10: render-dependent/semantic, `NOT-CHECKABLE` by the tool for
+every file; visually verified (render → crop → look, 4 iterations) —
+shared connector-axis alignment across both tiers (rule 3, matches
+source's own vertical alignment of instance columns), no label overlaps
+a box, the two crossing bands never visually merge or obscure each
+other's stroke, both container titles ("Auto"/"Scaling") sit centered in
+their badge's own space.
+
+## Colors
+
+**C1** — mechanically PASS (`rules-lint.mjs`): 22 documented palette
+colors cover all 13 used fill/stroke hex values (after 2 real fixes found
+during iteration — see "Verification"). **C2** (arrow = destination
+domain) is explicitly **not applied** here: `source.xml` uses one neutral
+connector color (`#505863`) for every edge, including the two edges that
+carry the `security.encryption.in-transit` token — the C2 convention
+belongs to `final.svg`'s restyle (a Diagram-rules authoring choice for a
+re-layout), and applying it to a faithful reproduction would be exactly
+the kind of unrequested visual edit the conversion-modes contract
+forbids. This is the second reproduce-mode exemption, and — like B1 — a
+documentation call, not a code change (`rules-lint`'s C2 check is itself
+`NOT-CHECKABLE` for every file).
+
+C3/C4/C5: `NOT-CHECKABLE` (semantic-judgement, tool-wide); domain hues
+reused unchanged from `source.xml`'s own `fillColor`/`gradientColor`
+pairs (verified against the raw XML, not approximated).
+
+## Text
+
+T1: `NOT-CHECKABLE` (render-dependent); visually verified — no label
+overlaps a box or a connector, both rotated Availability-Zone labels
+clear their crossing Autoscaling-Group bands' fill.
+
+**T2-lite: mechanically PASS**, after one real fix during iteration (see
+"Verification") — both rotated AZ-band labels now sit inside their own
+band's bbox (matching `final.svg`'s own convention: an inward inset from
+the band's edge, not an outward one) and are emitted immediately after
+their own band's `<rect>` (not both rects then both texts), so
+`rules-lint`'s `previousRectSibling` pairing binds each label to the
+correct band.
+
+T3: `NOT-CHECKABLE` (semantic); the 8 icon-square nodes' labels sit
+OUTSIDE the box (left or right, per `source.xml`'s own
+`align`/`labelPosition` style attribute on each — see the model's own
+per-component table), matching source's own convention exactly; this
+diagram has no node with body content requiring left-alignment (T3's
+other branch), since every "container" here (the two crossing bands) is
+drawn as a boundary/structure label, not a titled box with children
+inside it the way the restyle's Autoscaling-Group containers are.
+
+## Verification
+
+Rendered `final-reproduce.svg` → `final-reproduce.png` via headless
+Chrome at 2x device scale, 4 render passes, cropped and looked at each
+time (not just re-reading the SVG source) — plus a side-by-side crop
+comparison against `source.png` at matched heights, the actual fidelity
+target:
+
+1. **Real bug, official-icon integration**: the EC2-instance chip
+   rendered as a SOLID filled square with no hollow center — no "M4"/"C3"
+   text was visible at all. Root cause: the official SVG's hollow center
+   depends on `fill-rule="evenodd"`, set on the _wrapping_ `<g>` in every
+   fetched official file, not on the `<path>` itself — dropped when only
+   the bare `<path d="...">` was copied into this file's `<symbol>`
+   elements. Fixed by adding `fill-rule="evenodd"` to all 9 official-icon
+   `<symbol>` tags (also fixes the RDS cylinder's ring detail, which
+   depends on the same mechanism).
+2. **Real bug, fidelity**: connectors were initially colored per
+   destination domain (`final.svg`'s restyle-only C2 convention),
+   contradicting `source.xml`'s own uniform `#505863` on every edge —
+   caught by a side-by-side crop comparison against `source.png`, not by
+   `rules-lint` (C2 is `NOT-CHECKABLE` there). Fixed; see "Colors" above.
+3. **Real bug, layout**: left-side node labels ("CloudFront CDN",
+   "Static Resources") were clipped by the SVG's own `viewBox` — the
+   initial 20px left margin wasn't enough for the widest label. Fixed by
+   widening the `viewBox`'s left margin to 150px.
+4. **Real bug, `rules-lint` T2-lite FAIL**: both AZ-band labels were
+   positioned outside their band (matching neither band's bbox) and
+   emitted as a rect/rect/text/text run instead of interleaved
+   rect/text/rect/text, so `previousRectSibling` paired both labels with
+   the SAME (wrong) band. Fixed; see "Text" above.
+5. **Real bug, `rules-lint` C1/UNKNOWN_ICON_SYMBOL/VIEW_REF_UNRESOLVED
+   FAIL**: the hand-drawn `static-assets` fallback symbol was named
+   `icon-static-assets-cube` instead of the `icon-<id-with-dots-as-dashes>`
+   convention `UNKNOWN_ICON_SYMBOL` requires (`icon-aws-static-assets`
+   for `view-reproduce.yaml`'s `aws.static-assets`); and the 4 now-unused
+   domain-colored arrow markers (left over from bug #2's original,
+   incorrect C2-style coloring) were still documented in a comment but
+   left their hex values in the file, undocumented once C2 was removed.
+   Fixed both; renamed the symbol id, deleted the unused markers, and
+   added the 4 label-text `fontColor` hexes the C1 comment had missed.
+
+## Summary
+
+**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 13 PASS, 0 FAIL, 1 WARN (unused decorative `<symbol>`, non-blocking), 23 NOT-CHECKABLE. Two documented, disclosed reproduce-mode exemptions (B1's size quantization, C2's arrow-color-by-domain) — both are documentation-only calls; no `rules-lint.mjs` code changed to accommodate either, since both underlying checks are already `NOT-CHECKABLE` for every file, restyle included.

@@ -1,5 +1,40 @@
 # 1 — cloud-web-app (AWS SaaS 3-tier web application)
 
+## Conversion modes (added 2026-08-24)
+
+This example now carries **two views of the same model** — see
+`examples/showcase/README.md` "Conversion modes" for the general contract.
+`model.yaml`, `tokens.yaml`, and `census.yaml` are shared, unmodified,
+between both:
+
+| View                      | Mode        | Files                                                                 | Status                                                                                                                                                  |
+| ------------------------- | ----------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`view-reproduce.yaml`** | `reproduce` | `layout-reproduce.json`, `final-reproduce.svg`, `final-reproduce.png` | **PRIMARY**, per owner decision (2026-08-24) — this example was the case study that motivated adding the reproduce/restyle mode gate in the first place |
+| `view.yaml`               | `restyle`   | `layout.json`, `final.svg`, `final.png`, `out.drawio`                 | secondary/historical — predates the mode split; kept as the Diagram-rules re-layout alternative                                                         |
+
+**Why reproduce is primary:** `source.xml` already conveys deliberate
+structure — this is a well-known, widely reproduced AWS reference
+architecture (Route 53 → CloudFront/ELB → two-AZ × two-tier autoscaling
+web/app fleet → RDS master/slave). Every applicable Diagram rule that the
+restyle pass above had to actively FIX (icons, palette, the AZ bands, the
+SSL padlock — see "Restored elements" below) was already present and
+correct in the source. The restyle's one real structural move — flattening
+the source's crossing Availability-Zone × Autoscaling-Group grouping into
+two single-parent containers, and widening the corridor between them — is
+a genuine loss of the source author's own spatial reasoning, not a defect
+fix; see this file's own "What the layout improved over the source"
+section, which candidly documents that move as an _improvement judgement_,
+not a defect correction. That is exactly the case
+`examples/showcase/README.md`'s conversion-modes contract calls out: "A
+high-quality source reproduced faithfully BEATS a rules-perfect re-layout
+of it."
+
+See "Reproduce mode" near the end of this file for the reproduce view's
+own geometry-extraction method, icon provenance, source-defect list, and
+visual-diff notes against `source.png`. `RULES-CHECK.md`'s "Reproduce
+mode" section covers the Diagram-rules check-by-check pass for
+`final-reproduce.svg`.
+
 ## Source
 
 - URL: https://raw.githubusercontent.com/jgraph/drawio-diagrams/dev/examples/aws-saas-example.drawio
@@ -364,3 +399,128 @@ one needs and checks. Gate: the full cross-layer invocation (`final.svg`
 
 - `--model` + `--view` + `--census` + `--layout`) exits 0 for this
   example.
+
+## Reproduce mode (`view-reproduce.yaml`, PRIMARY)
+
+### Geometry extraction
+
+`layout-reproduce.json`'s 19 nodes are `source.xml`'s own `mxGeometry`
+`x`/`y`/`width`/`height` values (verified by parsing `source.xml`
+programmatically, not transcribed by eye), passed through one uniform
+integer offset — `x' = round(x) - 61`, `y' = round(y) - 134` — chosen so
+the extracted bounding box (source `x:[101.25, 750]`, `y:[174, 863.36]`)
+lands at a comfortable 40px margin from `(0,0)`; no scaling, no invented
+coordinates. `canvas: {width: 749, height: 789}`. Every node's `parentId`
+is `null`: `source.xml` itself parents every vertex directly to root cell
+`"1"` (there is no source-level nesting at all — see "Flattening &
+simplification decisions" #3 below for why the AZ×ASG crossing can't be
+containment either way), so "parent-relative coordinates for parented
+nodes" applies vacuously here — nothing in this source is parented, and
+inventing a single-parent hierarchy the source doesn't have would be the
+opposite of extraction. `web-asg`/`app-asg` (source ids 4/5, the
+horizontal Autoscaling-Group bands) are full `layout-reproduce.json`
+nodes like every other component — `src/layout.ts`'s `OMITTED_LAYOUT_ID`
+check requires every `model.yaml` component id to appear — sized to the
+source's own full-width band geometry (525×75), not the restyle's
+padded 928×120 container.
+
+Gate: `node tools/offline-generate.mjs model.yaml layout-reproduce.json --out out-reproduce.drawio --library tokens.yaml` exits 0, first try.
+
+### Icon provenance
+
+Per an explicit requirement added mid-task: every AWS glyph in
+`final-reproduce.svg` is the **official AWS Architecture Icons artwork**,
+not a hand-drawn approximation (the restyle's `final.svg` icons, built
+before this requirement existed, stay hand-drawn — see
+`examples/showcase/README.md`'s "Conversion modes": upgrading them is
+optional, not required).
+
+- **Channel**: npm package [`aws-svg-icons`](https://www.npmjs.com/package/aws-svg-icons), version `3.0.0-2021-07-30`, fetched via jsDelivr's raw CDN (`https://cdn.jsdelivr.net/npm/aws-svg-icons@3.0.0-2021-07-30/...`). Its own README states it mirrors "all the official AWS icons published at https://aws.amazon.com/architecture/icons/" — the asset package dated 07302021 (July 30, 2021), the same naming AWS itself uses for that release ("Resource-Icons_07302021", "Architecture-Service-Icons_07302021").
+- **Primary permission source**: `aws.amazon.com/architecture/icons/` states "We allow customers and partners to use these toolkits and assets to create architecture diagrams" and permits their use "in materials like whitepapers, presentations, data sheets, and posters" (fetched 2026-08-24) — this diagram is exactly that use.
+- **Redistribution-channel license**: the `aws-svg-icons` package does not carry its own separate license file, but the sibling official AWS Labs GitHub repo that redistributes the same 07302021 asset package for a different tool, [`awslabs/aws-icons-for-plantuml`](https://github.com/awslabs/aws-icons-for-plantuml), states its `LICENSE` as **Creative Commons Attribution-NoDerivs 2.0** (verbatim CC BY-ND 2.0 text, fetched 2026-08-24). Recorded here for completeness — this repo takes no legal position on how CC BY-ND 2.0's "no derivatives" clause interacts with AWS's own diagram-use permission above; both texts are quoted so a reviewer can judge. Where this example recolors an icon's fill (below), that is disclosed, not hidden.
+- **Icons used, unmodified white glyph on a source-matched gradient background** (Architecture Service Icons, 64px, `Arch_<Service>_64.svg`): `aws.elb` (Elastic Load Balancing), `aws.cloudfront` (Amazon CloudFront), `aws.route53` (Amazon Route 53 — its official artwork is itself a highway-shield "53" badge, an unplanned but exact match for the source's own shield-53 glyph), `aws.s3` (Amazon Simple Storage Service), `aws.rds` (Amazon RDS). Background gradient colors are `source.xml`'s own `fillColor`/`gradientColor` pairs (a real 2-stop `linearGradient`, `gradientDirection="north"` reproduced as a pure-vertical gradient, matching the source's own gradient direction exactly), not AWS's current (2021) category-color scheme — disclosed deviation: AWS's 2021 set categorizes ELB under Networking (purple), while the source (and this reproduction) uses the older orange/compute-family hue for ELB, to stay faithful to `source.png`, the stated fidelity target.
+- **Icons used as shipped, no recolor** (Resource Icons, 48px, `Res_<Name>_48_Light.svg`, bare glyph, no background box — matches source exactly, which also draws these two as bare colored silhouettes with no box): `actor.user` (`Res_User_48_Light`, official `#242F3E`, source's own value is `#232F3E` — near-identical) and `security.ssl-padlock` (`Res_SSL-padlock_48_Light`, official `#232F3D` — the shape name literally matches source's own `mxgraph.aws4.ssl_padlock`).
+- **Icon recolored, disclosed**: `aws.ec2-instance` (`Res_Amazon-EC2_Instance_48_Light` — a bare outline "chip with pins" glyph whose hollow center is produced by the source SVG's own `fill-rule="evenodd"`, carried through here). Shipped fill is `#D45B07`; recolored to source's own `#F58534` to match `source.png`'s exact hue. Reused for all 8 EC2-instance nodes (both the `M4`-labeled and the chip-icon-rendered-as-`C3` tier — see "Source-fidelity notes" below for why `C3` and not the XML's dead `M3` attribute), matching the source, which also draws all 8 with the identical glyph.
+- **No official equivalent, hand-drawn fallback (disclosed)**: `aws.static-assets`. The source's `Static Resources` node uses `shape=mxgraph.aws4.resourceIcon;resIcon=general` — an AWS4-stencil-era generic "unspecified resource" wireframe-cube placeholder glyph that AWS retired when it redesigned its icon set (no `Res_General*`/`Arch_General*` file in the 07302021 package matches it — checked the full `Res_General-Icons` and category listings). Kept as the pre-existing hand-drawn cube (from `final.svg`'s icon set), recolored to the source's exact `#1E262E`→`#505863` gradient background with a white cube glyph, matching `source.png`'s look. Per the task's own fallback clause: "If every channel fails... fall back to the current hand-drawn glyphs, mark the deviation prominently."
+- **Decorative-only bonus**: `icon-aws-ec2-auto-scaling` (`Res_Amazon-EC2_Auto-Scaling_48_Light`, official artwork) draws the small orange badge inside each Autoscaling-Group band, matching `source.png`'s own badge — rendered as raw SVG content, not through a `view.yaml` icon attachment (same precedent as `web-asg`/`app-asg` carrying no attachment at all — see `view.yaml`'s existing comment). `rules-lint`'s `UNKNOWN_ICON_SYMBOL` reports this as WARN (an unused `<symbol>` no attachment references), not FAIL — confirmed non-blocking under `--full`.
+
+All symbol `<path>` content is copied verbatim from the fetched official
+SVGs (only the wrapping `fill-rule="evenodd"` from each source file's own
+`<g>` element is preserved on the `<symbol>`, since several glyphs —
+the EC2 chip's hollow center, the RDS cylinder's rings — depend on it to
+render correctly), with editor cruft (`<title>`, `<desc>`, Sketch
+generator comments, `xlink` namespace noise) stripped.
+
+### Source defects fixed
+
+1. **Invisible "Availability Zone A/B" band labels.** `source.xml` sets
+   `fontColor="#ffffff"` on these two rotated-text vertices (source ids 42,
+   43), on a fully transparent background — genuinely invisible in
+   `source.png` (confirmed: cropped and inspected at 2x zoom, no trace of
+   the text). Rendered here in the band's own `#5A6C86` stroke color;
+   position and `rotate(-90 ...)` are otherwise unchanged from source. The
+   other three white-on-white text vertices (`"A"`, `"EC2"`, `"AZ"` —
+   source ids 41, 44, 46) stay **dropped**, per `census.yaml`'s existing,
+   unmodified drop records: they were genuinely invisible in `source.png`
+   too, so dropping them (not "fixing" them into existence) is what
+   fidelity to the _visual_ source actually requires — inventing visible
+   text the source never showed would be the opposite of a defect fix.
+2. **Dead `value="M3"` attribute on the bottom instance tier — not
+   fixed, documented.** `source.xml`'s 4 bottom-tier compute-instance
+   cells (ids 22/24/26/28) carry `value="M3"`, but their
+   `shape=mxgraph.aws4.optimized_instance` glyph bakes its own `"C3"`
+   lettering directly into the icon artwork; drawio does not additionally
+   render the cell's `value` text for this shape family. Cropped and
+   confirmed at 2x zoom: `source.png` shows `"C3"`, never `"M3"`, on all 4
+   boxes. Since the task's own fidelity target is `source.png` ("LOOK at
+   it hard, it is the visual target"), this reproduction labels those
+   boxes `"C3"` — what a viewer actually sees — and records the XML/PNG
+   mismatch here rather than silently reproducing the PNG's own visible
+   text as if it were uncontested. This is _not_ one of the disclosed
+   "genuine source defects... you may fix" — nothing was changed, the
+   dead attribute was simply not the fidelity target.
+
+### Visual-diff notes vs `source.png`
+
+What differs, and why:
+
+- **Connector color**: uniform `#505863` grey, matching every single edge
+  in `source.xml` (grepped: the only other `strokeColor` values present are
+  box borders `#5A6C86`/`#D86613`/`#ffffff`, none on an edge) — including
+  the dashed RDS-replication line. An earlier draft of this file
+  mistakenly imported `final.svg`'s restyle-only "arrow color = destination
+  domain" (C2) convention even onto these two SSL-tagged edges; fixed once
+  spotted, since `source.png` uses one neutral color for every connector,
+  never a per-domain palette.
+- **AZ-band corner badges omitted.** `source.png` draws a tiny
+  location-pin badge in the top-left corner of each Availability-Zone
+  band (the AWS4 `group_availability_zone` stencil's own decoration, no
+  separate semantic content — redundant with the band's own dashed
+  border + label). No official 2021 icon matches that specific
+  location-pin glyph in the general-icons set checked; given it carries
+  no meaning beyond "this is an AZ" (already conveyed twice over),
+  it's left out rather than approximated with a mismatched official
+  glyph or a new hand-drawn one.
+- **Auto-Scaling badge glyph**: source's own badge (inside a small orange
+  square, matching the "Auto Scaling" text beside it) is a different,
+  unidentified small icon (looks like a location/target marker in the
+  rendered PNG, not distinguishable from the AWS4 stencil's compressed
+  rendering at that size). Replaced with the official
+  `Res_Amazon-EC2_Auto-Scaling_48_Light` glyph on the same orange
+  background — same idiom (small colored badge next to the label), an
+  even more literally on-brand choice than trying to match an
+  unidentifiable source pixel pattern.
+- **Overall proportions**: this reproduction's canvas (749×789, plus a
+  wide left margin for the label column) reads slightly more spread out
+  than `source.png`'s tighter crop — a byproduct of the uniform-offset
+  extraction (no scaling applied, per the task's "invention not"
+  constraint) rather than a deliberate layout choice. Topology, relative
+  positions, colors, icons, and text are otherwise a 1:1 match, verified
+  by a side-by-side crop comparison at matched heights.
+
+Rendered headless-Chrome 2x device scale (`final-reproduce.png`), looked
+at directly and against a side-by-side crop of `source.png` at every
+iteration (4 render passes: initial layout, `fill-rule` fix for the
+hollow EC2-chip glyph + RDS rings, connector-color correction, AZ-label
+repositioning for `rules-lint`'s T2-lite check) — not just SVG-source
+read-through.

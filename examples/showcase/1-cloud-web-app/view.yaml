@@ -6,6 +6,23 @@
 # component now lives here instead (see model.yaml / tokens.yaml "View
 # vocabulary" section for why, and RULES-CHECK.md / README.md for the prior
 # rendering that this file now describes as data).
+#
+# mode: restyle, per README.md "Conversion modes" (added retroactively --
+# this was the only mode before 2026-08-24). Reason: the cloud-web-app
+# example is the case study that motivated adding the mode gate in the
+# first place -- source.xml already conveyed deliberate structure (see
+# view-reproduce.yaml), and this restyle's own re-layout, while
+# Diagram-rules-clean, discards that structure (flattens the crossing AZ x
+# Autoscaling-Group grouping into two separate single-parent containers,
+# widens gaps, moves the AZ bands from crossing rectangles to a
+# bounding-box overlay). Kept as a second, alternate view of the SAME
+# model/census (nothing here changed) rather than deleted, per "one model
+# may carry both views" -- but reproduce.yaml is primary; see README.md.
+mode: restyle
+reason: >
+  Predates the reproduce/restyle mode split; kept as the Diagram-rules
+  re-layout alternative to view-reproduce.yaml's faithful redraw. Not the
+  primary view for this example -- see README.md "Conversion modes".
 kind: view
 id: cloud-web-app
 model: model.yaml

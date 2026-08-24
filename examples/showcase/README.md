@@ -107,6 +107,27 @@ drafted); their APPLICATION lives in the view, so one model can carry several vi
 without mutation, and non-visual consumers (linters, IaC generators) never parse
 rendering hints.
 
+### Conversion modes (decided per example, recorded in the view)
+
+Assess the SOURCE's quality before authoring any layout, and record the verdict as
+`mode` in the view document, with a one-line reason:
+
+- **`reproduce`** — the source's layout already conveys deliberate structure (it passes
+  most applicable Diagram rules, or its violations are the author's intent). The target
+  is a faithful reproduction: geometry EXTRACTED from the source (not re-authored),
+  original visual language kept (icons, palette, containers — crossing groupings
+  included). The tokens methodology runs underneath unchanged: model, census, bindings,
+  and every blocking diagnostic. Diagram rules act only as a defect lint; a clean source
+  gets zero visual edits.
+- **`restyle`** — the source has real layout/style defects (uneven grids, bezier
+  spaghetti, undocumented color). Layout is re-authored per Diagram rules. This was the
+  only mode before 2026-08-24; the cloud-web-app example showed it degrades high-quality
+  sources, which is how this gate was added.
+
+A high-quality source reproduced faithfully BEATS a rules-perfect re-layout of it: the
+re-layout discards the source author's deliberate spatial reasoning. One model may carry
+both views (the view split exists precisely for this).
+
 ### Source-fidelity defaults
 
 1. **Direction**: preserve the source's computed direction; `mixed` sources get no
@@ -114,7 +135,11 @@ rendering hints.
    (`DIRECTION_GEOMETRY_CONFLICT` when edge displacements disagree with it).
 2. **Icons**: when the source carries icon identity, keep it (`icon` attachment resolved
    from the SVG `<defs>` symbol set — `UNKNOWN_ICON_SYMBOL` when unresolved). Dropping an
-   icon is an explicit-drop decision, never a default.
+   icon is an explicit-drop decision, never a default. When the icon belongs to a vendor
+   set with published official assets (AWS Architecture Icons, Azure/GCP packs, K8s), the
+   symbol comes from the OFFICIAL SVG asset (or an authoritative mirror) — never a
+   hand-drawn approximation — and the example README records per-icon provenance:
+   channel URL, set version, license/usage terms.
 3. **Binding**: every model component appears in `final.svg` exactly once, tagged
    `data-component="<id>"`; view elements tagged `data-view-element`
    (`UNTRACEABLE_VISUAL` / `MISSING_COMPONENT` otherwise). Hand-authored SVG is a

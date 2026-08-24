@@ -1,0 +1,155 @@
+# View Layer Contract (prototype v0) -- REPRODUCE MODE.
+#
+# mode: reproduce, per README.md "Conversion modes". Reason: this source
+# already conveys deliberate structure -- a well-known, widely reproduced
+# AWS reference architecture (Route 53 -> CloudFront/ELB -> two-AZ x
+# two-tier autoscaling web/app fleet -> RDS master/slave), every applicable
+# Diagram rule that final.svg's restyle pass had to actively FIX (icons,
+# palette, AZ bands, the SSL padlock) was already present and correct in
+# source.xml, and its one real structural feature -- a crossing AZ x
+# Autoscaling-Group grouping -- is deliberate spatial reasoning, not a
+# defect. Per the conversion-modes contract, a clean source gets zero
+# visual edits: geometry here is EXTRACTED (see layout-reproduce.json,
+# dx=-61/dy=-134 uniform offset from source.xml's own mxGeometry values,
+# no invention), and the Diagram rules act only as a defect lint (see
+# RULES-CHECK.md "Reproduce mode" for the one documented, disclosed
+# exemption: B1's "quantized/shared size" rule doesn't apply the way it
+# does in restyle, because faithfully keeping the source's own instance
+# spacing is the point, not a violation to fix).
+mode: reproduce
+reason: >
+  Source already conveys deliberate structure (a well-known AWS reference
+  architecture); target is a faithful redraw, not a rules-authored
+  re-layout. See RULES-CHECK.md "Reproduce mode" for the full rationale.
+kind: view
+id: cloud-web-app
+model: model.yaml
+
+# Direction computed the SAME way final.svg's restyle documents (dominant
+# axis-aligned projection of edge displacement vectors): source reads
+# bottom-up (user/route53 at the bottom, rds-master/rds-slave at the top,
+# exactly like the restyle view) -- this diagram's OWN direction was never
+# in question, both views agree; reproduce keeps the source's original
+# bottom-to-top reading rather than re-deriving it.
+flow:
+  direction: up
+
+# Icon attachments matching the source's own placements. Every icon-square
+# component (ELB x2, S3, CloudFront, Route53, RDS x2, Static Resources) IS
+# the box in source.xml (fillColor+gradientColor gradient with the icon
+# drawn directly on it, label text OUTSIDE) -- so the icon fills the WHOLE
+# node and `anchor: middle-center` is what "matching the source's own
+# placement" means here, unlike final.svg's restyle (uniform box + a
+# small corner glyph, a restyle-only convention). The 8 EC2 instances and
+# `user` are bare glyphs with no background box at all in source, same
+# `middle-center` anchor (the glyph fills the node; "M4"/"C3" render
+# separately, inside the glyph's own hollow center, matching source
+# exactly -- see final-reproduce.svg's LEAF NODES comment).
+components:
+  user:
+    - icon: actor.user
+      anchor: middle-center
+  route53:
+    - icon: aws.route53
+      anchor: middle-center
+  web-elb:
+    - icon: aws.elb
+      anchor: middle-center
+  cdn:
+    - icon: aws.cloudfront
+      anchor: middle-center
+  static-assets:
+    - icon: aws.static-assets
+      anchor: middle-center
+  s3:
+    - icon: aws.s3
+      anchor: middle-center
+  web-instance-1:
+    - icon: aws.ec2-instance
+      anchor: middle-center
+  web-instance-2:
+    - icon: aws.ec2-instance
+      anchor: middle-center
+  web-instance-3:
+    - icon: aws.ec2-instance
+      anchor: middle-center
+  web-instance-4:
+    - icon: aws.ec2-instance
+      anchor: middle-center
+  app-elb:
+    - icon: aws.elb
+      anchor: middle-center
+  app-instance-1:
+    - icon: aws.ec2-instance
+      anchor: middle-center
+  app-instance-2:
+    - icon: aws.ec2-instance
+      anchor: middle-center
+  app-instance-3:
+    - icon: aws.ec2-instance
+      anchor: middle-center
+  app-instance-4:
+    - icon: aws.ec2-instance
+      anchor: middle-center
+  rds-master:
+    - icon: aws.rds
+      anchor: middle-center
+  rds-slave:
+    - icon: aws.rds
+      anchor: middle-center
+  # web-asg / app-asg intentionally carry no attachment, same precedent as
+  # final.svg's restyle: the source's own small "Auto Scaling" badge is
+  # redundant with the band's own title text. final-reproduce.svg still
+  # draws that badge (matching source visually) as raw SVG content, not
+  # through this view-declared attachment mechanism -- see its "CROSSING
+  # GROUPS" comment.
+
+# The SSL padlock is the one edge-attached icon this diagram needs, same
+# as final.svg -- keyed off the two relationships carrying model.yaml's
+# security:security.encryption.in-transit token. Source draws ONE padlock
+# glyph on the shared user->padlock hop before it splits to cdn/web-elb;
+# `anchor: edge-midpoint` + identical offset on both relationships
+# reproduces that shared position (see final-reproduce.svg's "SSL padlock
+# badges" comment for why one source glyph maps to two data-relationship
+# groups -- a RELATIONSHIP_ATTACHMENT_NOT_RENDERED requirement, not a
+# reproduce-mode invention).
+relationships:
+  user-cdn:
+    - icon: security.ssl-padlock
+      anchor: edge-midpoint
+      offset: { dx: 0, dy: 0 }
+  user-web-elb:
+    - icon: security.ssl-padlock
+      anchor: edge-midpoint
+      offset: { dx: 0, dy: 0 }
+
+# Visual-layer elements: BOTH crossing dimensions source.xml draws, kept as
+# crossing rectangles (not flattened into single-parent containers the way
+# final.svg's restyle does) -- per the task brief and the conversion-modes
+# contract's "original visual language kept... crossing groupings
+# included". az-band-a/b are pure view-layer (no model.yaml component of
+# their own, same as final.svg). web-asg-band/app-asg-band are DIFFERENT
+# ids from the model components web-asg/app-asg they decorate -- census.yaml
+# already commits web-asg/app-asg to the `component` bucket (source_id 4/5,
+# primary_bucket: component), so they render via data-component exactly as
+# any other component does; these two visualElements entries exist only so
+# the SAME rect can ALSO carry data-view-element (dual-tagged in
+# final-reproduce.svg), satisfying "data-view-element on the 4 group
+# boxes" without re-bucketing an already-committed census record.
+visualElements:
+  - id: az-band-a
+    kind: availability-zone-band
+    label: Availability Zone A
+    members: [web-instance-1, web-instance-2, app-instance-1, app-instance-2]
+  - id: az-band-b
+    kind: availability-zone-band
+    label: Availability Zone B
+    members: [web-instance-3, web-instance-4, app-instance-3, app-instance-4]
+  - id: web-asg-band
+    kind: autoscaling-group-band
+    label: Web Tier Autoscaling Group
+    members: [web-instance-1, web-instance-2, web-instance-3, web-instance-4]
+  - id: app-asg-band
+    kind: autoscaling-group-band
+    label: App Tier Autoscaling Group
+    members: [app-instance-1, app-instance-2, app-instance-3, app-instance-4]

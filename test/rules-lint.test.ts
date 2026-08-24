@@ -156,6 +156,26 @@ describe('tools/rules-lint.mjs cross-layer checks', () => {
     expect(reports[0].summary.FAIL).toBe(0);
   });
 
+  // The reproduce-mode view (view-reproduce.yaml / layout-reproduce.json /
+  // final-reproduce.svg) shares model.yaml and census.yaml with the restyle
+  // view above -- one model, two views, per README.md "Conversion modes".
+  it('exits 0 under --full on example 1 REPRODUCE mode (final-reproduce.svg / view-reproduce.yaml / layout-reproduce.json)', async () => {
+    const { result, reports } = await runJson([
+      path.join(example1, 'final-reproduce.svg'),
+      '--full',
+      '--model',
+      path.join(example1, 'model.yaml'),
+      '--view',
+      path.join(example1, 'view-reproduce.yaml'),
+      '--census',
+      path.join(example1, 'census.yaml'),
+      '--layout',
+      path.join(example1, 'layout-reproduce.json'),
+    ]);
+    expect(result.exitCode).toBe(0);
+    expect(reports[0].summary.FAIL).toBe(0);
+  });
+
   it('exits 1 and names UNKNOWN_ICON_SYMBOL when view.yaml references an icon with no matching <symbol>', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-icon-'));
     const svgPath = path.join(dir, 'final.svg');
