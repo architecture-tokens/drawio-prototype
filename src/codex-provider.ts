@@ -76,14 +76,22 @@ export type SubscriptionProviderOptions = {
   environment?: NodeJS.ProcessEnv;
 };
 
+export const hasChatGptSubscriptionLogin = (
+  status: number | null,
+  stdout: string,
+  stderr: string,
+) => status === 0 && `${stdout}\n${stderr}`.includes('Logged in using ChatGPT');
+
 const defaultAuthCheck = () => {
   const result = spawnSync('codex', ['login', 'status'], {
     encoding: 'utf8',
     timeout: 10_000,
     env: subscriptionEnvironment(),
-    stdio: ['ignore', 'pipe', 'ignore'],
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
-  return result.status === 0 && result.stdout.includes('Logged in using ChatGPT');
+  // Codex versions differ on whether login status is written to stdout or stderr.
+  // Match only the stable subscription marker and never retain or publish either stream.
+  return hasChatGptSubscriptionLogin(result.status, result.stdout, result.stderr);
 };
 
 function providerPrompt(request: PlannerRequest): string {
