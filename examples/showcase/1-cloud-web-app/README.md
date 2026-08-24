@@ -424,7 +424,7 @@ check requires every `model.yaml` component id to appear — sized to the
 source's own full-width band geometry (525×75), not the restyle's
 padded 928×120 container.
 
-Gate: `node tools/offline-generate.mjs model.yaml layout-reproduce.json --out out-reproduce.drawio --library tokens.yaml` exits 0, first try.
+Gate: `node tools/offline-generate.mjs model.yaml layout-reproduce.json --view view-reproduce.yaml --out out-reproduce.drawio --library tokens.yaml` exits 0, first try. This now regenerates the checked-in editable draw.io directly from the model, validated Architecture View, and corrected layout: AWS stencil styles, SSL attachments, both AZ and ASG grouping dimensions, and the non-crossing y=626 ingress route are renderer output rather than hand-edited XML.
 
 ### Icon provenance
 

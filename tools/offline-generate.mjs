@@ -11,13 +11,14 @@ import { readFileSync } from 'node:fs';
 import { run } from '../dist/cli.js';
 
 const usage =
-  'Usage:\n  node tools/offline-generate.mjs <model.yaml|json> <layout.json> --out <diagram.drawio> [--library file] [--policy file]\n';
+  'Usage:\n  node tools/offline-generate.mjs <model.yaml|json> <layout.json> --out <diagram.drawio> [--view view.yaml|json] [--library file] [--policy file]\n';
 
 function parseArgs(argv) {
   const [model, layoutPath, ...rest] = argv;
   const libraries = [];
   const policies = [];
   let out;
+  let view;
   for (let i = 0; i < rest.length; i += 1) {
     const flag = rest[i];
     const value = rest[i + 1];
@@ -30,12 +31,15 @@ function parseArgs(argv) {
     } else if (flag === '--policy' && value) {
       policies.push(value);
       i += 1;
+    } else if (flag === '--view' && value) {
+      view = value;
+      i += 1;
     } else {
       return { error: `Unknown or incomplete option: ${flag}\n${usage}` };
     }
   }
   if (!model || !layoutPath || !out) return { error: usage };
-  return { model, layoutPath, out, libraries, policies };
+  return { model, layoutPath, out, view, libraries, policies };
 }
 
 // Exported so tests can drive the offline harness in-process (same pattern
@@ -45,7 +49,7 @@ export async function runOffline(argv) {
   if (parsed.error) {
     return { exitCode: 2, stdout: '', stderr: parsed.error };
   }
-  const { model, layoutPath, out, libraries, policies } = parsed;
+  const { model, layoutPath, out, view, libraries, policies } = parsed;
 
   let layout;
   try {
@@ -73,6 +77,7 @@ export async function runOffline(argv) {
     model,
     '--out',
     out,
+    ...(view ? ['--view', view] : []),
     ...libraries.flatMap((file) => ['--library', file]),
     ...policies.flatMap((file) => ['--policy', file]),
   ];
