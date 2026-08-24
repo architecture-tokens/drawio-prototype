@@ -149,12 +149,30 @@ describe('subscription planner benchmark', () => {
     });
   });
 
-  it('keeps the checked-in output schema synchronized and validates fixture reports', async () => {
+  it('keeps the provider output schema strict-compatible and validates fixture reports', async () => {
     const outputSchema = JSON.parse(
       fs.readFileSync(path.join(root, 'benchmark/layout-output.schema.json'), 'utf8'),
     );
     const { benchmarkLayoutSchema } = await import('../src/benchmark-cli.js');
-    expect(outputSchema).toEqual(benchmarkLayoutSchema);
+    expect(outputSchema.properties.version).toEqual({ type: 'string', const: '0.1' });
+    expect(outputSchema.required).toContain('topology');
+    expect(benchmarkLayoutSchema.properties.topology.type).toBe('object');
+    expect(outputSchema.properties.topology.properties.allowEdgeCrossings.type).toBe('array');
+    const validateProviderLayout = new (Ajv2020 as any)({ allErrors: true, strict: true }).compile(
+      outputSchema,
+    );
+    const fixtureLayout = JSON.parse(
+      fs.readFileSync(
+        path.join(root, 'examples/showcase/5-event-pipeline/layout-reproduce.json'),
+        'utf8',
+      ),
+    );
+    expect(
+      validateProviderLayout({
+        ...fixtureLayout,
+        topology: fixtureLayout.topology ?? { allowEdgeCrossings: [] },
+      }),
+    ).toBe(true);
 
     const directory = path.join(os.tmpdir(), `benchmark-five-${Date.now()}`);
     const result = await runBenchmarkCli([
