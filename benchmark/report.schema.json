@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://architecturetokens.org/schema/planner-benchmark-report.schema.json",
+  "title": "Architecture Tokens Planner Benchmark Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "example",
+    "provider",
+    "status",
+    "repairCount",
+    "redactedLayout",
+    "diagnostics",
+    "score",
+    "fullGate"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "0.1.0" },
+    "example": {
+      "enum": [
+        "1-cloud-web-app",
+        "2-cicd-flow",
+        "3-microservices-c4",
+        "4-kubernetes",
+        "5-event-pipeline"
+      ]
+    },
+    "provider": { "enum": ["codex-subscription", "fixture"] },
+    "status": { "enum": ["passed", "failed"] },
+    "repairCount": { "type": "integer", "minimum": 0, "maximum": 1 },
+    "redactedLayout": {
+      "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/layout" }]
+    },
+    "diagnostics": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/diagnostic" }
+    },
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "maximum", "checks"],
+      "properties": {
+        "total": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "maximum": { "const": 100 },
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "completeIds",
+            "declaredDirection",
+            "zeroUnintendedCrossings",
+            "zeroCollisions",
+            "uniformConnectorTreatment",
+            "crossLayerFullGate"
+          ],
+          "properties": {
+            "completeIds": { "$ref": "#/$defs/scoreCheck" },
+            "declaredDirection": { "$ref": "#/$defs/scoreCheck" },
+            "zeroUnintendedCrossings": { "$ref": "#/$defs/scoreCheck" },
+            "zeroCollisions": { "$ref": "#/$defs/scoreCheck" },
+            "uniformConnectorTreatment": { "$ref": "#/$defs/scoreCheck" },
+            "crossLayerFullGate": { "$ref": "#/$defs/scoreCheck" }
+          }
+        }
+      }
+    },
+    "fullGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["PASS", "FAIL", "WARN", "NOT-CHECKABLE"],
+      "properties": {
+        "PASS": { "type": "integer", "minimum": 0 },
+        "FAIL": { "type": "integer", "minimum": 0 },
+        "WARN": { "type": "integer", "minimum": 0 },
+        "NOT-CHECKABLE": { "type": "integer", "minimum": 0 }
+      }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y"],
+      "properties": {
+        "x": { "type": "integer", "minimum": 0 },
+        "y": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "layout": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "canvas", "nodes", "edges"],
+      "properties": {
+        "version": { "const": "0.1" },
+        "canvas": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["width", "height"],
+          "properties": {
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "x", "y", "width", "height", "parentId"],
+            "properties": {
+              "id": { "type": "string" },
+              "x": { "type": "integer", "minimum": 0 },
+              "y": { "type": "integer", "minimum": 0 },
+              "width": { "type": "integer", "minimum": 0 },
+              "height": { "type": "integer", "minimum": 0 },
+              "parentId": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "waypoints"],
+            "properties": {
+              "id": { "type": "string" },
+              "waypoints": { "type": "array", "items": { "$ref": "#/$defs/point" } }
+            }
+          }
+        },
+        "topology": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["allowEdgeCrossings"],
+          "properties": {
+            "allowEdgeCrossings": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["edgeIds"],
+                "properties": {
+                  "edgeIds": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "path", "message"],
+      "properties": {
+        "code": { "type": "string" },
+        "path": { "type": "string" },
+        "message": { "type": "string" },
+        "layer": { "type": "string" },
+        "elementId": { "type": "string" }
+      }
+    },
+    "scoreCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed", "points", "maximum"],
+      "properties": {
+        "passed": { "type": "boolean" },
+        "points": { "type": "integer", "minimum": 0 },
+        "maximum": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}
