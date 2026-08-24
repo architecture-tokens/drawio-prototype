@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BenchmarkProviderError,
   CodexSubscriptionPlanner,
+  hasChatGptSubscriptionLogin,
   runForegroundCommand,
   subscriptionEnvironment,
   type ForegroundCommand,
@@ -15,6 +16,13 @@ const root = path.resolve(import.meta.dirname, '..');
 const emptyLayout = { version: '0.1', canvas: { width: 1, height: 1 }, nodes: [], edges: [] };
 
 describe('ChatGPT Subscription codex provider', () => {
+  it('recognizes the subscription marker on either codex status stream', () => {
+    expect(hasChatGptSubscriptionLogin(0, 'Logged in using ChatGPT\n', '')).toBe(true);
+    expect(hasChatGptSubscriptionLogin(0, '', 'Logged in using ChatGPT\n')).toBe(true);
+    expect(hasChatGptSubscriptionLogin(1, '', 'Logged in using ChatGPT\n')).toBe(false);
+    expect(hasChatGptSubscriptionLogin(0, '', 'Not logged in')).toBe(false);
+  });
+
   it('uses a bounded foreground codex exec contract and scrubs API keys', async () => {
     const calls: ForegroundCommand[] = [];
     const planner = new CodexSubscriptionPlanner({
