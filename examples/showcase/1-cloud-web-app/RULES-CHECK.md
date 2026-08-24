@@ -331,6 +331,10 @@ their 90-degree turns; buses remain straight, genuine T-junctions remain
 T-junctions, shared trunks do not double in weight, and every arrowhead
 still lands on the same box edge. The SSL badge routes remain clean and
 their mechanically clamped micro-jog remains hidden under the badge mask.
+The user-to-CDN leg is also restored to `y=626`, below the web fan bus at
+`y=593`: the two false lower-left crossings created by the earlier
+`y=560` extraction are gone, matching source edge 38's explicit `y=760`
+control point after the diagram's `-134` y translation.
 
 Rules 1/2/3/5/6/11/12 are the render-dependent/semantic-judgement ones
 `rules-lint` marks NOT-CHECKABLE for every file (restyle included);

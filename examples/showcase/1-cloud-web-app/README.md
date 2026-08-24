@@ -484,6 +484,15 @@ generator comments, `xlink` namespace noise) stripped.
 
 What differs, and why:
 
+- **Ingress-route crossing corrected.** Source edge 38 (`ssl_padlock` ->
+  `CloudFront`) carries an explicit elbow control point at `y=760`.
+  Applying the reproduction's uniform `-134` y translation puts that
+  horizontal leg at `y=626`, below the web-tier fan bus at `y=593`, just
+  as `source.png` shows it. An earlier extraction incorrectly used
+  `y=560`; that made the CDN route cross both the fan bus and its first
+  vertical branch even though neither crossing exists in the source.
+  `layout-reproduce.json`, the SVG, editable draw.io output, PNG, and
+  showcase report now all use `y=626`.
 - **Connector corners rounded (rule 3a).** `source.xml`'s connectors are
   all sharp right-angle bends. This file originally kept them sharp too,
   under rule 3a's now-REMOVED reproduce-mode exemption (owner decision

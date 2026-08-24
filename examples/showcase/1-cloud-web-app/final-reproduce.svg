@@ -115,7 +115,7 @@
 
 <!-- SSL padlock badges: security:security.encryption.in-transit applies to user-cdn and user-web-elb. Source draws ONE padlock on their shared first hop (user -> padlock); RELATIONSHIP_ATTACHMENT_NOT_RENDERED needs a <use> inside EACH data-relationship group, so both full polylines (sharing the first segment) and both padlock <use>s are drawn here, stacked at the identical position. -->
 <g data-relationship="user-cdn" fill="none" stroke-width="1.5">
-  <path d="M 190,697.5 H 254.5 Q 259.5,697.5 259.5,692.5 V 565 Q 259.5,560 254.5,560 H 79.5 Q 74.5,560 74.5,555 V 515" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 190,697.5 H 254.5 Q 259.5,697.5 259.5,692.5 V 631 Q 259.5,626 254.5,626 H 79.5 Q 74.5,626 74.5,621 V 515" stroke="#505863" marker-end="url(#arrow-neutral)"/>
   <circle cx="259.5" cy="698" r="16" fill="#FFFFFF"/>
   <use href="#icon-security-ssl-padlock" x="245.5" y="684" width="28" height="28"/>
 </g>

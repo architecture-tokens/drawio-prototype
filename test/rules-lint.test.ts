@@ -293,6 +293,25 @@ describe('tools/rules-lint.mjs cross-layer checks', () => {
     const corners = reports[0].checks.find((c) => c.id === '3a');
     expect(corners?.status).toBe('PASS');
     expect(corners?.message).toMatch(/18 rounded connector.*21 bend/);
+
+    // The source routes user -> CDN below the web-tier fan bus before
+    // turning left. Keeping that horizontal leg below the bus prevents
+    // two false crossings with the bus and its first vertical branch.
+    const layout = JSON.parse(
+      fs.readFileSync(path.join(example1, 'layout-reproduce.json'), 'utf8'),
+    ) as {
+      edges: Array<{ id: string; waypoints: Array<{ x: number; y: number }> }>;
+    };
+    const userCdn = layout.edges.find((edge) => edge.id === 'user-cdn');
+    const webFan = layout.edges.find((edge) => edge.id === 'web-elb-web-instance-1');
+    expect(userCdn?.waypoints[1].y).toBeGreaterThan(webFan?.waypoints[0].y ?? Infinity);
+    expect(userCdn?.waypoints[2].y).toBe(userCdn?.waypoints[1].y);
+
+    const reproduceSvg = fs.readFileSync(path.join(example1, 'final-reproduce.svg'), 'utf8');
+    const userCdnGroup = reproduceSvg.match(/<g data-relationship="user-cdn"[\s\S]*?<\/g>/)?.[0];
+    const routeY = userCdn?.waypoints[1].y;
+    expect(userCdnGroup).toContain(`259.5,${routeY}`);
+    expect(userCdnGroup).toContain(`74.5,${routeY}`);
   });
 
   it('treats an iconless view as a decisive --full PASS for both attachment checks', async () => {
