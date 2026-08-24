@@ -111,7 +111,7 @@ const MINIMAL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10
 describe('tools/rules-lint.mjs cross-layer checks', () => {
   const example1 = path.join(showcaseDir, '1-cloud-web-app');
 
-  it('exits 0 on the full example-1 cross-layer invocation and all five cross-layer checks PASS', async () => {
+  it('exits 0 on the full example-1 cross-layer invocation and all six cross-layer checks PASS', async () => {
     const { result, reports } = await runJson([
       path.join(example1, 'final.svg'),
       '--model',
@@ -131,6 +131,7 @@ describe('tools/rules-lint.mjs cross-layer checks', () => {
       'VIEW_REF_UNRESOLVED',
       'DIRECTION_GEOMETRY_CONFLICT',
       'CENSUS_MISMATCH',
+      'RELATIONSHIP_ATTACHMENT_NOT_RENDERED',
     ]) {
       const check = reports[0].checks.find((c) => c.id === id);
       expect(check, `${id} should be present in the report`).toBeDefined();
@@ -580,5 +581,77 @@ describe('tools/rules-lint.mjs hardening (adversarial-review fixes)', () => {
     const check = reports[0].checks.find((c) => c.id === 'DIRECTION_GEOMETRY_CONFLICT');
     expect(check?.status).toBe('FAIL');
     expect(check?.message).toMatch(/FULL_GATE_NOT_CHECKABLE/);
+  });
+
+  // RELATIONSHIP_ATTACHMENT_NOT_RENDERED: mutate a COPY of the real example-1
+  // final.svg (not a synthetic minimal fixture) so these two adversarial
+  // cases exercise the actual data-relationship binding final.svg now
+  // carries for user-cdn/user-web-elb, against the example's own real
+  // model.yaml/view.yaml/census.yaml/layout.json.
+  const example1Dir = path.join(showcaseDir, '1-cloud-web-app');
+  const realExample1Svg = fs.readFileSync(path.join(example1Dir, 'final.svg'), 'utf8');
+
+  function fullArgsFor(svgPath: string) {
+    return [
+      svgPath,
+      '--full',
+      '--model',
+      path.join(example1Dir, 'model.yaml'),
+      '--view',
+      path.join(example1Dir, 'view.yaml'),
+      '--census',
+      path.join(example1Dir, 'census.yaml'),
+      '--layout',
+      path.join(example1Dir, 'layout.json'),
+    ];
+  }
+
+  it('adversarial (reviewer): --full exits 1 naming RELATIONSHIP_ATTACHMENT_NOT_RENDERED when example 1 is missing its user-cdn padlock <use>', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-rel-removed-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const withPadlockRemoved = realExample1Svg.replace(
+      '<use href="#icon-security-ssl-padlock" x="253" y="631" width="18" height="18"/>\n',
+      '',
+    );
+    // Sanity: the replace actually matched something in the real file.
+    expect(withPadlockRemoved).not.toBe(realExample1Svg);
+    fs.writeFileSync(svgPath, withPadlockRemoved);
+
+    const { result, reports } = await runJson(fullArgsFor(svgPath));
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'RELATIONSHIP_ATTACHMENT_NOT_RENDERED');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/RELATIONSHIP_ATTACHMENT_NOT_RENDERED/);
+    expect(check?.message).toMatch(/user-cdn/);
+  });
+
+  it('adversarial (reviewer): --full exits 1 naming RELATIONSHIP_ATTACHMENT_NOT_RENDERED when the padlock is bound to the wrong data-relationship', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-rel-wrongedge-'));
+    const svgPath = path.join(dir, 'final.svg');
+    // Re-tag the user-cdn edge group's own data-relationship to the OTHER
+    // relationship's id. The padlock <use> still exists in the file, but
+    // now only inside user-web-elb's group -- from user-cdn's own
+    // declared-attachment point of view its glyph is unrendered.
+    const withWrongEdge = realExample1Svg.replace(
+      '<g data-relationship="user-cdn" fill="none" stroke-width="1.5">',
+      '<g data-relationship="user-web-elb" fill="none" stroke-width="1.5">',
+    );
+    expect(withWrongEdge).not.toBe(realExample1Svg);
+    fs.writeFileSync(svgPath, withWrongEdge);
+
+    const { result, reports } = await runJson(fullArgsFor(svgPath));
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'RELATIONSHIP_ATTACHMENT_NOT_RENDERED');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/RELATIONSHIP_ATTACHMENT_NOT_RENDERED/);
+    expect(check?.message).toMatch(/user-cdn/);
+  });
+
+  it('real example 1 stays exit 0 under --full with RELATIONSHIP_ATTACHMENT_NOT_RENDERED decisively PASS (never NOT-CHECKABLE)', async () => {
+    const { result, reports } = await runJson(fullArgsFor(path.join(example1Dir, 'final.svg')));
+    expect(result.exitCode).toBe(0);
+    const check = reports[0].checks.find((c) => c.id === 'RELATIONSHIP_ATTACHMENT_NOT_RENDERED');
+    expect(check?.status).toBe('PASS');
+    expect(check?.message).toMatch(/2 relationship attachment/);
   });
 });

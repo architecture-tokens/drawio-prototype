@@ -58,6 +58,15 @@
 //   CENSUS_MISMATCH                  census.yaml's record count vs.
 //                                    source.xml's mxCell count, target-id
 //                                    resolvability, and drop reasons.
+//   RELATIONSHIP_ATTACHMENT_NOT_RENDERED
+//                                    every relationship attachment view.yaml
+//                                    declares (e.g. the SSL padlock badges)
+//                                    must resolve to a <use> for its icon
+//                                    symbol inside the element group carrying
+//                                    the matching data-relationship="<id>"
+//                                    attribute — the edge-attachment
+//                                    counterpart of VIEW_REF_UNRESOLVED's
+//                                    component-side ATTACHMENT_NOT_RENDERED.
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -92,6 +101,7 @@ const CROSS_LAYER_CHECK_IDS = [
   'VIEW_REF_UNRESOLVED',
   'DIRECTION_GEOMETRY_CONFLICT',
   'CENSUS_MISMATCH',
+  'RELATIONSHIP_ATTACHMENT_NOT_RENDERED',
 ];
 
 // ---------------------------------------------------------------------------
@@ -841,12 +851,14 @@ function attachmentGroupMembers(anchorNode) {
 //      a <use> inside its element group whose href resolves to the icon's
 //      expected <symbol>) — ATTACHMENT_NOT_RENDERED otherwise.
 //      Relationship attachments (edge badges, e.g. the SSL padlock) are
-//      shape-checked but NOT render-bound: this project's final.svg
-//      convention only tags data-component/data-view-element (see
-//      examples/showcase/README.md "Binding") — there is no
-//      data-relationship anchor to bind an edge attachment to, so
-//      ATTACHMENT_NOT_RENDERED is scoped to what the check's own name says:
-//      data-component/data-view-element.
+//      shape-checked here only, not render-bound: final.svg's
+//      data-relationship anchor (see examples/showcase/1-cloud-web-app/
+//      final.svg's "SSL padlock badges" comment) binds an edge glyph to a
+//      <g>, not to a rect-then-siblings element group the way
+//      data-component/data-view-element do, so it needs a different
+//      "what counts as inside" rule (descendants of the <g>, not following
+//      siblings of an anchor rect) — see checkRelationshipAttachmentNotRendered
+//      / RELATIONSHIP_ATTACHMENT_NOT_RENDERED below for that render binding.
 function checkViewRefUnresolved(root, model, view) {
   const problems = [];
   const componentIds = new Set((model.components ?? []).map((c) => String(c.id)));
@@ -957,6 +969,109 @@ function checkViewRefUnresolved(root, model, view) {
       'every view.yaml components/relationships key and visualElements member resolves into ' +
       "model.yaml, every attachment's shape is valid, and every declared component/view-element " +
       'icon attachment is rendered inside its element group',
+  };
+}
+
+// Every `tagName` descendant of `node` (not including `node` itself) — a
+// subtree-scoped variant of collectAll, used below to search inside one
+// data-relationship anchor's <g> rather than the whole document.
+function collectDescendants(node, tagName) {
+  const out = [];
+  (function walk(n) {
+    for (const c of n.children) {
+      if (c.tag === tagName) out.push(c);
+      walk(c);
+    }
+  })(node);
+  return out;
+}
+
+// RELATIONSHIP_ATTACHMENT_NOT_RENDERED (requires --model + --view): every
+// relationship attachment view.yaml declares (e.g. the SSL padlock badges on
+// user-cdn / user-web-elb in examples/showcase/1-cloud-web-app) must
+// actually be visible in the SVG: a <use> whose href resolves to the
+// attachment's expected <symbol> must sit somewhere inside the element
+// group carrying the matching data-relationship="<relationship id>"
+// attribute — final.svg's edge-attachment binding convention (see that
+// file's "SSL padlock badges" comment). checkViewRefUnresolved validates
+// the same attachments' *shape* (icon/anchor/offset) but, by design,
+// doesn't render-bind relationship attachments the way it does for
+// components/visual-elements (see its doc comment) — this check is that
+// render binding, kept separate so a component-side rendering defect and an
+// edge-side one are never reported under the same id.
+//
+// Two ways an attachment fails here, both reported identically (from this
+// relationship's point of view its glyph is simply not where declared):
+//   - absent:     no node carries data-relationship="<id>" at all, or none
+//                 of that node's descendants is a matching <use>.
+//   - wrong-edge: the <use> exists, but only inside a DIFFERENT
+//                 relationship's data-relationship group — this
+//                 relationship's own group (if any) still has none.
+//
+// A relationship id that doesn't resolve into model.yaml, or an attachment
+// whose own shape is invalid (not an object, non-string icon), is left to
+// VIEW_REF_UNRESOLVED to report — skipped here to avoid a duplicate report
+// of the same root cause.
+function checkRelationshipAttachmentNotRendered(root, model, view) {
+  const relationshipIds = new Set((model.relationships ?? []).map((r) => String(r.id)));
+  const dataRelationshipNodes = collectDataAttrNodes(root, 'data-relationship');
+
+  const declared = Object.entries(view.relationships ?? {}).filter(([id]) =>
+    relationshipIds.has(id),
+  );
+  if (declared.length === 0) {
+    return {
+      status: 'NOT-CHECKABLE',
+      message:
+        'view.yaml declares no relationship attachments that resolve into a model.yaml relationship id',
+    };
+  }
+
+  const problems = [];
+  let checkedAttachments = 0;
+  for (const [id, attachments] of declared) {
+    if (!Array.isArray(attachments)) continue;
+    attachments.forEach((attachment, index) => {
+      if (
+        !attachment ||
+        typeof attachment !== 'object' ||
+        typeof attachment.icon !== 'string' ||
+        attachment.icon.length === 0
+      ) {
+        return; // malformed shape — VIEW_REF_UNRESOLVED already reports this
+      }
+      checkedAttachments += 1;
+      const expectedSymbol = svgSymbolIdForIcon(attachment.icon);
+      const nodes = dataRelationshipNodes.get(id) ?? [];
+      const rendered = nodes.some((anchorNode) =>
+        collectDescendants(anchorNode, 'use').some((u) => useHrefTarget(u) === expectedSymbol),
+      );
+      if (!rendered) {
+        problems.push(
+          `relationship "${id}" attachment[${index}] declares icon "${attachment.icon}" ` +
+            `(expects a <use href="#${expectedSymbol}">) but none was found inside the ` +
+            `element group carrying data-relationship="${id}" (${nodes.length} such group(s) found)`,
+        );
+      }
+    });
+  }
+
+  if (checkedAttachments === 0) {
+    return {
+      status: 'NOT-CHECKABLE',
+      message:
+        'every relationship attachment in view.yaml has an invalid shape (see VIEW_REF_UNRESOLVED)',
+    };
+  }
+  if (problems.length > 0) {
+    return {
+      status: 'FAIL',
+      message: `RELATIONSHIP_ATTACHMENT_NOT_RENDERED: ${problems.length} problem(s), e.g. ${problems[0]}`,
+    };
+  }
+  return {
+    status: 'PASS',
+    message: `${checkedAttachments} relationship attachment(s) in view.yaml each have a matching <use> rendered inside their data-relationship group`,
   };
 }
 
@@ -1399,6 +1514,11 @@ function lintSource(text, label, crossLayer = {}) {
     );
   if (model && view)
     checkResults.set('VIEW_REF_UNRESOLVED', checkViewRefUnresolved(root, model, view));
+  if (model && view)
+    checkResults.set(
+      'RELATIONSHIP_ATTACHMENT_NOT_RENDERED',
+      checkRelationshipAttachmentNotRendered(root, model, view),
+    );
   if (model && view && layout)
     checkResults.set(
       'DIRECTION_GEOMETRY_CONFLICT',
@@ -1565,6 +1685,19 @@ A cross-layer check only runs when ALL of the flags it needs are supplied:
                                      NOT-CHECKABLE (the bijection this check
                                      exists for was never verified), not a
                                      silent PASS.
+  RELATIONSHIP_ATTACHMENT_NOT_RENDERED
+                                     needs --model and --view. Every
+                                     relationship attachment view.yaml
+                                     declares (e.g. an SSL padlock badge)
+                                     must render as a <use href="#icon-<id>">
+                                     found inside the element group carrying
+                                     the matching data-relationship="<id>"
+                                     attribute in the SVG — absent, or bound
+                                     to a different relationship's group
+                                     (wrong-edge), is a FAIL either way. A
+                                     relationship id or attachment shape
+                                     VIEW_REF_UNRESOLVED already rejects is
+                                     skipped here, not double-reported.
 
 --full requires --model, --view, --census, and --layout together
 (FULL_GATE_INCOMPLETE if any is missing) and additionally treats any

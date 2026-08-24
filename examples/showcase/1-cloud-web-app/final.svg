@@ -154,11 +154,12 @@
   <!-- user -> route53 (straight, same row) -->
   <polyline points="514,690 554,690" stroke="#6B46C1" marker-end="url(#arrow-ingress)"/>
 
-  <!-- user -> cdn (offset exit, elbow up-left, SSL padlock badge on the shared trunk below) -->
-  <polyline points="414,660 414,640 110,640 110,620" stroke="#6B46C1" marker-end="url(#arrow-ingress)"/>
-
-  <!-- user -> web-elb (offset exit, elbow up-right, SSL padlock badge on the shared trunk below) -->
-  <polyline points="474,660 474,640 684,640 684,620" stroke="#B7791F" marker-end="url(#arrow-routing)"/>
+  <!-- user -> cdn and user -> web-elb: relocated below (still painted before
+       the leaf boxes, so z-order is unchanged; neither polyline's path
+       overlaps any other connector drawn in this <g>, so painting them after
+       the rest of this block is visually identical) into their own
+       <g data-relationship="..."> alongside their SSL padlock badge, per
+       tools/rules-lint.mjs's RELATIONSHIP_ATTACHMENT_NOT_RENDERED check. -->
 
   <!-- cdn -> static-assets -->
   <polyline points="110,560 110,520" stroke="#15803D" marker-end="url(#arrow-storage)"/>
@@ -204,11 +205,23 @@
 <!-- SSL padlock badges: security:security.encryption.in-transit is applied to
      user-cdn and user-web-elb (model.yaml); a white disc masks the line so
      the glyph reads as a badge ON the wire, not text struck by it (rule 12 /
-     T1's masking option). -->
-<circle cx="262" cy="640" r="11" fill="#FFFFFF"/>
-<use href="#icon-security-ssl-padlock" x="253" y="631" width="18" height="18"/>
-<circle cx="579" cy="640" r="11" fill="#FFFFFF"/>
-<use href="#icon-security-ssl-padlock" x="570" y="631" width="18" height="18"/>
+     T1's masking option). Each edge's own polyline (moved here from the
+     shared connectors <g> above) is grouped with its badge under one
+     <g data-relationship="<model.yaml relationship id>">, so the
+     relationship attachment view.yaml declares and the glyph that renders it
+     live in the same node (fill/stroke-width restated here to match the
+     connectors <g> they came from, since that inherited styling doesn't
+     travel with them). -->
+<g data-relationship="user-cdn" fill="none" stroke-width="1.5">
+  <polyline points="414,660 414,640 110,640 110,620" stroke="#6B46C1" marker-end="url(#arrow-ingress)"/>
+  <circle cx="262" cy="640" r="11" fill="#FFFFFF"/>
+  <use href="#icon-security-ssl-padlock" x="253" y="631" width="18" height="18"/>
+</g>
+<g data-relationship="user-web-elb" fill="none" stroke-width="1.5">
+  <polyline points="474,660 474,640 684,640 684,620" stroke="#B7791F" marker-end="url(#arrow-routing)"/>
+  <circle cx="579" cy="640" r="11" fill="#FFFFFF"/>
+  <use href="#icon-security-ssl-padlock" x="570" y="631" width="18" height="18"/>
+</g>
 
 <!-- edge label: Cross-AZ Replication (clear of the dashed line, which sits at y=70) -->
 <text x="859" y="74" font-size="11" fill="#15359E">Cross-AZ Replication</text>
