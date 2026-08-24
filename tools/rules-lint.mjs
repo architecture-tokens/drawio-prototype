@@ -82,6 +82,18 @@ const RENDER_DEPENDENT_IDS = [
 ];
 const OUT_OF_SCOPE_IDS = ['B1', 'B2', 'C2', 'C3', 'C4', 'C5', 'T3'];
 
+// The check ids lintSource may add to checkResults when cross-layer flags
+// are supplied — used by --full to know which NOT-CHECKABLE results to
+// promote to FAIL (see the `full` handling in lintSource). Must match the
+// Map keys used in the `checkResults.set(...)` calls below exactly.
+const CROSS_LAYER_CHECK_IDS = [
+  'UNKNOWN_ICON_SYMBOL',
+  'UNTRACEABLE_VISUAL / MISSING_COMPONENT',
+  'VIEW_REF_UNRESOLVED',
+  'DIRECTION_GEOMETRY_CONFLICT',
+  'CENSUS_MISMATCH',
+];
+
 // ---------------------------------------------------------------------------
 // Tiny SVG tokenizer / tree builder. Deliberately not a real XML parser:
 // good enough for the well-formed, generator-produced SVGs this tool is
@@ -691,6 +703,20 @@ function svgSymbolIdForIcon(iconId) {
   return `icon-${iconId.replace(/\./g, '-')}`;
 }
 
+// The nine-grid box-anchor enum (view.yaml README: "top/middle/bottom x
+// left/center/right"), plus the one non-grid anchor edge attachments use.
+const NINE_GRID_ANCHORS = new Set([
+  'top-left',
+  'top-center',
+  'top-right',
+  'middle-left',
+  'middle-center',
+  'middle-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+]);
+
 function collectIconIdsFromView(view) {
   const ids = new Set();
   const addAll = (byId) => {
@@ -747,6 +773,190 @@ function checkUnknownIconSymbol(root, view) {
   return {
     status: 'PASS',
     message: `${iconIds.size} icon id(s) referenced in view.yaml all resolve to a matching <symbol id="icon-<id>">`,
+  };
+}
+
+// Every element under root carrying `attrName` -> the list of nodes that
+// carry it (an id should carry exactly one node; MISSING_COMPONENT/
+// ATTACHMENT_NOT_RENDERED both need the actual node(s), not just a count).
+function collectDataAttrNodes(root, attrName) {
+  const nodes = new Map();
+  (function walk(n) {
+    for (const c of n.children) {
+      const v = c.attrs && c.attrs[attrName];
+      if (v !== undefined) {
+        if (!nodes.has(v)) nodes.set(v, []);
+        nodes.get(v).push(c);
+      }
+      walk(c);
+    }
+  })(root);
+  return nodes;
+}
+
+// href (or xlink:href, for tooling that still emits it) target of a <use>,
+// with the leading "#" stripped so it compares directly against a <symbol
+// id="...">.
+function useHrefTarget(node) {
+  const href = node.attrs.href ?? node.attrs['xlink:href'];
+  return href ? href.replace(/^#/, '') : undefined;
+}
+
+// The "element group" a declared attachment must render inside: the anchor
+// node itself (a <rect data-component="..."> or <rect data-view-element="...">)
+// plus every sibling drawn immediately after it, up to (not including) the
+// next <rect> sibling or the end of the parent's children. This matches the
+// authoring convention final.svg documents explicitly ("Order within each
+// box is always rect, text, use — never a <rect> between the box rect and
+// its title") and that T2-lite's previousRectSibling already relies on from
+// the other direction.
+function attachmentGroupMembers(anchorNode) {
+  const parent = anchorNode.parent;
+  if (!parent) return [anchorNode];
+  const siblings = parent.children;
+  const idx = siblings.indexOf(anchorNode);
+  const members = [anchorNode];
+  for (let i = idx + 1; i < siblings.length; i += 1) {
+    if (siblings[i].tag === 'rect') break;
+    members.push(siblings[i]);
+  }
+  return members;
+}
+
+// VIEW_REF_UNRESOLVED (requires --model + --view): a view document is
+// presentation-only data (see view.yaml's own "View Layer Contract"
+// preamble) — every id it names must resolve into model.yaml, and every
+// attachment it declares must actually be visible in the SVG it describes.
+// Three things are checked, each contributing to one combined FAIL:
+//   1. every `components`/`relationships` key resolves to a model.yaml
+//      component/relationship id (this is the gap that let a typo'd key —
+//      e.g. "components.typo" — through silently: nothing else in this
+//      file ever reads the KEYS of those maps, only the icon ids inside
+//      their attachment lists).
+//   2. every visualElements[].members entry resolves to a model.yaml
+//      component id.
+//   3. every attachment's shape is valid (icon: string, anchor: nine-grid
+//      or "edge-midpoint", offset only alongside "edge-midpoint") and,
+//      for component/visual-element attachments only, is actually rendered:
+//      a <use> inside its element group whose href resolves to the icon's
+//      expected <symbol>) — ATTACHMENT_NOT_RENDERED otherwise.
+//      Relationship attachments (edge badges, e.g. the SSL padlock) are
+//      shape-checked but NOT render-bound: this project's final.svg
+//      convention only tags data-component/data-view-element (see
+//      examples/showcase/README.md "Binding") — there is no
+//      data-relationship anchor to bind an edge attachment to, so
+//      ATTACHMENT_NOT_RENDERED is scoped to what the check's own name says:
+//      data-component/data-view-element.
+function checkViewRefUnresolved(root, model, view) {
+  const problems = [];
+  const componentIds = new Set((model.components ?? []).map((c) => String(c.id)));
+  const relationshipIds = new Set((model.relationships ?? []).map((r) => String(r.id)));
+  const dataComponentNodes = collectDataAttrNodes(root, 'data-component');
+  const dataViewElementNodes = collectDataAttrNodes(root, 'data-view-element');
+
+  function validateAttachmentShape(where, attachment) {
+    if (attachment === null || typeof attachment !== 'object') {
+      problems.push(`${where}: attachment must be an object, got ${JSON.stringify(attachment)}`);
+      return false;
+    }
+    let ok = true;
+    if (typeof attachment.icon !== 'string' || attachment.icon.length === 0) {
+      problems.push(
+        `${where}: icon must be a non-empty string, got ${JSON.stringify(attachment.icon)}`,
+      );
+      ok = false;
+    }
+    if (attachment.anchor !== 'edge-midpoint' && !NINE_GRID_ANCHORS.has(attachment.anchor)) {
+      problems.push(
+        `${where}: anchor ${JSON.stringify(attachment.anchor)} is not a nine-grid position or "edge-midpoint"`,
+      );
+      ok = false;
+    }
+    if (attachment.offset !== undefined && attachment.anchor !== 'edge-midpoint') {
+      problems.push(`${where}: offset is only allowed when anchor is "edge-midpoint"`);
+      ok = false;
+    }
+    return ok;
+  }
+
+  function checkRendered(where, ownerId, attachment, nodesById) {
+    const expectedSymbol = svgSymbolIdForIcon(attachment.icon);
+    const nodes = nodesById.get(ownerId) ?? [];
+    const rendered = nodes.some((anchorNode) =>
+      attachmentGroupMembers(anchorNode).some(
+        (member) => member.tag === 'use' && useHrefTarget(member) === expectedSymbol,
+      ),
+    );
+    if (!rendered) {
+      problems.push(
+        `ATTACHMENT_NOT_RENDERED: ${where} declares icon "${attachment.icon}" (expects a ` +
+          `<use href="#${expectedSymbol}">) but none was found inside the element group ` +
+          `carrying data-component/data-view-element="${ownerId}"`,
+      );
+    }
+  }
+
+  function checkAttachmentList(ownerKind, ownerId, attachments, opts) {
+    if (attachments === undefined) return;
+    if (!Array.isArray(attachments)) {
+      problems.push(
+        `${ownerKind} "${ownerId}": attachments must be a list, got ${JSON.stringify(attachments)}`,
+      );
+      return;
+    }
+    attachments.forEach((attachment, index) => {
+      const where = `${ownerKind} "${ownerId}" attachment[${index}]`;
+      if (!validateAttachmentShape(where, attachment)) return;
+      if (opts?.bindTo) checkRendered(where, ownerId, attachment, opts.bindTo);
+    });
+  }
+
+  for (const [id, attachments] of Object.entries(view.components ?? {})) {
+    if (!componentIds.has(id)) {
+      problems.push(`view.components key "${id}" does not resolve to a model.yaml component id`);
+      continue;
+    }
+    checkAttachmentList('component', id, attachments, { bindTo: dataComponentNodes });
+  }
+
+  for (const [id, attachments] of Object.entries(view.relationships ?? {})) {
+    if (!relationshipIds.has(id)) {
+      problems.push(
+        `view.relationships key "${id}" does not resolve to a model.yaml relationship id`,
+      );
+      continue;
+    }
+    // Shape-only: see the function doc comment for why relationships aren't
+    // render-bound.
+    checkAttachmentList('relationship', id, attachments, {});
+  }
+
+  for (const ve of view.visualElements ?? []) {
+    for (const memberId of ve.members ?? []) {
+      if (!componentIds.has(String(memberId))) {
+        problems.push(
+          `view.visualElements "${ve.id}" member "${memberId}" does not resolve to a model.yaml component id`,
+        );
+      }
+    }
+    // Current schema examples never attach icons directly to a visual
+    // element, but nothing rules it out — bind the same way as components
+    // (against data-view-element) if a view.yaml ever does.
+    checkAttachmentList('visualElement', ve.id, ve.attachments, { bindTo: dataViewElementNodes });
+  }
+
+  if (problems.length > 0) {
+    return {
+      status: 'FAIL',
+      message: `VIEW_REF_UNRESOLVED: ${problems.length} problem(s), e.g. ${problems[0]}`,
+    };
+  }
+  return {
+    status: 'PASS',
+    message:
+      'every view.yaml components/relationships key and visualElements member resolves into ' +
+      "model.yaml, every attachment's shape is valid, and every declared component/view-element " +
+      'icon attachment is rendered inside its element group',
   };
 }
 
@@ -865,10 +1075,21 @@ export const DIRECTION_GEOMETRY_THRESHOLD = 0.6;
 // model.yaml relationship, the net displacement (layout.json node center,
 // target minus source) along the axis view.yaml's flow.direction names must
 // be POSITIVE in that direction for at least DIRECTION_GEOMETRY_THRESHOLD of
-// relationships whose endpoints resolve. "mixed" skips the check entirely
-// (no single dominant direction to check against). A same-row/same-column
-// edge (net displacement 0 on that axis) counts toward the denominator but
-// not the numerator — it neither confirms nor conflicts.
+// relationships. "mixed" skips the check entirely (no single dominant
+// direction to check against). A same-row/same-column edge (net
+// displacement 0 on that axis) counts toward the denominator but not the
+// numerator — it neither confirms nor conflicts.
+//
+// LAYOUT_INCOMPLETE (blocking, computed before the ratio): every model.yaml
+// relationship's endpoints must resolve to a layout.json node — an
+// unresolved endpoint used to be silently dropped from the denominator,
+// which let a near-empty layout.json (most nodes missing) score against
+// only the handful of relationships it happened to cover and pass at 100%
+// while saying nothing about the rest of the diagram. That's now a hard
+// FAIL, not a skip. Duplicate layout.json node ids are checked first and
+// are also a hard FAIL: resolveLayoutCenters silently lets a later
+// duplicate clobber an earlier one's center, which would make the
+// completeness check itself unreliable.
 function checkDirectionGeometryConflict(model, view, layout) {
   const direction = view?.flow?.direction;
   if (!direction) return { status: 'NOT-CHECKABLE', message: 'view.yaml has no flow.direction' };
@@ -880,26 +1101,55 @@ function checkDirectionGeometryConflict(model, view, layout) {
       status: 'NOT-CHECKABLE',
       message: `flow.direction "${direction}" is not one of up/down/left/right/mixed`,
     };
+
+  const nodeIdCounts = new Map();
+  for (const n of layout.nodes ?? []) nodeIdCounts.set(n.id, (nodeIdCounts.get(n.id) ?? 0) + 1);
+  const duplicateIds = [...nodeIdCounts].filter(([, count]) => count > 1).map(([id]) => id);
+  if (duplicateIds.length > 0) {
+    return {
+      status: 'FAIL',
+      message: `LAYOUT_INCOMPLETE: layout.json has ${duplicateIds.length} duplicate node id(s): ${duplicateIds.join(', ')}`,
+    };
+  }
+
   const centers = resolveLayoutCenters(layout);
   const relationships = model.relationships ?? [];
-  let considered = 0;
+  if (relationships.length === 0)
+    return { status: 'NOT-CHECKABLE', message: 'model.yaml has no relationships' };
+
+  const unresolved = [];
   let compliant = 0;
   let firstOffender = null;
   for (const rel of relationships) {
     const from = centers.get(rel.from);
     const to = centers.get(rel.to);
-    if (!from || !to) continue;
-    considered += 1;
+    if (!from || !to) {
+      unresolved.push({
+        id: rel.id,
+        from: rel.from,
+        to: rel.to,
+        fromOk: Boolean(from),
+        toOk: Boolean(to),
+      });
+      continue;
+    }
     const raw = axis.key === 'y' ? to.y - from.y : to.x - from.x;
     const delta = raw * axis.sign;
     if (delta > 0) compliant += 1;
     else if (!firstOffender) firstOffender = rel.id;
   }
-  if (considered === 0)
+  if (unresolved.length > 0) {
+    const u = unresolved[0];
+    const badSide = !u.fromOk ? `from "${u.from}"` : `to "${u.to}"`;
     return {
-      status: 'NOT-CHECKABLE',
-      message: 'no model.yaml relationship had both endpoints resolvable against layout.json nodes',
+      status: 'FAIL',
+      message:
+        `LAYOUT_INCOMPLETE: ${unresolved.length}/${relationships.length} model.yaml relationship(s) have ` +
+        `an endpoint that does not resolve to a layout.json node, e.g. relationship "${u.id}" ${badSide}`,
     };
+  }
+
+  const considered = relationships.length;
   const fraction = compliant / considered;
   const pct = (n) => `${Math.round(n * 100)}%`;
   if (fraction < DIRECTION_GEOMETRY_THRESHOLD) {
@@ -917,24 +1167,57 @@ function checkDirectionGeometryConflict(model, view, layout) {
   };
 }
 
-function countSourceMxCells(sourceXmlText) {
-  const vertexCount = (sourceXmlText.match(/<mxCell\b[^>]*\bvertex="1"/g) ?? []).length;
-  const edgeCount = (sourceXmlText.match(/<mxCell\b[^>]*\bedge="1"/g) ?? []).length;
-  return { vertexCount, edgeCount };
+// Every mxCell in source.xml that is a vertex or an edge -> { id, kind }.
+// Same "not a real XML parser" tradeoff as the SVG tokenizer above: a flat
+// regex scan over well-formed, generator-produced drawio XML, not a DOM
+// walk. Sound for this format because drawio always HTML-entity-escapes
+// literal '>' inside attribute values (`&gt;`), so a naive `[^>]*` capture
+// of the attribute string never runs past the real tag boundary.
+function parseSourceMxCells(sourceXmlText) {
+  const cells = [];
+  const re = /<mxCell\b([^>]*)>/g;
+  let m;
+  while ((m = re.exec(sourceXmlText))) {
+    const attrs = parseAttrs(m[1]);
+    if (attrs.id === undefined) continue;
+    if (attrs.vertex === '1') cells.push({ id: attrs.id, kind: 'vertex' });
+    else if (attrs.edge === '1') cells.push({ id: attrs.id, kind: 'edge' });
+  }
+  return cells;
 }
 
-// CENSUS_MISMATCH (requires --census; --model additionally enables the
-// target-id resolvability check): census.yaml's `source` field names the
-// raw diagram source (resolved relative to census.yaml's own directory);
-// its mxCell vertex+edge count must equal census.yaml's record count.
-// Every component/relationship primary_bucket record's target_ids must
-// resolve into model.yaml (skipped, not failed, when --model isn't given —
-// this half of the check needs it to mean anything). Every drop record
-// must carry a non-empty reason.
-function checkCensusMismatch(census, censusFilePath, model) {
+const CENSUS_PRIMARY_BUCKETS = new Set(['component', 'relationship', 'token', 'visual', 'drop']);
+
+// CENSUS_MISMATCH (requires --census; --model additionally enables
+// component/relationship/token target-id resolvability, --view additionally
+// enables visual target-id resolvability): census.yaml's `source` field
+// names the raw diagram source (resolved relative to census.yaml's own
+// directory). Its vertex+edge mxCell ids must map ONE-TO-ONE onto
+// census.yaml's records — every source_id in records must exist exactly
+// once (no duplicates, no unknown ids) and every source vertex/edge id must
+// have exactly one record (no missing ids); this used to be checked as a
+// bare count comparison, which a census that duplicated one id enough times
+// to match the total (e.g. all records pointing at the same source_id)
+// could pass while covering almost nothing. Each record's `kind` must match
+// its source cell's kind, and `primary_bucket` must be one of the five
+// closed values. target_ids are then validated per bucket:
+//   component/relationship -> must resolve into model.yaml's matching list.
+//   visual                 -> must resolve into view.yaml's visualElements.
+//   token                  -> target_ids mixes a token ref (e.g.
+//                              "security:security.encryption.in-transit")
+//                              with the model component/relationship id(s)
+//                              it's carried by (see census.yaml's own
+//                              source_id 40 for the real shape this takes);
+//                              every non-token-ref entry must resolve into
+//                              model.yaml, and every token-ref entry must
+//                              actually appear in the tokens list of at
+//                              least one of those resolved elements.
+//   drop                   -> target_ids must be empty and reason required.
+function checkCensusMismatch(census, censusFilePath, model, view) {
   const problems = [];
   const records = census.records ?? [];
 
+  let sourceCells = null;
   if (census.source) {
     const sourcePath = path.resolve(path.dirname(censusFilePath), census.source);
     let sourceText;
@@ -946,46 +1229,143 @@ function checkCensusMismatch(census, censusFilePath, model) {
         message: `CENSUS_MISMATCH: could not read census source "${census.source}" (resolved ${sourcePath}): ${cause instanceof Error ? cause.message : String(cause)}`,
       };
     }
-    const { vertexCount, edgeCount } = countSourceMxCells(sourceText);
-    const expectedTotal = vertexCount + edgeCount;
-    if (records.length !== expectedTotal) {
-      problems.push(
-        `record count ${records.length} != source element count ${expectedTotal} (${vertexCount} vertex + ${edgeCount} edge, from "${census.source}")`,
-      );
-    }
+    sourceCells = parseSourceMxCells(sourceText);
   }
 
-  if (model) {
-    const componentIds = new Set((model.components ?? []).map((c) => String(c.id)));
-    const relationshipIds = new Set((model.relationships ?? []).map((r) => String(r.id)));
+  if (sourceCells) {
+    const bySourceId = new Map(sourceCells.map((c) => [c.id, c]));
+    const recordIdCounts = new Map();
     for (const rec of records) {
-      const ids = rec.primary_bucket === 'component' ? componentIds : relationshipIds;
-      if (rec.primary_bucket !== 'component' && rec.primary_bucket !== 'relationship') continue;
-      for (const target of rec.target_ids ?? []) {
-        if (!ids.has(String(target))) {
-          problems.push(
-            `census record ${rec.source_id} (${rec.primary_bucket}) targets "${target}", not found in model.yaml`,
-          );
-          break;
-        }
+      if (rec.source_id === undefined || rec.source_id === null) {
+        problems.push('a census record is missing source_id');
+        continue;
+      }
+      const sid = String(rec.source_id);
+      recordIdCounts.set(sid, (recordIdCounts.get(sid) ?? 0) + 1);
+    }
+    for (const [sid, count] of recordIdCounts) {
+      if (count > 1)
+        problems.push(`source_id "${sid}" appears ${count} times in census.yaml (duplicate)`);
+      if (!bySourceId.has(sid))
+        problems.push(
+          `source_id "${sid}" does not correspond to any vertex/edge mxCell in "${census.source}"`,
+        );
+    }
+    for (const [sid, cell] of bySourceId) {
+      if (!recordIdCounts.has(sid))
+        problems.push(
+          `source element "${sid}" (${cell.kind}) in "${census.source}" has no census record`,
+        );
+    }
+    for (const rec of records) {
+      if (rec.source_id === undefined || rec.source_id === null) continue;
+      const cell = bySourceId.get(String(rec.source_id));
+      if (cell && rec.kind !== cell.kind) {
+        problems.push(
+          `census record ${rec.source_id} declares kind "${rec.kind}" but the source cell is "${cell.kind}"`,
+        );
       }
     }
   }
 
   for (const rec of records) {
-    if (rec.primary_bucket === 'drop' && !(rec.reason && String(rec.reason).trim())) {
-      problems.push(`census record ${rec.source_id} has primary_bucket=drop but no reason`);
+    if (!CENSUS_PRIMARY_BUCKETS.has(rec.primary_bucket)) {
+      problems.push(
+        `census record ${rec.source_id} has primary_bucket ${JSON.stringify(rec.primary_bucket)}, not one of ${[...CENSUS_PRIMARY_BUCKETS].join('/')}`,
+      );
+    }
+  }
+
+  const componentIds = model ? new Set((model.components ?? []).map((c) => String(c.id))) : null;
+  const relationshipIds = model
+    ? new Set((model.relationships ?? []).map((r) => String(r.id)))
+    : null;
+  const visualElementIds = view
+    ? new Set((view.visualElements ?? []).map((e) => String(e.id)))
+    : null;
+
+  for (const rec of records) {
+    const targetIds = (rec.target_ids ?? []).map(String);
+    if (rec.primary_bucket === 'component' && componentIds) {
+      for (const t of targetIds)
+        if (!componentIds.has(t))
+          problems.push(
+            `census record ${rec.source_id} (component) targets "${t}", not found in model.yaml`,
+          );
+    } else if (rec.primary_bucket === 'relationship' && relationshipIds) {
+      for (const t of targetIds)
+        if (!relationshipIds.has(t))
+          problems.push(
+            `census record ${rec.source_id} (relationship) targets "${t}", not found in model.yaml`,
+          );
+    } else if (rec.primary_bucket === 'visual' && visualElementIds) {
+      for (const t of targetIds)
+        if (!visualElementIds.has(t))
+          problems.push(
+            `census record ${rec.source_id} (visual) targets "${t}", not found in view.yaml visualElements`,
+          );
+    } else if (rec.primary_bucket === 'token' && componentIds && relationshipIds) {
+      const modelIdTargets = targetIds.filter((t) => componentIds.has(t) || relationshipIds.has(t));
+      const tokenRefTargets = targetIds.filter(
+        (t) => !componentIds.has(t) && !relationshipIds.has(t),
+      );
+      if (modelIdTargets.length === 0) {
+        problems.push(
+          `census record ${rec.source_id} (token) has no linked model component/relationship id in target_ids`,
+        );
+      }
+      for (const tokenRef of tokenRefTargets) {
+        const carried = modelIdTargets.some((linkedId) => {
+          const el =
+            (model.components ?? []).find((c) => String(c.id) === linkedId) ??
+            (model.relationships ?? []).find((r) => String(r.id) === linkedId);
+          return el && (el.tokens ?? []).some((t) => t.token === tokenRef);
+        });
+        if (!carried) {
+          problems.push(
+            `census record ${rec.source_id} (token) target "${tokenRef}" is not a token on any of its ` +
+              `linked model element(s) (${modelIdTargets.join(', ') || 'none'})`,
+          );
+        }
+      }
+    } else if (rec.primary_bucket === 'drop') {
+      if (targetIds.length > 0)
+        problems.push(
+          `census record ${rec.source_id} has primary_bucket=drop but non-empty target_ids`,
+        );
+      if (!(rec.reason && String(rec.reason).trim()))
+        problems.push(`census record ${rec.source_id} has primary_bucket=drop but no reason`);
     }
   }
 
   if (problems.length > 0)
     return { status: 'FAIL', message: `CENSUS_MISMATCH: ${problems.join('; ')}` };
-  const modelNote = model
-    ? '; every component/relationship target_id resolves into model.yaml'
-    : ' (target_id resolvability not checked — no --model given)';
+  // The bijection against source.xml is this check's core purpose (its own
+  // name is CENSUS_MISMATCH); a census.yaml with no `source` field can still
+  // pass every per-record validation above without that ever having been
+  // verified. Reported as NOT-CHECKABLE rather than a silent PASS so --full
+  // (which promotes NOT-CHECKABLE cross-layer results to FAIL) can see it.
+  if (!sourceCells) {
+    return {
+      status: 'NOT-CHECKABLE',
+      message: `census.yaml has no \`source\` field — record/source bijection not checked (${records.length} record(s) otherwise valid)`,
+    };
+  }
+  const notes = [];
+  notes.push(`bijects onto ${sourceCells.length} source element(s) in "${census.source}"`);
+  notes.push(
+    model
+      ? 'every component/relationship/token target_id resolves into model.yaml'
+      : 'target_id resolvability not checked for component/relationship/token — no --model given',
+  );
+  notes.push(
+    view
+      ? 'every visual target_id resolves into view.yaml'
+      : 'target_id resolvability not checked for visual — no --view given',
+  );
   return {
     status: 'PASS',
-    message: `${records.length} census record(s) match the source element count${modelNote}; every drop carries a reason`,
+    message: `${records.length} census record(s): ${notes.join('; ')}; every drop carries a reason and no target_ids`,
   };
 }
 
@@ -1010,20 +1390,40 @@ function lintSource(text, label, crossLayer = {}) {
     ['T2-lite', checkT2Lite(root)],
   ]);
 
-  const { model, view, census, censusFilePath, layout } = crossLayer;
+  const { model, view, census, censusFilePath, layout, full } = crossLayer;
   if (view) checkResults.set('UNKNOWN_ICON_SYMBOL', checkUnknownIconSymbol(root, view));
   if (model)
     checkResults.set(
       'UNTRACEABLE_VISUAL / MISSING_COMPONENT',
       checkUntraceableVisual(root, model, view),
     );
+  if (model && view)
+    checkResults.set('VIEW_REF_UNRESOLVED', checkViewRefUnresolved(root, model, view));
   if (model && view && layout)
     checkResults.set(
       'DIRECTION_GEOMETRY_CONFLICT',
       checkDirectionGeometryConflict(model, view, layout),
     );
   if (census)
-    checkResults.set('CENSUS_MISMATCH', checkCensusMismatch(census, censusFilePath, model));
+    checkResults.set('CENSUS_MISMATCH', checkCensusMismatch(census, censusFilePath, model, view));
+
+  // --full is the full-gate mode: a cross-layer check that couldn't reach a
+  // definitive answer (NOT-CHECKABLE) is promoted to FAIL rather than left
+  // as a pass-through. This applies ONLY to the cross-layer checks above —
+  // the baseline render-dependent/out-of-scope rule ids below stay
+  // NOT-CHECKABLE regardless of --full; those are permanently outside this
+  // tool's reach (see the file header), not a gap --full is meant to close.
+  if (full) {
+    for (const id of CROSS_LAYER_CHECK_IDS) {
+      const result = checkResults.get(id);
+      if (result && result.status === 'NOT-CHECKABLE') {
+        checkResults.set(id, {
+          status: 'FAIL',
+          message: `FULL_GATE_NOT_CHECKABLE: --full requires a definitive answer; ${id} was NOT-CHECKABLE: ${result.message}`,
+        });
+      }
+    }
+  }
 
   const checks = [];
   for (const [id, result] of checkResults) {
@@ -1087,6 +1487,7 @@ function formatHuman(result) {
 const USAGE = `Usage:
   node tools/rules-lint.mjs <file.svg> [more.svg...] [--format human|json]
   node tools/rules-lint.mjs <file.svg> [--model model.yaml] [--view view.yaml] [--census census.yaml] [--layout layout.json] [--format human|json]
+  node tools/rules-lint.mjs <file.svg> --full --model model.yaml --view view.yaml --census census.yaml --layout layout.json [--format human|json]
   node tools/rules-lint.mjs --help
 
 --model/--view/--census/--layout are each optional, and together they
@@ -1110,26 +1511,68 @@ A cross-layer check only runs when ALL of the flags it needs are supplied:
                                      and every data-component/
                                      data-view-element value in the SVG must
                                      resolve back to a known id.
+  VIEW_REF_UNRESOLVED               needs --model and --view. Every
+                                     view.yaml components/relationships key
+                                     must resolve to a model.yaml
+                                     component/relationship id, every
+                                     visualElements[].members entry must
+                                     resolve to a model.yaml component id,
+                                     every attachment's shape must be valid
+                                     (icon: string; anchor: a nine-grid
+                                     position or "edge-midpoint"; offset only
+                                     alongside "edge-midpoint"), and every
+                                     declared component/view-element icon
+                                     attachment must be rendered as a <use>
+                                     inside the element group carrying the
+                                     matching data-component/
+                                     data-view-element (ATTACHMENT_NOT_RENDERED
+                                     otherwise; relationship attachments are
+                                     shape-checked only — this SVG format has
+                                     no data-relationship anchor to bind
+                                     them to).
   DIRECTION_GEOMETRY_CONFLICT       needs --model, --view, and --layout.
-                                     For each model.yaml relationship,
-                                     computes the net displacement between
-                                     its endpoints' layout.json node centers;
+                                     Every model.yaml relationship's
+                                     endpoints must first resolve to a
+                                     layout.json node (LAYOUT_INCOMPLETE
+                                     otherwise, and duplicate layout.json
+                                     node ids are also LAYOUT_INCOMPLETE);
+                                     then, for each relationship, computes
+                                     the net displacement between its
+                                     endpoints' layout.json node centers —
                                      if view.yaml's flow.direction is one of
                                      up/down/left/right, at least
                                      ${Math.round(DIRECTION_GEOMETRY_THRESHOLD * 100)}% of relationships must have a net
                                      displacement matching that direction.
                                      "mixed" skips the check.
-  CENSUS_MISMATCH                   needs --census (add --model to also
-                                     check target-id resolvability).
-                                     census.yaml's record count must equal
-                                     its own \`source\` file's mxCell
-                                     vertex+edge count (source path is
-                                     resolved relative to census.yaml's own
-                                     directory); every component/
-                                     relationship record's target_ids must
-                                     resolve into model.yaml; every
-                                     primary_bucket=drop record must carry a
-                                     non-empty reason.
+  CENSUS_MISMATCH                   needs --census (add --model to check
+                                     component/relationship/token target-id
+                                     resolvability, --view to check visual
+                                     target-id resolvability). census.yaml's
+                                     records must map ONE-TO-ONE onto its own
+                                     \`source\` file's vertex+edge mxCell ids
+                                     (source path resolved relative to
+                                     census.yaml's own directory; no
+                                     duplicate or unknown source_ids, no
+                                     missing ones), each record's kind must
+                                     match its source cell's kind,
+                                     primary_bucket must be one of
+                                     component/relationship/token/visual/drop,
+                                     target_ids must resolve per that bucket,
+                                     and every primary_bucket=drop record
+                                     must carry a non-empty reason and no
+                                     target_ids. A census.yaml with no
+                                     \`source\` field is reported
+                                     NOT-CHECKABLE (the bijection this check
+                                     exists for was never verified), not a
+                                     silent PASS.
+
+--full requires --model, --view, --census, and --layout together
+(FULL_GATE_INCOMPLETE if any is missing) and additionally treats any
+NOT-CHECKABLE result from the cross-layer checks above as a blocking FAIL
+(FULL_GATE_NOT_CHECKABLE) rather than a pass-through — e.g. flow.direction:
+mixed, which normally just skips DIRECTION_GEOMETRY_CONFLICT, fails under
+--full. The always-render-dependent/out-of-scope baseline rule ids are
+unaffected — they stay NOT-CHECKABLE even under --full.
 `;
 
 function parseArgs(argv) {
@@ -1139,6 +1582,7 @@ function parseArgs(argv) {
   let viewPath;
   let censusPath;
   let layoutPath;
+  let full = false;
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--help' || arg === '-h') {
@@ -1148,6 +1592,8 @@ function parseArgs(argv) {
       i += 1;
     } else if (arg.startsWith('--format=')) {
       format = arg.slice('--format='.length);
+    } else if (arg === '--full') {
+      full = true;
     } else if (arg === '--model' && argv[i + 1]) {
       modelPath = argv[i + 1];
       i += 1;
@@ -1167,12 +1613,12 @@ function parseArgs(argv) {
   if (files.length === 0) return { error: USAGE };
   if (format !== 'human' && format !== 'json')
     return { error: `Unknown --format: ${format}\n${USAGE}` };
-  const anyCrossLayerFlag = Boolean(modelPath || viewPath || censusPath || layoutPath);
+  const anyCrossLayerFlag = Boolean(modelPath || viewPath || censusPath || layoutPath || full);
   if (anyCrossLayerFlag && files.length !== 1)
     return {
-      error: `--model/--view/--census/--layout require exactly one <file.svg> positional argument (got ${files.length})\n${USAGE}`,
+      error: `--model/--view/--census/--layout/--full require exactly one <file.svg> positional argument (got ${files.length})\n${USAGE}`,
     };
-  return { files, format, modelPath, viewPath, censusPath, layoutPath };
+  return { files, format, modelPath, viewPath, censusPath, layoutPath, full };
 }
 
 // Exported so tests can drive the linter in-process (same pattern as
@@ -1181,7 +1627,38 @@ export async function runCli(argv) {
   const parsed = parseArgs(argv);
   if (parsed.help) return { exitCode: 0, stdout: USAGE, stderr: '' };
   if (parsed.error) return { exitCode: 2, stdout: '', stderr: parsed.error };
-  const { files, format, modelPath, viewPath, censusPath, layoutPath } = parsed;
+  const { files, format, modelPath, viewPath, censusPath, layoutPath, full } = parsed;
+
+  // Full-gate mode: --model/--view/--census/--layout are all required
+  // together. This is reported as a FAIL result (not a usage error) so it
+  // carries a named, machine-checkable code the same way every other
+  // blocking condition in this tool does, rather than a bare exit-2 usage
+  // dump.
+  if (full) {
+    const missingFlags = [
+      !modelPath && '--model',
+      !viewPath && '--view',
+      !censusPath && '--census',
+      !layoutPath && '--layout',
+    ].filter(Boolean);
+    if (missingFlags.length > 0) {
+      const result = {
+        file: files[0],
+        checks: [
+          {
+            id: 'FULL_GATE',
+            status: 'FAIL',
+            message: `FULL_GATE_INCOMPLETE: --full requires --model, --view, --census, and --layout; missing: ${missingFlags.join(', ')}`,
+          },
+        ],
+        summary: { PASS: 0, FAIL: 1, WARN: 0, 'NOT-CHECKABLE': 0 },
+        ok: false,
+      };
+      const stdout =
+        format === 'json' ? `${JSON.stringify([result], null, 2)}\n` : `${formatHuman(result)}\n`;
+      return { exitCode: 1, stdout, stderr: '' };
+    }
+  }
 
   let model;
   let view;
@@ -1199,7 +1676,7 @@ export async function runCli(argv) {
       stderr: `Could not read/parse cross-layer input: ${cause instanceof Error ? cause.message : String(cause)}\n`,
     };
   }
-  const crossLayer = { model, view, census, censusFilePath: censusPath, layout };
+  const crossLayer = { model, view, census, censusFilePath: censusPath, layout, full };
 
   const results = [];
   for (const file of files) {

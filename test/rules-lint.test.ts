@@ -33,6 +33,12 @@ describe('tools/rules-lint.mjs', () => {
     expect(showcaseSvgs.length).toBe(5);
   });
 
+  // Only 1-cloud-web-app carries model.yaml/view.yaml/census.yaml/layout.json
+  // today (see the cross-layer describe block below, including its --full
+  // invocation). Examples 2-5 (2-cicd-flow, 3-microservices-c4, 4-kubernetes,
+  // 5-event-pipeline) have not been migrated to the cross-layer contract yet
+  // — this test intentionally stays SVG-only for all five so it keeps
+  // covering the 4 unmigrated ones without requiring inputs they don't have.
   it('exits 0 with 0 FAIL on every hand-verified examples/showcase/*/final.svg', async () => {
     const result = await runCli([...showcaseSvgs, '--format', 'json']);
     expect(result.exitCode).toBe(0);
@@ -105,7 +111,7 @@ const MINIMAL_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10
 describe('tools/rules-lint.mjs cross-layer checks', () => {
   const example1 = path.join(showcaseDir, '1-cloud-web-app');
 
-  it('exits 0 on the full example-1 cross-layer invocation and all four new checks PASS', async () => {
+  it('exits 0 on the full example-1 cross-layer invocation and all five cross-layer checks PASS', async () => {
     const { result, reports } = await runJson([
       path.join(example1, 'final.svg'),
       '--model',
@@ -122,6 +128,7 @@ describe('tools/rules-lint.mjs cross-layer checks', () => {
     for (const id of [
       'UNKNOWN_ICON_SYMBOL',
       'UNTRACEABLE_VISUAL / MISSING_COMPONENT',
+      'VIEW_REF_UNRESOLVED',
       'DIRECTION_GEOMETRY_CONFLICT',
       'CENSUS_MISMATCH',
     ]) {
@@ -129,6 +136,23 @@ describe('tools/rules-lint.mjs cross-layer checks', () => {
       expect(check, `${id} should be present in the report`).toBeDefined();
       expect(check?.status, `${id}: ${check?.message}`).toBe('PASS');
     }
+  });
+
+  it('exits 0 under --full on example 1 (all four inputs present, no NOT-CHECKABLE cross-layer check)', async () => {
+    const { result, reports } = await runJson([
+      path.join(example1, 'final.svg'),
+      '--full',
+      '--model',
+      path.join(example1, 'model.yaml'),
+      '--view',
+      path.join(example1, 'view.yaml'),
+      '--census',
+      path.join(example1, 'census.yaml'),
+      '--layout',
+      path.join(example1, 'layout.json'),
+    ]);
+    expect(result.exitCode).toBe(0);
+    expect(reports[0].summary.FAIL).toBe(0);
   });
 
   it('exits 1 and names UNKNOWN_ICON_SYMBOL when view.yaml references an icon with no matching <symbol>', async () => {
@@ -252,5 +276,309 @@ describe('tools/rules-lint.mjs cross-layer checks', () => {
     const check = reports[0].checks.find((c) => c.id === 'CENSUS_MISMATCH');
     expect(check?.status).toBe('FAIL');
     expect(check?.message).toMatch(/CENSUS_MISMATCH/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Hardening: one synthetic fixture per new failure mode found by adversarial
+// review (view typo, census duplicate-id, incomplete layout, --full with
+// missing input), plus two closely-related fixtures (ATTACHMENT_NOT_RENDERED,
+// duplicate layout node ids) covering the rest of what VIEW_REF_UNRESOLVED
+// and the hardened DIRECTION_GEOMETRY_CONFLICT are now responsible for.
+// ---------------------------------------------------------------------------
+
+describe('tools/rules-lint.mjs hardening (adversarial-review fixes)', () => {
+  it("exits 1 and names VIEW_REF_UNRESOLVED for a typo'd view.yaml components key (reviewer repro)", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-view-typo-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const modelPath = path.join(dir, 'model.yaml');
+    const viewPath = path.join(dir, 'view.yaml');
+    fs.writeFileSync(svgPath, MINIMAL_SVG);
+    fs.writeFileSync(modelPath, 'components:\n  - id: user\nrelationships: []\n');
+    // "components.typo" does not resolve to a model.yaml component id --
+    // before this fix, nothing in rules-lint.mjs ever read view.yaml's
+    // components/relationships KEYS, only the icon ids inside their
+    // attachment lists, so this typo passed silently.
+    fs.writeFileSync(
+      viewPath,
+      'components:\n  components.typo:\n    - icon: actor.user\n      anchor: top-center\n',
+    );
+
+    const { result, reports } = await runJson([svgPath, '--model', modelPath, '--view', viewPath]);
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'VIEW_REF_UNRESOLVED');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/VIEW_REF_UNRESOLVED/);
+    expect(check?.message).toMatch(/components\.typo/);
+  });
+
+  it('exits 1 and names ATTACHMENT_NOT_RENDERED when a declared icon attachment has no matching rendered <use>', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-attachment-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const modelPath = path.join(dir, 'model.yaml');
+    const viewPath = path.join(dir, 'view.yaml');
+    // The rect is tagged data-component="widget" (so the ref half of
+    // VIEW_REF_UNRESOLVED and MISSING_COMPONENT both resolve cleanly) but
+    // no <use> for its declared icon is drawn anywhere in its element group.
+    fs.writeFileSync(
+      svgPath,
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">\n' +
+        '<rect x="0" y="0" width="40" height="20" data-component="widget"/>\n' +
+        '<text x="5" y="10">Widget</text>\n' +
+        '</svg>\n',
+    );
+    fs.writeFileSync(modelPath, 'components:\n  - id: widget\nrelationships: []\n');
+    fs.writeFileSync(
+      viewPath,
+      'components:\n  widget:\n    - icon: aws.ec2-instance\n      anchor: top-center\n',
+    );
+
+    const { result, reports } = await runJson([svgPath, '--model', modelPath, '--view', viewPath]);
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'VIEW_REF_UNRESOLVED');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/ATTACHMENT_NOT_RENDERED/);
+  });
+
+  it('exits 1 and names CENSUS_MISMATCH when every census record shares one duplicated source_id (reviewer repro: 51 records at source_id=2)', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-census-dup-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const censusPath = path.join(dir, 'census.yaml');
+    const sourcePath = path.join(dir, 'source.xml');
+    fs.writeFileSync(svgPath, MINIMAL_SVG);
+    // 3 source elements (2 vertices + 1 edge); census.yaml has exactly 3
+    // records too (so the OLD bare-count check would have passed) but all 3
+    // collapse onto source_id "2" -- 2 duplicates, and elements "3"/"4" get
+    // no record at all.
+    fs.writeFileSync(
+      sourcePath,
+      '<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/>' +
+        '<mxCell id="2" vertex="1" parent="1"/><mxCell id="3" vertex="1" parent="1"/>' +
+        '<mxCell id="4" edge="1" source="2" target="3" parent="1"/>' +
+        '</root></mxGraphModel>',
+    );
+    fs.writeFileSync(
+      censusPath,
+      [
+        'source: source.xml',
+        'records:',
+        '  - source_id: "2"',
+        '    kind: vertex',
+        '    label: null',
+        '    primary_bucket: drop',
+        '    target_ids: []',
+        '    reason: "dup 1"',
+        '  - source_id: "2"',
+        '    kind: vertex',
+        '    label: null',
+        '    primary_bucket: drop',
+        '    target_ids: []',
+        '    reason: "dup 2"',
+        '  - source_id: "2"',
+        '    kind: vertex',
+        '    label: null',
+        '    primary_bucket: drop',
+        '    target_ids: []',
+        '    reason: "dup 3"',
+        '',
+      ].join('\n'),
+    );
+
+    const { result, reports } = await runJson([svgPath, '--census', censusPath]);
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'CENSUS_MISMATCH');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/CENSUS_MISMATCH/);
+    expect(check?.message).toMatch(/duplicate/);
+  });
+
+  it('exits 1 and names LAYOUT_INCOMPLETE when layout.json is missing nodes for most relationship endpoints (reviewer repro: 2-node layout scored 1/1=100%)', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-layout-incomplete-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const modelPath = path.join(dir, 'model.yaml');
+    const viewPath = path.join(dir, 'view.yaml');
+    const layoutPath = path.join(dir, 'layout.json');
+    fs.writeFileSync(svgPath, MINIMAL_SVG);
+    fs.writeFileSync(
+      modelPath,
+      [
+        'components:',
+        '  - id: a',
+        '  - id: b',
+        '  - id: c',
+        'relationships:',
+        '  - id: r1',
+        '    from: a',
+        '    to: b',
+        '  - id: r2',
+        '    from: b',
+        '    to: c',
+        '',
+      ].join('\n'),
+    );
+    fs.writeFileSync(viewPath, 'flow:\n  direction: up\n');
+    // layout.json only places 2 of the 3 model components -- r1's endpoints
+    // both resolve (a, b) but r2's target "c" does not. The OLD code
+    // silently dropped r2 from the denominator and scored 1/1 = 100% PASS
+    // on the one relationship it happened to cover.
+    fs.writeFileSync(
+      layoutPath,
+      JSON.stringify({
+        version: '0.1',
+        canvas: { width: 300, height: 300 },
+        nodes: [
+          { id: 'a', x: 0, y: 100, width: 10, height: 10, parentId: null },
+          { id: 'b', x: 0, y: 0, width: 10, height: 10, parentId: null },
+        ],
+        edges: [],
+      }),
+    );
+
+    const { result, reports } = await runJson([
+      svgPath,
+      '--model',
+      modelPath,
+      '--view',
+      viewPath,
+      '--layout',
+      layoutPath,
+    ]);
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'DIRECTION_GEOMETRY_CONFLICT');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/LAYOUT_INCOMPLETE/);
+  });
+
+  it('exits 1 and names LAYOUT_INCOMPLETE for duplicate layout.json node ids', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-layout-dup-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const modelPath = path.join(dir, 'model.yaml');
+    const viewPath = path.join(dir, 'view.yaml');
+    const layoutPath = path.join(dir, 'layout.json');
+    fs.writeFileSync(svgPath, MINIMAL_SVG);
+    fs.writeFileSync(
+      modelPath,
+      [
+        'components:',
+        '  - id: a',
+        '  - id: b',
+        'relationships:',
+        '  - id: r1',
+        '    from: a',
+        '    to: b',
+        '',
+      ].join('\n'),
+    );
+    fs.writeFileSync(viewPath, 'flow:\n  direction: up\n');
+    fs.writeFileSync(
+      layoutPath,
+      JSON.stringify({
+        version: '0.1',
+        canvas: { width: 300, height: 300 },
+        nodes: [
+          { id: 'a', x: 0, y: 100, width: 10, height: 10, parentId: null },
+          { id: 'a', x: 50, y: 100, width: 10, height: 10, parentId: null },
+          { id: 'b', x: 0, y: 0, width: 10, height: 10, parentId: null },
+        ],
+        edges: [],
+      }),
+    );
+
+    const { result, reports } = await runJson([
+      svgPath,
+      '--model',
+      modelPath,
+      '--view',
+      viewPath,
+      '--layout',
+      layoutPath,
+    ]);
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'DIRECTION_GEOMETRY_CONFLICT');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/LAYOUT_INCOMPLETE/);
+    expect(check?.message).toMatch(/duplicate/);
+  });
+
+  it('exits 1 and names FULL_GATE_INCOMPLETE when --full is missing a required input', async () => {
+    const example1 = path.join(showcaseDir, '1-cloud-web-app');
+    const { result, reports } = await runJson([
+      path.join(example1, 'final.svg'),
+      '--full',
+      '--model',
+      path.join(example1, 'model.yaml'),
+      '--view',
+      path.join(example1, 'view.yaml'),
+      // --census and --layout deliberately omitted.
+    ]);
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'FULL_GATE');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/FULL_GATE_INCOMPLETE/);
+    expect(check?.message).toMatch(/--census/);
+    expect(check?.message).toMatch(/--layout/);
+  });
+
+  it('exits 1 and promotes a NOT-CHECKABLE cross-layer check to FAIL under --full (flow.direction: mixed)', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'rules-lint-full-not-checkable-'));
+    const svgPath = path.join(dir, 'final.svg');
+    const modelPath = path.join(dir, 'model.yaml');
+    const viewPath = path.join(dir, 'view.yaml');
+    const censusPath = path.join(dir, 'census.yaml');
+    const sourcePath = path.join(dir, 'source.xml');
+    const layoutPath = path.join(dir, 'layout.json');
+    fs.writeFileSync(svgPath, MINIMAL_SVG);
+    fs.writeFileSync(modelPath, 'components:\n  - id: a\n  - id: b\nrelationships: []\n');
+    // "mixed" normally just skips DIRECTION_GEOMETRY_CONFLICT (NOT-CHECKABLE)
+    // -- under --full that must become a blocking FAIL instead.
+    fs.writeFileSync(viewPath, 'flow:\n  direction: mixed\n');
+    fs.writeFileSync(
+      sourcePath,
+      '<mxGraphModel><root><mxCell id="0"/><mxCell id="1" parent="0"/>' +
+        '<mxCell id="2" vertex="1" parent="1"/></root></mxGraphModel>',
+    );
+    fs.writeFileSync(
+      censusPath,
+      [
+        'source: source.xml',
+        'records:',
+        '  - source_id: "2"',
+        '    kind: vertex',
+        '    label: null',
+        '    primary_bucket: drop',
+        '    target_ids: []',
+        '    reason: "n/a"',
+        '',
+      ].join('\n'),
+    );
+    fs.writeFileSync(
+      layoutPath,
+      JSON.stringify({
+        version: '0.1',
+        canvas: { width: 100, height: 100 },
+        nodes: [
+          { id: 'a', x: 0, y: 0, width: 10, height: 10, parentId: null },
+          { id: 'b', x: 0, y: 50, width: 10, height: 10, parentId: null },
+        ],
+        edges: [],
+      }),
+    );
+
+    const { result, reports } = await runJson([
+      svgPath,
+      '--full',
+      '--model',
+      modelPath,
+      '--view',
+      viewPath,
+      '--census',
+      censusPath,
+      '--layout',
+      layoutPath,
+    ]);
+    expect(result.exitCode).toBe(1);
+    const check = reports[0].checks.find((c) => c.id === 'DIRECTION_GEOMETRY_CONFLICT');
+    expect(check?.status).toBe('FAIL');
+    expect(check?.message).toMatch(/FULL_GATE_NOT_CHECKABLE/);
   });
 });
