@@ -5,7 +5,8 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "archtokens": "./dist/cli.js"
+    "archtokens": "./dist/cli.js",
+    "archtokens-benchmark": "./tools/subscription-benchmark.mjs"
   },
   "engines": {
     "node": ">=24"
@@ -14,7 +15,12 @@
     "dist",
     "README.md",
     "LICENSE",
-    "examples"
+    "examples",
+    "benchmark",
+    "docs",
+    "tools/subscription-benchmark.mjs",
+    "tools/rules-lint.mjs",
+    "tools/architecture-pipeline.mjs"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
@@ -23,7 +29,9 @@
     "test": "vitest run",
     "lint": "eslint .",
     "format:check": "prettier --check .",
-    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build"
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test && npm run build",
+    "benchmark:fixture": "npm run build && node tools/subscription-benchmark.mjs --provider fixture --all --out-dir .benchmark-results/fixture",
+    "pipeline": "npm run build && node tools/architecture-pipeline.mjs"
   },
   "dependencies": {
     "@architecture-tokens/spec": "git+https://github.com/architecture-tokens/spec.git#207a608684914dc97fac17c5caff044491b2d848",

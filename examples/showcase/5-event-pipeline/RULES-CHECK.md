@@ -250,28 +250,12 @@ centred both horizontally and vertically, matching source exactly.
 
 ## Cross-layer gate
 
-`node tools/rules-lint.mjs final-reproduce.svg --model model.yaml --view view-reproduce.yaml
---census census.yaml --layout layout-reproduce.json` (no `--full`): **14 PASS, 0 FAIL, 0
-NOT-CHECKABLE among the checks that ran** (24 NOT-CHECKABLE render-dependent/out-of-scope, same
-baseline as every file this tool evaluates) — `CENSUS_MISMATCH` (11 records biject onto source's
-11 elements), `DIRECTION_GEOMETRY_CONFLICT` (5/5 relationships, 100%, match `flow.direction:
-right`), `UNTRACEABLE_VISUAL / MISSING_COMPONENT` (6/6 components each appear exactly once via
-`data-component`), `VIEW_REF_UNRESOLVED` all PASS. **Exit 0.**
-
-**With `--full`: 2 FAIL, both a disclosed tool limitation, not a defect in this example.**
-`UNKNOWN_ICON_SYMBOL` and `RELATIONSHIP_ATTACHMENT_NOT_RENDERED` are unconditionally NOT-CHECKABLE
-whenever `view.yaml` declares zero icon/relationship attachments (`checkUnknownIconSymbol` /
-`checkRelationshipAttachmentNotRendered` in `tools/rules-lint.mjs` both hard-return NOT-CHECKABLE
-at `iconIds.size === 0` / `declared.length === 0`, with no vacuous-PASS path for "0 declared, 0
-needed"), and `--full` unconditionally promotes any NOT-CHECKABLE cross-layer result to FAIL
-(`FULL_GATE_NOT_CHECKABLE`). source.mmd is a bare Mermaid flowchart with no icon glyphs at all, so
-`view-reproduce.yaml` correctly declares no attachments — inventing one to satisfy the gate would
-be a real fidelity violation (drawing an icon the source doesn't have) traded for a cosmetic exit
-code, which this task's HARD LIMITS (no edits to `tools/*`) also forbid fixing at the source. Cross-
-checked: `2-cicd-flow`'s reproduce view (also icon-less) hits the exact same 2 FAILs under `--full`
-for the identical reason — this is systemic to icon-free sources, not specific to this example's
-authoring. Routed as feedback below for the coordinator (who owns `tools/`) to fix once at
-consolidation: add a vacuous-PASS branch to both checks for "0 attachments declared AND 0 needed."
+`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view
+view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0: **17 PASS, 0
+FAIL, 0 WARN, 22 NOT-CHECKABLE**. `CENSUS_MISMATCH` bijects all 11 source elements,
+`DIRECTION_GEOMETRY_CONFLICT` confirms 5/5 relationships match the rightward flow, and all six
+components are trace-bound. The icon and relationship-attachment checks explicitly PASS because
+the validated icon-less view declares zero attachments.
 
 ## Verification
 
@@ -298,10 +282,7 @@ passes:
 
 **24 PASS, 6 N/A, 0 FAIL** among the checkable/visually-verified rules above (T3/C3/C4/C5/T1
 counted as N/A-in-substance per their entries; 11 is N/A as the documented fan-out/fan-in mirror).
-`node tools/rules-lint.mjs final-reproduce.svg --model model.yaml --view view-reproduce.yaml
---census census.yaml --layout layout-reproduce.json` (no `--full`) exits 0: **14 PASS, 0 FAIL**.
-`node tools/offline-generate.mjs model.yaml layout-reproduce.json --out out-reproduce.drawio
---library tokens.yaml` exits 0, first try. `--full` adds 2 FAIL from a disclosed, cross-checked
-`tools/rules-lint.mjs` limitation (icon-less sources can never satisfy `UNKNOWN_ICON_SYMBOL`/
-`RELATIONSHIP_ATTACHMENT_NOT_RENDERED` under `--full`), routed as tooling feedback above, not a
-defect in this example's `model.yaml`/`view-reproduce.yaml`/`census.yaml`/`final-reproduce.svg`.
+`npm run pipeline -- --example examples/showcase/5-event-pipeline --out-dir
+/tmp/event-pipeline` imports the 6-vertex/5-edge Mermaid source, validates model/view/layout,
+regenerates editable draw.io, and exits 0 with **17 PASS, 0 FAIL, 0 WARN, 22 NOT-CHECKABLE**.
+The generated result is recorded in `../../../docs/gate-matrix.md`.

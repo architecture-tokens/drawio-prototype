@@ -1,0 +1,79 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "canvas", "nodes", "edges", "topology"],
+  "properties": {
+    "version": { "type": "string", "const": "0.1" },
+    "canvas": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "x", "y", "width", "height", "parentId"],
+        "properties": {
+          "id": { "type": "string" },
+          "x": { "type": "integer", "minimum": 0 },
+          "y": { "type": "integer", "minimum": 0 },
+          "width": { "type": "integer", "minimum": 0 },
+          "height": { "type": "integer", "minimum": 0 },
+          "parentId": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "waypoints"],
+        "properties": {
+          "id": { "type": "string" },
+          "waypoints": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["x", "y"],
+              "properties": {
+                "x": { "type": "integer", "minimum": 0 },
+                "y": { "type": "integer", "minimum": 0 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "topology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allowEdgeCrossings"],
+      "properties": {
+        "allowEdgeCrossings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["edgeIds"],
+            "properties": {
+              "edgeIds": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

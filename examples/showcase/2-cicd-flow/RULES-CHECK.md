@@ -289,46 +289,15 @@ both axes (`text-anchor="middle" dominant-baseline="central"`), matching
 `source.mmd`'s own convention exactly; there is no node with body content
 in this diagram.
 
-## Reproduce-mode `--full` gate limitation (disclosed, not a rule exemption)
+## Reproduce-mode full gate
 
-Distinct in kind from the B1/C2 items above: this is a **gate coverage
-gap for icon-less sources**, not a documented rules-methodology
-exemption. `node tools/rules-lint.mjs final-reproduce.svg --model
-model.yaml --view view-reproduce.yaml --census census.yaml --layout
-layout-reproduce.json --full` exits **1** with exactly 2 FAILs, both
-`FULL_GATE_NOT_CHECKABLE`:
-
-```
-[FAIL] RELATIONSHIP_ATTACHMENT_NOT_RENDERED: FULL_GATE_NOT_CHECKABLE: --full requires a definitive answer; RELATIONSHIP_ATTACHMENT_NOT_RENDERED was NOT-CHECKABLE: view.yaml declares no relationship attachments that resolve into a model.yaml relationship id
-[FAIL] UNKNOWN_ICON_SYMBOL: FULL_GATE_NOT_CHECKABLE: --full requires a definitive answer; UNKNOWN_ICON_SYMBOL was NOT-CHECKABLE: view.yaml has no component/relationship icon attachments
-```
-
-Root cause: `source.mmd` has zero icons (plain-text mermaid flowchart
-nodes; no icon-shape syntax anywhere) — per README.md's Source-fidelity
-default #2, "[dropping an icon] is an explicit-drop decision, never a
-default", and the inverse holds too: an icon is added only if the source
-has one. `view-reproduce.yaml` therefore correctly declares no
-`components`/`relationships` icon attachments. Both
-`checkUnknownIconSymbol` and `checkRelationshipAttachmentNotRendered`
-(`tools/rules-lint.mjs`) exist solely to verify declared icon
-attachments render correctly; with zero declared, both are structurally
-`NOT-CHECKABLE` (not a defect — see each function's own
-`iconIds.size === 0` / `declared.length === 0` early return), and
-`--full` promotes any NOT-CHECKABLE cross-layer result to FAIL
-unconditionally (`tools/rules-lint.mjs`'s own comment: "a cross-layer
-check that couldn't reach a definitive answer... is promoted to FAIL").
-This is unavoidable from within this example's directory: fabricating an
-icon attachment to force a definitive answer would violate the fidelity
-contract (icons only when the source has them), and fixing the tool
-itself (e.g. letting the zero-attachment case return PASS with "0
-declared, 0 required") is out of scope per the task's HARD LIMITS (no
-edits to `tools/*`) and belongs to whoever owns the gate.
-
-**The same command without `--full` exits 0**: 13 PASS, 0 FAIL, 0 WARN,
-25 NOT-CHECKABLE (the same 2 icon checks correctly report
-NOT-CHECKABLE, not FAIL, in this mode) — every check this tool CAN
-evaluate for this file passes; the only gap is `--full`'s inability to
-mark "definitively nothing to check" as anything other than FAIL.
+`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml
+--view view-reproduce.yaml --census census.yaml --layout
+layout-reproduce.json` exits **0**: **16 PASS, 0 FAIL, 0 WARN, 23
+NOT-CHECKABLE**. Icon and relationship-attachment checks explicitly PASS
+when the validated view declares zero attachments, so this icon-less
+Mermaid source has a definitive gate result. The generated result is recorded in
+`../../../docs/gate-matrix.md`.
 
 ## Verification
 
@@ -350,16 +319,10 @@ to avoid embedding literal `-->` text.
 
 ## Summary
 
-`node tools/rules-lint.mjs final-reproduce.svg --model model.yaml --view
-view-reproduce.yaml --census census.yaml --layout layout-reproduce.json`
-(no `--full`): **13 PASS, 0 FAIL, 0 WARN, 25 NOT-CHECKABLE — exit 0.**
-With `--full`: **13 PASS, 2 FAIL (both FULL_GATE_NOT_CHECKABLE, icon
-checks only — see above), 23 NOT-CHECKABLE — exit 1**, a disclosed gate
-coverage gap for this icon-less source, not a defect in the model, view,
-layout, or SVG. `node tools/offline-generate.mjs model.yaml
-layout-reproduce.json --out out-reproduce.drawio --library tokens.yaml`
-exits 0, first try. Two documented, disclosed reproduce-mode rule
-exemptions (B1's size quantization, C2's arrow-color-by-domain) mirror
-1-cloud-web-app's precedent exactly; the `--full` gap is a third,
-differently-kinded disclosure (tool coverage, not a rules-methodology
-call).
+`rules-lint --full` exits 0 with **16 PASS, 0 FAIL, 0 WARN, 23
+NOT-CHECKABLE**. `npm run pipeline -- --example
+examples/showcase/2-cicd-flow --out-dir /tmp/cicd-pipeline` also imports
+the 12-vertex/10-edge Mermaid source and regenerates editable draw.io in
+the same successful run. Two documented reproduce-mode rule exemptions
+(B1 size quantization and C2 arrow-color-by-domain) still mirror the
+source faithfully; neither is a cross-layer gate failure.
