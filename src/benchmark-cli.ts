@@ -98,10 +98,17 @@ const filesFor = (example: BenchmarkExampleId) => {
 
 function rulesGate(example: BenchmarkExampleId): FullGateRunner {
   const files = filesFor(example);
+  const sourceLayout = JSON.parse(fs.readFileSync(files.fixtureLayout, 'utf8')) as Layout;
   return async (layout: Layout): Promise<FullGateReport> => {
     const temporaryDirectory = fs.mkdtempSync(path.join(os.tmpdir(), 'archtokens-benchmark-'));
     const layoutFile = path.join(temporaryDirectory, 'layout.json');
-    fs.writeFileSync(layoutFile, `${JSON.stringify(layout, null, 2)}\n`, 'utf8');
+    // The fixed reproduce SVG may contain crossings whose intent comes only from
+    // the source diagram (C4 is the current example). Candidate geometry is
+    // validated independently before this gate, so preserve the verified source
+    // allowance solely while linting that fixed SVG instead of asking the model
+    // to guess source-only intent from model + view.
+    const gateLayout = applySourceTopologyContract(layout, sourceLayout);
+    fs.writeFileSync(layoutFile, `${JSON.stringify(gateLayout, null, 2)}\n`, 'utf8');
     try {
       const result = spawnSync(
         process.execPath,
@@ -134,6 +141,18 @@ function rulesGate(example: BenchmarkExampleId): FullGateRunner {
     } finally {
       fs.rmSync(temporaryDirectory, { recursive: true, force: true });
     }
+  };
+}
+
+export function applySourceTopologyContract(candidate: Layout, sourceLayout: Layout): Layout {
+  if (!sourceLayout.topology) return candidate;
+  return {
+    ...candidate,
+    topology: {
+      allowEdgeCrossings: sourceLayout.topology.allowEdgeCrossings.map(({ edgeIds }) => ({
+        edgeIds: [...edgeIds] as [string, string],
+      })),
+    },
   };
 }
 

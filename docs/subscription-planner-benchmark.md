@@ -24,7 +24,11 @@ run then stops: a second failure writes a failed report and exits `1`.
 
 The full gate uses the example's checked-in `final-reproduce.svg` as the
 renderer baseline and substitutes the candidate layout for the layout-dependent
-checks. This keeps line radius/width a renderer responsibility while evaluating
+checks. Candidate geometry is validated independently first. When the fixed SVG
+contains a crossing whose intent exists only in the verified source (the C4
+fixture is the current case), the SVG gate reuses that checked-in source-intent
+allowlist; the planner is not asked to guess information absent from model +
+view. This keeps line radius/width a renderer responsibility while evaluating
 the planner's IDs, direction, topology, and geometry from its own layout.
 
 ## Offline five-example gate
