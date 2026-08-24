@@ -1,6 +1,6 @@
 # Architecture Tokens 剩余工作
 
-> 2026-08-24 集成基线。这里只保留尚未决定或尚未用真实 planner 验证的工作；今天已经落地的能力不再列为 TODO。
+> 2026-08-24 集成基线。这里只保留仍需契约决策、重复性验证或发布治理的工作；今天已经落地的能力不再列为 TODO。
 
 ## 已完成且有证据的基线
 
@@ -21,19 +21,19 @@ npm run pipeline -- --all --out-dir /tmp/architecture-pipeline --matrix-out docs
 - 通用 collision/crossing/T-junction：[`src/topology.ts`](src/topology.ts)、[`docs/visual-topology.md`](docs/visual-topology.md)。
 - token/view 驱动可编辑 draw.io：[`src/renderer-registry.ts`](src/renderer-registry.ts)、[`docs/view-rendering.md`](docs/view-rendering.md)。
 - draw.io/Mermaid source import 与 census scaffold：[`src/source-import.ts`](src/source-import.ts)、[`docs/source-import.md`](docs/source-import.md)。
-- ChatGPT Subscription benchmark harness：[`docs/subscription-planner-benchmark.md`](docs/subscription-planner-benchmark.md)。fixture 五例均为 100 分；live 实测只接受 3/5，另外 2 例在一次 repair 后按设计 fail-closed。
+- ChatGPT Subscription benchmark harness：[`docs/subscription-planner-benchmark.md`](docs/subscription-planner-benchmark.md)。fixture 五例均为 100 分；首轮 live 正确拒绝 CI/CD 与 C4，补充 parent-relative geometry、routing contract 和 element-specific repair context 后，两例复测均首轮 100。
 
 ### Live Subscription planner 实测（redacted evidence）
 
-| 示例             | 结果        | 分数 | Repair | Full-gate FAIL | 仍失败的 geometry                         |
-| ---------------- | ----------- | ---: | -----: | -------------: | ----------------------------------------- |
-| cloud-web-app    | PASS        |  100 |      1 |              0 | —                                         |
-| cicd-flow        | FAIL-CLOSED |   30 |      1 |              1 | containment、crossing/junction、direction |
-| microservices-c4 | FAIL-CLOSED |   80 |      1 |              0 | containment、collision                    |
-| kubernetes       | PASS        |  100 |      1 |              0 | —                                         |
-| event-pipeline   | PASS        |  100 |      0 |              0 | —                                         |
+| 示例             | 最新结果 | 分数 | Repair | Full-gate FAIL | 证据说明                                            |
+| ---------------- | -------- | ---: | -----: | -------------: | --------------------------------------------------- |
+| cloud-web-app    | PASS     |  100 |      1 |              0 | 19 nodes / 22 edges；六项评分全过                   |
+| cicd-flow        | PASS     |  100 |      0 |              0 | 从旧 30 分提升；containment/direction/crossing 全过 |
+| microservices-c4 | PASS     |  100 |      0 |              0 | 从旧 80 分提升；containment/collision 全过          |
+| kubernetes       | PASS     |  100 |      1 |              0 | 9 nodes / 9 edges；六项评分全过                     |
+| event-pipeline   | PASS     |  100 |      0 |              0 | 6 nodes / 5 edges；首轮通过                         |
 
-结论是 **3/5 accepted，2/5 correctly rejected**，不是五例 planner quality 通过。证据包为 `task6-live-summary.md` 与五份 schema-checked redacted report；不包含 raw prompt、raw response 或 auth 输出。C4 的 source-only topology allowlist 由 follow-up `1fc059b` 修正后复测，candidate layout 仍独立接受 collision/containment 校验。
+结论是五例**最新 guarded live run 均 accepted**，但这是一轮固定 benchmark 的证据，不等于跨模型版本的统计稳定性。首轮被拒绝的 CI/CD 30 分与 C4 80 分报告仍保留，证明 gate 没有为转绿而降级；改进后的两份报告在 `task8-live-reports/`。全部报告均为 schema-checked redacted artifact，不含 raw prompt、raw response、auth 输出或 API key。
 
 ## 真正剩余的契约选择
 
@@ -55,9 +55,9 @@ importer 能无损列出 source IDs、geometry、direction 与 TODO census，但
 
 ## 真正剩余的产品验证
 
-### 4. 修复两个被拒绝的 live planner case
+### 4. 验证 planner 的重复性与版本治理
 
-harness 已限制为单例 foreground、最多一次 repair、最长 600 秒，并且不使用 API key。当前不是扩大 benchmark，而是针对 CI/CD 的 containment + crossing/junction + direction，以及 C4 的 containment + collision 改进 planner prompt/layout strategy；每次修改都必须重新跑同一 redacted gate。2/5 失败转绿前，不应宣称 planner 已产品化，也不能降低 fail-closed 阈值来换取通过。
+固定五例的最新一次 live run 已全绿，仍只说明当前模型/effort 在这五个输入上可行。进入产品前需要定义：每例重复次数、模型/effort/version 记录、通过率与回归阈值，以及模型升级时是否强制重跑。失败仍必须最多 repair 一次并 fail-closed，不能用降低 100 分/full-gate 标准换稳定性。
 
 ### 5. renderer vocabulary 的扩展治理
 

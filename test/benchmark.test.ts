@@ -61,7 +61,11 @@ describe('subscription planner benchmark', () => {
           return gates === 1
             ? {
                 checks: [
-                  { id: '3a', status: 'FAIL' },
+                  {
+                    id: '3a',
+                    status: 'FAIL',
+                    message: 'Relationship channel-consumer-a has a connector corner mismatch.',
+                  },
                   { id: '8', status: 'PASS' },
                   { id: 'DIRECTION_GEOMETRY_CONFLICT', status: 'PASS' },
                 ],
@@ -74,13 +78,53 @@ describe('subscription planner benchmark', () => {
     expect(result.exitCode).toBe(0);
     expect(provider.calls).toHaveLength(2);
     expect(provider.calls[1].errors).toEqual(
-      expect.arrayContaining([{ code: 'FULL_GATE_3A', message: 'Benchmark validation failed.' }]),
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'FULL_GATE_3A',
+          message: 'Benchmark validation failed.',
+          elementId: 'channel-consumer-a',
+          relatedIds: ['channel', 'consumer-a'],
+        }),
+      ]),
     );
     expect(JSON.parse(fs.readFileSync(output, 'utf8'))).toMatchObject({
       status: 'passed',
       repairCount: 1,
       score: { total: 100 },
     });
+  });
+
+  it('identifies a child and its parent when containment needs repair', async () => {
+    const layout = JSON.parse(
+      fs.readFileSync(
+        path.join(root, 'examples/showcase/2-cicd-flow/layout-reproduce.json'),
+        'utf8',
+      ),
+    );
+    const invalid = structuredClone(layout);
+    invalid.nodes[2].x = 400;
+    const provider = sequencePlanner([invalid, layout]);
+    const output = path.join(os.tmpdir(), `benchmark-containment-${Date.now()}.json`);
+    const result = await runBenchmarkCli(
+      ['--provider', 'fixture', '--example', '2-cicd-flow', '--out', output],
+      {
+        providerFactory: () => provider,
+        gateFactory: () => async () => fixtureGate,
+      },
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(provider.calls).toHaveLength(2);
+    expect(provider.calls[1].errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'CHILD_OUTSIDE_PARENT',
+          path: '/layout/nodes/2',
+          elementId: 'build_a',
+          relatedIds: ['build_stage'],
+        }),
+      ]),
+    );
   });
 
   it('repairs a schema-valid visual collision exactly once and exits nonzero after a second failure', async () => {
@@ -111,7 +155,13 @@ describe('subscription planner benchmark', () => {
     expect(provider.calls[1]).toMatchObject({
       previousLayout: invalid,
       errors: expect.arrayContaining([
-        { code: 'NODE_COLLISION', message: 'Two unrelated nodes overlap.' },
+        expect.objectContaining({
+          code: 'NODE_COLLISION',
+          message: 'Two unrelated nodes overlap.',
+          path: '/layout/nodes/0',
+          elementId: 'producer',
+          relatedIds: ['message'],
+        }),
       ]),
     });
     const report = JSON.parse(fs.readFileSync(output, 'utf8'));
@@ -143,6 +193,15 @@ describe('subscription planner benchmark', () => {
     );
     expect(result.exitCode).toBe(1);
     expect(provider.calls).toHaveLength(2);
+    expect(JSON.stringify(provider.calls[1].errors)).not.toContain(secret);
+    expect(provider.calls[1].errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'INVALID_LAYOUT_SCHEMA',
+          path: '/layout',
+        }),
+      ]),
+    );
     const published = fs.readFileSync(output, 'utf8');
     expect(published).not.toContain(secret);
     expect(published).not.toContain('rawResponse');

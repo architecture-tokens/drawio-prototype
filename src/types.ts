@@ -63,6 +63,8 @@ export type Diagnostic = {
   ruleId?: string;
   remediation?: string;
   layer?: string;
+  /** Other trusted model element ids involved in the same diagnostic. */
+  relatedIds?: string[];
 };
 export type Report = { valid: boolean; diagnostics: Diagnostic[] };
 export type PlannerRequest = {
@@ -70,7 +72,10 @@ export type PlannerRequest = {
   view?: ArchitectureView;
   schema: object;
   previousLayout?: unknown;
-  errors?: Array<Pick<Diagnostic, 'code' | 'message'>>;
+  errors?: Array<
+    Pick<Diagnostic, 'code' | 'message'> &
+      Partial<Pick<Diagnostic, 'path' | 'elementId' | 'relatedIds' | 'layer'>>
+  >;
 };
 export type Planner = { plan(request: PlannerRequest): Promise<unknown> };
 export type RunResult = { exitCode: number; stdout: string; stderr: string };

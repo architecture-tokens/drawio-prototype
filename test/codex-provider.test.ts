@@ -66,9 +66,53 @@ describe('ChatGPT Subscription codex provider', () => {
     expect(calls[0].args).toContain('-o');
     expect(calls[0].args).not.toContain('-');
     expect(calls[0].args.at(-1)).toContain('renderer-input');
+    const initialPrompt = JSON.parse(calls[0].args.at(-1)!);
+    expect(initialPrompt.layoutContract).toMatchObject({
+      coordinates: expect.stringContaining('parent-relative'),
+      containment: expect.stringContaining('inside'),
+      routing: expect.stringContaining('orthogonal'),
+      direction: expect.stringContaining('flow.direction'),
+      topology: expect.stringContaining('source intent'),
+    });
+
+    await planner.plan({
+      architecture: { kind: 'renderer-input' },
+      schema: layoutSchema,
+      previousLayout: emptyLayout,
+      errors: [
+        {
+          code: 'CHILD_OUTSIDE_PARENT',
+          message: 'A child is outside its declared parent.',
+          path: '/layout/nodes/2',
+          elementId: 'build_a',
+          relatedIds: ['build_stage'],
+        },
+      ] as any,
+    });
+    const repairPrompt = JSON.parse(calls[1].args.at(-1)!);
+    expect(repairPrompt.diagnostics).toEqual([
+      {
+        code: 'CHILD_OUTSIDE_PARENT',
+        message: 'A child is outside its declared parent.',
+        path: '/layout/nodes/2',
+        elementId: 'build_a',
+        relatedIds: ['build_stage'],
+      },
+    ]);
     const privateOutput = calls[0].args[calls[0].args.indexOf('-o') + 1];
     expect(privateOutput).toContain('archtokens-codex-');
     expect(fs.existsSync(privateOutput)).toBe(false);
+  });
+
+  it('describes parent-relative containment and routing in the structured-output schema', () => {
+    const schema = JSON.parse(
+      fs.readFileSync(path.join(root, 'benchmark/layout-output.schema.json'), 'utf8'),
+    );
+    expect(schema.description).toContain('non-overlapping');
+    expect(schema.properties.nodes.items.properties.x.description).toContain('parent-relative');
+    expect(schema.properties.nodes.items.properties.parentId.description).toContain('containment');
+    expect(schema.properties.edges.items.properties.waypoints.description).toContain('orthogonal');
+    expect(schema.properties.topology.description).toContain('source intent');
   });
 
   it('requires ChatGPT auth before dispatch and reports only a stable code', async () => {

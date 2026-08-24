@@ -100,6 +100,19 @@ function providerPrompt(request: PlannerRequest): string {
     task: repair
       ? 'Repair the architecture layout. Do not inspect or modify files and do not call tools. Return only JSON matching the supplied output schema.'
       : 'Plan the architecture layout. Do not inspect or modify files and do not call tools. Return only JSON matching the supplied output schema.',
+    layoutContract: {
+      coordinates:
+        'Use finite canvas coordinates. Root node x/y are canvas-absolute; child node x/y are parent-relative offsets from the declared parent.',
+      containment:
+        'Keep every child fully inside its declared parent: x + width and y + height must fit within the parent bounds.',
+      nonOverlap:
+        'Keep unrelated node boxes non-overlapping, including nodes nested under different parents.',
+      routing:
+        'Use absolute-canvas waypoints and orthogonal connector segments. Route around node boxes and avoid unintended crossings and unrelated T-junctions.',
+      direction: 'Make connector geometry agree with view.flow.direction unless it is mixed.',
+      topology:
+        'Preserve source intent topology only. Do not invent crossing allowances; return an empty allowance list when source intent does not explicitly authorize a pair.',
+    },
     architecture: request.architecture,
     ...(request.view ? { view: request.view } : {}),
     ...(repair

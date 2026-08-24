@@ -26,6 +26,8 @@ export type FullGateSummary = {
 export type FullGateCheck = {
   id: string;
   status: 'PASS' | 'FAIL' | 'WARN' | 'NOT-CHECKABLE';
+  /** Local linter detail. Never copied verbatim into prompts or reports. */
+  message?: string;
 };
 export type FullGateReport = { checks: FullGateCheck[]; summary: FullGateSummary };
 export type FullGateRunner = (layout: Layout) => Promise<FullGateReport>;
@@ -37,7 +39,9 @@ export type BenchmarkReport = {
   status: 'passed' | 'failed';
   repairCount: 0 | 1;
   redactedLayout: Layout | null;
-  diagnostics: Array<Pick<Diagnostic, 'code' | 'path' | 'message' | 'layer' | 'elementId'>>;
+  diagnostics: Array<
+    Pick<Diagnostic, 'code' | 'path' | 'message' | 'layer' | 'elementId' | 'relatedIds'>
+  >;
   score: {
     total: number;
     maximum: 100;
@@ -78,15 +82,34 @@ function safeDiagnostic(
   diagnostic: Diagnostic,
   expectedIds: Set<string>,
 ): BenchmarkReport['diagnostics'][number] {
+  const relatedIds = [...new Set(diagnostic.relatedIds ?? [])]
+    .filter((id) => expectedIds.has(id) && id !== diagnostic.elementId)
+    .slice(0, 8);
   return {
     code: diagnostic.code.replace(/[^A-Z0-9_-]/gi, '_').slice(0, 80),
-    path: /^\/[A-Za-z0-9_./-]*$/.test(diagnostic.path) ? diagnostic.path : '/',
-    message: safeMessages[diagnostic.code] ?? 'A benchmark validation gate failed.',
+    path:
+      /^\/[A-Za-z0-9_./-]*$/.test(diagnostic.path) && diagnostic.path.length <= 240
+        ? diagnostic.path
+        : '/',
+    message: safeMessages[diagnostic.code] ?? 'Benchmark validation failed.',
     ...(diagnostic.layer ? { layer: diagnostic.layer.replace(/[^a-z-]/gi, '').slice(0, 32) } : {}),
     ...(diagnostic.elementId && expectedIds.has(diagnostic.elementId)
       ? { elementId: diagnostic.elementId }
       : {}),
+    ...(relatedIds.length ? { relatedIds } : {}),
   };
+}
+
+function referencedExpectedIds(message: string | undefined, expectedIds: Set<string>): string[] {
+  if (!message) return [];
+  const escaped = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return [...expectedIds]
+    .sort((left, right) => right.length - left.length || left.localeCompare(right))
+    .filter((id) => {
+      if (!id || id.length > 160) return false;
+      return new RegExp(`(^|[^A-Za-z0-9_.:-])${escaped(id)}($|[^A-Za-z0-9_.:-])`).test(message);
+    })
+    .slice(0, 8);
 }
 
 export function redactLayout(value: unknown, model: any): Layout | null {
@@ -189,6 +212,9 @@ export async function runBenchmarkCase(input: {
     ...(input.model.components ?? []).map((item: any) => String(item.id)),
     ...(input.model.relationships ?? []).map((item: any) => String(item.id)),
   ]);
+  const relationships = new Map<string, any>(
+    (input.model.relationships ?? []).map((item: any) => [String(item.id), item]),
+  );
   const evaluate = async (layout: unknown) => {
     const layoutReport = validateLayout(layout, input.model);
     const redactedLayout = redactLayout(layout, input.model);
@@ -196,13 +222,24 @@ export async function runBenchmarkCase(input: {
     const score = scoreBenchmark(layoutReport, gate, input.view);
     const gateDiagnostics: Diagnostic[] = (gate?.checks ?? [])
       .filter(({ status }) => status === 'FAIL')
-      .map(({ id }) => ({
-        severity: 'error',
-        code: `FULL_GATE_${id.replace(/[^A-Z0-9]+/gi, '_').toUpperCase()}`,
-        path: '/fullGate',
-        message: 'A cross-layer full gate failed.',
-        layer: 'full-gate',
-      }));
+      .map(({ id, message }) => {
+        const referenced = referencedExpectedIds(message, expectedIds);
+        const primary = referenced[0];
+        const relationship = primary ? relationships.get(primary) : undefined;
+        const related = [
+          ...referenced.slice(1),
+          ...(relationship ? [String(relationship.from), String(relationship.to)] : []),
+        ];
+        return {
+          severity: 'error' as const,
+          code: `FULL_GATE_${id.replace(/[^A-Z0-9]+/gi, '_').toUpperCase()}`,
+          path: '/fullGate',
+          message: 'A cross-layer full gate failed.',
+          layer: 'full-gate',
+          ...(primary ? { elementId: primary } : {}),
+          ...(related.length ? { relatedIds: related } : {}),
+        };
+      });
     const scoreDiagnostics: Diagnostic[] = Object.entries(score.checks)
       .filter(([, check]) => !check.passed)
       .map(([name]) => ({
@@ -212,7 +249,8 @@ export async function runBenchmarkCase(input: {
         message: 'A benchmark acceptance score did not pass.',
         layer: 'benchmark',
       }));
-    const diagnostics = [...layoutReport.diagnostics, ...gateDiagnostics, ...scoreDiagnostics];
+    const repairDiagnostics = [...layoutReport.diagnostics, ...gateDiagnostics];
+    const diagnostics = [...repairDiagnostics, ...scoreDiagnostics];
     return {
       layout,
       layoutReport,
@@ -220,6 +258,7 @@ export async function runBenchmarkCase(input: {
       gate,
       score,
       diagnostics,
+      repairDiagnostics: repairDiagnostics.length ? repairDiagnostics : scoreDiagnostics,
       passed: layoutReport.valid && gate?.summary.FAIL === 0 && score.total === 100,
     };
   };
@@ -232,10 +271,7 @@ export async function runBenchmarkCase(input: {
     layout = await input.provider.plan({
       ...request,
       previousLayout: layout,
-      errors: evaluation.diagnostics.map(({ code }) => ({
-        code,
-        message: safeMessages[code] ?? 'Benchmark validation failed.',
-      })),
+      errors: evaluation.repairDiagnostics.map((item) => safeDiagnostic(item, expectedIds)),
     });
     evaluation = await evaluate(layout);
   }

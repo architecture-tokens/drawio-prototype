@@ -164,7 +164,13 @@
         "path": { "type": "string" },
         "message": { "type": "string" },
         "layer": { "type": "string" },
-        "elementId": { "type": "string" }
+        "elementId": { "type": "string" },
+        "relatedIds": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "type": "string" }
+        }
       }
     },
     "scoreCheck": {

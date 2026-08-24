@@ -23,6 +23,7 @@ const diagnostic = (
   message: string,
   elementId: string,
   path: string,
+  relatedIds: string[] = [],
 ): Diagnostic => ({
   severity: 'error',
   code,
@@ -30,6 +31,7 @@ const diagnostic = (
   path,
   message,
   elementId,
+  ...(relatedIds.length ? { relatedIds } : {}),
 });
 
 function resolveBoxes(layout: Layout): Map<string, Box> {
@@ -228,6 +230,7 @@ export function validateVisualTopology(layout: Layout, model: any): Diagnostic[]
         `${child.id} is not geometrically contained by its declared parent ${parent.id}`,
         child.id,
         `/layout/nodes/${layout.nodes.indexOf(child.node)}`,
+        [parent.id],
       ),
     );
   }
@@ -261,6 +264,7 @@ export function validateVisualTopology(layout: Layout, model: any): Diagnostic[]
           `Nodes ${a.id} and ${b.id} overlap with positive painted area`,
           a.id,
           `/layout/nodes/${layout.nodes.indexOf(a.node)}`,
+          [b.id],
         ),
       );
     }
@@ -297,6 +301,7 @@ export function validateVisualTopology(layout: Layout, model: any): Diagnostic[]
           `${pair[0]} and ${pair[1]} ${properCrossing ? 'cross' : 'form an unrelated T-junction'} at (${intersection.point.x}, ${intersection.point.y})`,
           pair[0],
           `/layout/edges/${layout.edges.findIndex((edge) => edge.id === pair[0])}`,
+          [pair[1]],
         ),
       );
     }
