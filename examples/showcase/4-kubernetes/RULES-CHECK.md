@@ -18,8 +18,20 @@ Colors C1-C5, Text T1-T3.
    all fan points: `hub-service`->firefox pair, firefox pair->
    `frontend-service`, `ui-servers-rc`/`backend-servers-rc`->
    `backend-service`).
-4. **Orthogonal polylines, not curves.** PASS -- every connector is an SVG
-   `<polyline>` with only horizontal/vertical segments; no `<path>` curves.
+4. **Orthogonal polylines, not curves.** PASS -- every connector routes in
+   horizontal/vertical segments; the 5 single-segment straight connectors
+   stay `<polyline>`, and the 7 connectors with a bend are now `<path>`
+   (M/L/H/V plus the rule-3a corner arc -- see below), never a smooth
+   bezier route.
+   3a. **Uniform small corner-rounding radius.** PASS (rule adopted
+   2026-08-24) -- the 7 bent connectors (8 bends total: the workload/
+   network fan splits and both converge points into `frontend-service`/
+   `backend-service`) were converted from sharp `<polyline>` elbows to
+   `<path>` with a 5-unit `Q` arc at every bend, one radius uniform across
+   the file (`rules-lint` rule 3a: 7 rounded connectors, 8 bends, radius
+   5, PASS). Re-rendered and cropped the `hub-service`->firefox fan bend
+   at 3x zoom: smooth corner, `stroke-linecap="round"` unaffected,
+   arrowhead still lands exactly on the box edge.
 5. **Arrowhead follows the final segment's direction.** PASS -- every
    terminal segment is horizontal, every arrowhead is right-pointing; no
    vertical-then-down-arrow kink exists.
@@ -39,8 +51,9 @@ Colors C1-C5, Text T1-T3.
    pair of `<marker>` defs (`arrow-workload`, `arrow-network`),
    `markerUnits="userSpaceOnUse"`, fixed `markerWidth`/`markerHeight="13"`,
    independent of the connector `stroke-width="2"`.
-9. **Uniform connector stroke width.** PASS -- every `<polyline>` uses
-   `stroke-width="2"`, no exceptions.
+9. **Uniform connector stroke width.** PASS -- every connector
+   (`<polyline>` and the rule-3a `<path>`s alike) uses `stroke-width="2"`,
+   no exceptions.Coverage note resolved 2026-08-24: rule 8 scans `<polyline>`/`<line>` AND marker-ended `<path>` connectors, so the rule-3a rounded paths stay inside its uniform-stroke-width guarantee.
 10. **Arrowhead tip lands exactly at the edge.** PASS -- `refX="10"` on a
     `0 0 10 10` viewBox triangle `M0,0 L10,5 L0,10` places the reference
     point at the tip; verified by crop (`crop_arrow2.png`) showing the tip
@@ -163,7 +176,9 @@ replication-controller` -> blue; `firefox-attribute-to-frontend`
 
 ## Summary
 
-Connectors: 11 PASS, 2 N/A (rules 6, 13). Boxes: 8 PASS, 2 N/A (B5, B9).
+Connectors: 12 PASS, 2 N/A (rules 6, 13). Boxes: 8 PASS, 2 N/A (B5, B9).
 Colors: 5 PASS. Text: 3 PASS.
 
-**27 PASS, 4 N/A, 0 FAIL** (31 applicable rules total).
+**28 PASS, 4 N/A, 0 FAIL** (32 applicable rules total; +1 PASS vs. the
+previous iteration for the new rule 3a). `node tools/rules-lint.mjs
+final.svg` exits 0.

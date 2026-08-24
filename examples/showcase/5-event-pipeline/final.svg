@@ -49,9 +49,9 @@
          toward its own consumer. The first segment of all three polylines
          below is byte-identical, so the overdrawn strokes read as one
          trunk line up to the split. -->
-    <polyline points="620,170 660,170 660,70 700,70" stroke="#2f9e44" marker-end="url(#arrow)"/>
+    <path d="M 620,170 H 655 Q 660,170 660,165 V 75 Q 660,70 665,70 H 700" stroke="#2f9e44" marker-end="url(#arrow)"/>
     <polyline points="620,170 660,170 700,170" stroke="#2f9e44" marker-end="url(#arrow)"/>
-    <polyline points="620,170 660,170 660,270 700,270" stroke="#2f9e44" marker-end="url(#arrow)"/>
+    <path d="M 620,170 H 655 Q 660,170 660,175 V 265 Q 660,270 665,270 H 700" stroke="#2f9e44" marker-end="url(#arrow)"/>
   </g>
 
   <!-- Boxes -->

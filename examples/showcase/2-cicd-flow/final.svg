@@ -49,21 +49,21 @@
      parallel jobs of one stage converge into ONE trunk with ONE arrowhead
      on the next stage's entry job, per rule 11. -->
 <g fill="none" stroke-linecap="square">
-  <polyline points="198,142 218,142 218,110 238,110" stroke="#3B5BDB" stroke-width="1" marker-end="url(#arrow-build)"/>
-  <polyline points="198,162 218,162 218,194 238,194" stroke="#3B5BDB" stroke-width="1" marker-end="url(#arrow-build)"/>
-  <polyline points="594,142 614,142 614,110 634,110" stroke="#E8590C" stroke-width="1" marker-end="url(#arrow-test)"/>
-  <polyline points="594,162 614,162 614,194 634,194" stroke="#E8590C" stroke-width="1" marker-end="url(#arrow-test)"/>
-  <polyline points="990,142 1010,142 1010,110 1030,110" stroke="#2F9E44" stroke-width="1" marker-end="url(#arrow-deploy)"/>
-  <polyline points="990,162 1010,162 1010,194 1030,194" stroke="#2F9E44" stroke-width="1" marker-end="url(#arrow-deploy)"/>
+  <path d="M 198,142 H 213 Q 218,142 218,137 V 115 Q 218,110 223,110 H 238" stroke="#3B5BDB" stroke-width="1" marker-end="url(#arrow-build)"/>
+  <path d="M 198,162 H 213 Q 218,162 218,167 V 189 Q 218,194 223,194 H 238" stroke="#3B5BDB" stroke-width="1" marker-end="url(#arrow-build)"/>
+  <path d="M 594,142 H 609 Q 614,142 614,137 V 115 Q 614,110 619,110 H 634" stroke="#E8590C" stroke-width="1" marker-end="url(#arrow-test)"/>
+  <path d="M 594,162 H 609 Q 614,162 614,167 V 189 Q 614,194 619,194 H 634" stroke="#E8590C" stroke-width="1" marker-end="url(#arrow-test)"/>
+  <path d="M 990,142 H 1005 Q 1010,142 1010,137 V 115 Q 1010,110 1015,110 H 1030" stroke="#2F9E44" stroke-width="1" marker-end="url(#arrow-deploy)"/>
+  <path d="M 990,162 H 1005 Q 1010,162 1010,167 V 189 Q 1010,194 1015,194 H 1030" stroke="#2F9E44" stroke-width="1" marker-end="url(#arrow-deploy)"/>
 
   <!-- build -> test stage handoff: two branches merge into one trunk -->
-  <polyline points="368,110 416,110 416,152" stroke="#E8590C" stroke-width="1" stroke-dasharray="6,4"/>
-  <polyline points="368,194 416,194 416,152" stroke="#E8590C" stroke-width="1" stroke-dasharray="6,4"/>
+  <path d="M 368,110 H 411 Q 416,110 416,115 V 152" stroke="#E8590C" stroke-width="1" stroke-dasharray="6,4"/>
+  <path d="M 368,194 H 411 Q 416,194 416,189 V 152" stroke="#E8590C" stroke-width="1" stroke-dasharray="6,4"/>
   <polyline points="416,152 464,152" stroke="#E8590C" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#arrow-test)"/>
 
   <!-- test -> deploy stage handoff: two branches merge into one trunk -->
-  <polyline points="764,110 812,110 812,152" stroke="#2F9E44" stroke-width="1" stroke-dasharray="6,4"/>
-  <polyline points="764,194 812,194 812,152" stroke="#2F9E44" stroke-width="1" stroke-dasharray="6,4"/>
+  <path d="M 764,110 H 807 Q 812,110 812,115 V 152" stroke="#2F9E44" stroke-width="1" stroke-dasharray="6,4"/>
+  <path d="M 764,194 H 807 Q 812,194 812,189 V 152" stroke="#2F9E44" stroke-width="1" stroke-dasharray="6,4"/>
   <polyline points="812,152 860,152" stroke="#2F9E44" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#arrow-deploy)"/>
 
 </g>

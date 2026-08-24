@@ -47,14 +47,14 @@ alternating blue/teal chain that mirrors the real compute-then-routing hops.
 <polyline points="134,324.0 234,324.0" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
 <polyline points="466,324.0 530,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-network)"/>
 <polyline points="670,324.0 702,324.0" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
-<polyline points="702,324.0 702,252.0 734,252.0" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
-<polyline points="702,324.0 702,396.0 734,396.0" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
-<polyline points="966,252.0 1026,252.0 1026,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
-<polyline points="966,396.0 1026,396.0 1026,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+<path d="M 702,324 V 257 Q 702,252 707,252 H 734" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
+<path d="M 702,324 V 391 Q 702,396 707,396 H 734" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
+<path d="M 966,252 H 1021 Q 1026,252 1026,257 V 324" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+<path d="M 966,396 H 1021 Q 1026,396 1026,391 V 324" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
 <polyline points="1026,324.0 1086,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-network)"/>
-<polyline points="1226,324.0 1258,324.0 1258,252.0 1290,252.0" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
-<polyline points="1522,252.0 1554,252.0 1554,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
-<polyline points="1522,396.0 1554,396.0 1554,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+<path d="M 1226,324 H 1253 Q 1258,324 1258,319 V 257 Q 1258,252 1263,252 H 1290" fill="none" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-workload)"/>
+<path d="M 1522,252 H 1549 Q 1554,252 1554,257 V 324" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
+<path d="M 1522,396 H 1549 Q 1554,396 1554,391 V 324" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round"/>
 <polyline points="1554,324.0 1586,324.0" fill="none" stroke="#0F766E" stroke-width="2" stroke-linecap="round" marker-end="url(#arrow-network)"/>
 <rect x="234" y="272" width="232" height="104" rx="8" fill="#EAF1FE" stroke="#1D4ED8" stroke-width="2"/>
 <rect x="252" y="307.0" width="34" height="34" rx="7" fill="#1D4ED8"/>

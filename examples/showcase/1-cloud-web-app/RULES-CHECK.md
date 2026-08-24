@@ -19,11 +19,27 @@ found and fixed during that process (see below).
    `user`'s top edge carries two outgoing edges (to `cdn`, to `web-elb`),
    offset to x=414/x=474 either side of its center (x=444) instead of both
    sitting at the exact midpoint.
-3. **Orthogonal polylines only.** PASS. Every connector is a `<polyline>`
-   with axis-aligned segments; no bezier curves anywhere (the icon glyphs
-   inside `<defs>`/`<symbol>` use curved `<path>`s, but none carry a
-   marker — out of scope for this rule per its own text, and confirmed by
-   rules-lint rule 4).
+3. **Orthogonal polylines only.** PASS. Every connector routes in
+   axis-aligned horizontal/vertical segments; the single-segment straight
+   connectors stay `<polyline>`, and the 10 connectors with a bend are now
+   `<path>` (M/L/H/V plus the rule-3a corner arc — see below), never a
+   smooth bezier route (the icon glyphs inside `<defs>`/`<symbol>` use
+   curved `<path>`s, but none carry a marker — out of scope for this rule
+   per its own text, and confirmed by rules-lint rule 4, which allows Q/A
+   but still fails C/S).
+   3a. **Uniform small corner-rounding radius.** PASS (rule adopted
+   2026-08-24). All 10 bent connectors (20 bends total: the two SSL-badge
+   edges, both diverging fan-out buses, both converging merge trunks) were
+   converted from sharp `<polyline>` elbows to `<path>` with a 5-unit `Q`
+   arc at every bend — one radius, uniform across the whole file (rules-lint
+   rule 3a: 10 rounded connectors, 20 bends, radius 5, PASS). Verified
+   visually at 2x-render zoom on four different bend shapes (a badge-run
+   elbow, a diverging fan-out riser, a converging merge trunk, and a
+   terminal arrowhead landing) — see `final.png`: every corner is smooth,
+   every arrowhead still lands exactly on its box edge, no marker
+   distortion. `final-reproduce.svg` is untouched (reproduce-mode is
+   explicitly exempt from rule 3a — it follows the source's own corner
+   treatment instead).
 4. **Arrowhead follows the final segment.** PASS, checked edge by edge —
    flow reads bottom-up (`infra:presentation.flow.direction = up`, now
    view.yaml's top-level `flow.direction`, not a model.yaml token on
@@ -47,8 +63,9 @@ found and fixed during that process (see below).
    `markerUnits="userSpaceOnUse"`) reused per domain color (rules-lint
    rule 7: 6 markers, all pass).
 8. **Uniform connector stroke-width.** PASS. All 26 connectors are
-   `stroke-width="1.5"` (rules-lint rule 8); box borders are a separate
-   `2.5`.
+   `stroke-width="1.5"` (visually confirmed and inherited from the shared
+   `<g fill="none" stroke-width="1.5">` wrapper; rules-lint rule 8 itself
+   Coverage note resolved 2026-08-24: rule 8 scans `<polyline>`/`<line>` AND marker-ended `<path>` connectors, so the rule-3a rounded paths stay inside its uniform-stroke-width guarantee.
 9. **Arrowhead tip lands exactly on the edge.** PASS (rules-lint rule 9:
    6/6 markers verified `refX` == tip x).
 10. **Solid by default; dashed only with real meaning.** PASS, now with
@@ -233,12 +250,23 @@ clearance, dashed replication edge, converging bus entry), and both AZ
 bands end-to-end (title clearance, connector clearance, corridor gap to
 both ELBs) — per the skill's "render, crop, look" verification rule.
 
+**Rule 3a pass (2026-08-24):** re-rendered `final.svg` -> `final.png` after
+converting the 10 bent connectors to rounded `<path>`s, then cropped and
+looked at four distinct bend shapes at 2-3x zoom: the padlock-badge elbow
+(User -> CDN/Web ELB), a diverging fan-out riser (App ELB -> App
+instances), a converging merge-trunk bend (App instances -> App ELB), and
+a terminal arrowhead landing (App ELB -> App 1). All four are smooth,
+uniform-radius corners with the arrowhead still landing exactly on the box
+edge — no marker distortion, no overshoot into the box.
+
 ## Summary
 
-**31 PASS, 0 FAIL, 1 N/A** (rule 5, no badges in this diagram — unchanged
-from the previous iteration). `node tools/rules-lint.mjs final.svg` exits
-0 (9 PASS / 0 FAIL / 22 NOT-CHECKABLE or out-of-scope for the mechanical
-subset it can evaluate; the render-dependent and semantic-judgement rules
+**32 PASS, 0 FAIL, 1 N/A** (rule 5, no badges in this diagram — unchanged
+from the previous iteration; +1 PASS vs. the previous iteration for the new
+rule 3a). `node tools/rules-lint.mjs final.svg` exits 0 (10 PASS / 0 FAIL /
+22 NOT-CHECKABLE or out-of-scope for the mechanical subset it can evaluate
+— rule 3a is now part of that 10, confirming all 10 rounded connectors
+share one 5-unit radius; the render-dependent and semantic-judgement rules
 above were checked manually per the table).
 
 ---
@@ -264,6 +292,19 @@ grepped, confirmed no other edge stroke color exists), all 30 connectors
 share `stroke-width="1.5"`, one dashed class (RDS replication + the two
 Availability-Zone/Autoscaling-Group band borders — rule 10 requires the
 word "dash" appear in a documenting comment; the palette comment does).
+
+**3a EXEMPT (task brief: reproduce-mode conversions follow the SOURCE's own
+corner treatment instead of rule 3a).** `source.xml`'s connectors are all
+sharp-cornered, so `final-reproduce.svg` stayed untouched by the rule-3a
+restyle pass applied to `final.svg` above — this is faithfulness winning
+over 3a, exactly as diagram-rules.md's rule 3a text and this task's brief
+both call for, not an oversight. `rules-lint` itself reports this
+correctly as WARN, not FAIL (`node tools/rules-lint.mjs
+final-reproduce.svg`: `3a: rule 3a adopted 2026-08-24; 2 connector(s) with
+sharp (unrounded) bends predate it — not hard-failed`) — WARN doesn't
+affect the exit code (still 0), consistent with the rule's own design for
+diagrams that predate its adoption.
+
 Rules 1/2/3/5/6/11/12 are the render-dependent/semantic-judgement ones
 `rules-lint` marks NOT-CHECKABLE for every file (restyle included);
 checked here the same way restyle's check documents (render → crop →
@@ -400,4 +441,4 @@ target:
 
 ## Summary
 
-**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 13 PASS, 0 FAIL, 1 WARN (unused decorative `<symbol>`, non-blocking), 23 NOT-CHECKABLE. Two documented, disclosed reproduce-mode exemptions (B1's size quantization, C2's arrow-color-by-domain) — both are documentation-only calls; no `rules-lint.mjs` code changed to accommodate either, since both underlying checks are already `NOT-CHECKABLE` for every file, restyle included.
+**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 13 PASS, 0 FAIL, 2 WARN (unused decorative `<symbol>`, non-blocking; plus rule 3a — 2 sharp-cornered connectors predating the rule, exempt per the task brief since reproduce mode follows the source's own corner treatment), 23 NOT-CHECKABLE. Three documented, disclosed reproduce-mode exemptions (B1's size quantization, C2's arrow-color-by-domain, and now 3a's corner-rounding) — all are documentation-only calls; no `rules-lint.mjs` code changed to accommodate any of them, since B1/C2 are already `NOT-CHECKABLE` for every file and 3a's own design already reports a pre-existing sharp diagram as WARN, not FAIL.

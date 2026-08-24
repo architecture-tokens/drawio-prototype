@@ -15,6 +15,16 @@ orthogonal-only 1-3/11), all ten Box rules, all five Color rules, and all three 
    same point (620,170). This is deliberate — see rule 11 below, the diagram's showcase rule.
 3. PASS — every edge departs and arrives perpendicular to the box edge it touches (all horizontal
    at the connection point); departure and arrival mirror on every edge, verified in final.png.
+   3a. PASS (rule adopted 2026-08-24) — the top and bottom `channel-consumer-*` edges (2 bends, one
+   each: `(660,170)`/`(660,270)`) were converted from sharp `<polyline>` elbows to `<path>` with a
+   5-unit `Q` arc, one radius uniform across the file (`rules-lint` rule 3a: 2 rounded connectors,
+   2 bends, radius 5, PASS). The middle `channel-consumer-*` edge stays a straight, unbent
+   `<polyline>` (its middle point at `660,170` is collinear with its endpoints — no real bend to
+   round, per the task brief's "straight single-segment lines unchanged"). This shrinks the
+   shared-trunk overlap described in rule 11 below by the 5-unit radius (the trunk's three
+   connectors now visually coincide from x=620 to x=655 instead of x=620 to x=660) — re-rendered
+   and cropped the top branch's bend at 3x zoom: still reads as one trunk splitting cleanly into
+   three, smooth corner, arrowhead lands exactly on the box edge.
 4. PASS — every arrowhead follows its final segment's direction (all final segments are horizontal
    runs into a left edge, so all arrowheads point right; no kinked head).
 5. N/A — no number badges or title decorations exist on any box to land clear of.
@@ -22,8 +32,9 @@ orthogonal-only 1-3/11), all ten Box rules, all five Color rules, and all three 
    connector grazes a box it doesn't terminate at.
 7. PASS — one `<marker id="arrow">` def, `markerUnits="userSpaceOnUse"`, fixed `markerWidth`/
    `markerHeight="9"`, independent of the uniform stroke-width="1".
-8. PASS — every `<polyline>` connector uses `stroke-width="1"`; box outlines are separately
-   stroke-width 1.5 per B4 (rule 8 explicitly allows this split).
+8. PASS — every connector (`<polyline>` and the rule-3a `<path>`s alike) uses `stroke-width="1"`;
+   box outlines are separately stroke-width 1.5 per B4 (rule 8 explicitly allows this split).
+   Coverage note resolved 2026-08-24: rule 8 scans `<polyline>`/`<line>` AND marker-ended `<path>` connectors, so the rule-3a rounded paths stay inside its uniform-stroke-width guarantee.
 9. PASS — marker `viewBox="0 0 10 10"`, triangle `M0,0 L10,5 L0,10`, `refX="10"` (the tip), so the
    arrowhead tip lands exactly on the box edge, no overshoot.
 10. PASS — every connector is solid; no dash is used anywhere (no second transition class exists
@@ -89,8 +100,10 @@ vertically per T3.
 Rendered via `headless Chrome --screenshot --force-device-scale-factor=2` at 880x340 -> final.png
 (1760x680). Inspected the PNG directly: trunk merge reads as one line into a clean 3-way split,
 arrowheads match their line colors, no overlap, no overflow. Clean on the first render — no
-iteration was needed.
+iteration was needed. Re-rendered after the rule-3a corner-rounding pass and re-cropped the top
+branch's bend at 3x zoom: smooth corner, trunk-merge appearance intact, no distortion.
 
 ## Summary
 
-25 PASS, 5 N/A, 0 FAIL.
+26 PASS, 5 N/A, 0 FAIL. (+1 PASS vs. the previous iteration for the new rule 3a.)
+`node tools/rules-lint.mjs final.svg` exits 0.

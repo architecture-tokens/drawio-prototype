@@ -20,7 +20,13 @@
 //
 // Checked rules (see individual check* functions below for the exact
 // heuristic + its known limits):
-//   rule 4    - no marker-ended <path> using C/S/Q bezier commands
+//   rule 4    - no marker-ended <path> using C/S bezier commands (Q/A are
+//               allowed as of rule 3a — a corner-rounding arc is not a
+//               smooth-routed bezier)
+//   rule 3a   - every 90° bend in an orthogonal connector uses ONE uniform
+//               small arc radius, once any connector in the file adopts
+//               rounded corners (a diagram still fully sharp-cornered is
+//               WARN, not FAIL — the rule postdates it)
 //   rule 7    - every <marker> uses markerUnits="userSpaceOnUse" and one
 //               shared markerWidth/markerHeight
 //   rule 8    - every connector (<polyline>/<line>) shares one stroke-width
@@ -324,24 +330,221 @@ function hasMarkerRef(attrs) {
   return Boolean(attrs['marker-end'] || attrs['marker-start'] || attrs['marker-mid']);
 }
 
-// rule 4: no <path> with C/S/Q bezier commands used as a connector.
+// rule 4: no <path> with C/S bezier commands used as a connector.
 // Heuristic (per task brief): any marker-ended <path> whose `d` contains a
-// C/S/Q command is a FAIL. A curved <path> with NO marker (a decorative
+// C/S command is a FAIL. Q (quadratic) and A (elliptical arc) are NOT
+// banned here as of rule 3a (2026-08-24): an orthogonal connector is
+// allowed to round its 90° bends with a small Q/A arc, per rule 3a below —
+// only a real bezier curve used to smooth-route a connector (C/S) is what
+// this rule exists to catch. A curved <path> with NO marker (a decorative
 // icon glyph, e.g. a smiley on an actor icon) is out of scope for this
-// rule — it isn't a connector — and is intentionally not flagged.
+// rule either way — it isn't a connector — and is intentionally not
+// flagged.
+const BEZIER_BAN_RE = /[csCS]/;
 function checkRule4(root) {
   const paths = collectAll(root, 'path').filter((p) => !isInsideDefsOrMarker(p));
-  const offenders = paths.filter((p) => hasMarkerRef(p.attrs) && /[csqCSQ]/.test(p.attrs.d || ''));
+  const offenders = paths.filter(
+    (p) => hasMarkerRef(p.attrs) && BEZIER_BAN_RE.test(p.attrs.d || ''),
+  );
   if (offenders.length > 0) {
     return {
       status: 'FAIL',
-      message: `${offenders.length} marker-ended <path> element(s) contain C/S/Q bezier commands (connectors must be <polyline>/<line>)`,
+      message: `${offenders.length} marker-ended <path> element(s) contain C/S bezier commands (connectors must be <polyline>/<line>, or a <path> using only M/L/H/V plus Q/A corner arcs per rule 3a)`,
       snippet: truncate(offenders[0].raw),
     };
   }
   return {
     status: 'PASS',
-    message: `no marker-ended <path> uses C/S/Q bezier commands (${paths.length} <path> element(s) scanned)`,
+    message: `no marker-ended <path> uses C/S bezier commands (${paths.length} <path> element(s) scanned; Q/A corner arcs are allowed, see rule 3a)`,
+  };
+}
+
+// rule 3a: every 90° bend in an orthogonal connector gets ONE uniform small
+// arc radius (rule adopted 2026-08-24, diagram-rules.md). Checkable subset
+// (deliberately narrower than the full rule text, per the task brief that
+// introduced this check): once ANY connector bend in the file is rounded,
+// EVERY bend across EVERY connector must share that same radius — a mix of
+// sharp and rounded bends anywhere (even within one connector) is a FAIL,
+// and rounded bends at different radii are a FAIL. A diagram whose
+// connectors are still all sharp-cornered predates the rule and is
+// reported WARN, not FAIL — old diagrams are not hard-failed retroactively
+// (only the showcase files a task explicitly upgrades need to reach PASS).
+//
+// "Connector", for this check, means:
+//   - a <polyline> with >=1 real (non-collinear) interior vertex — a sharp
+//     bend by construction, since <polyline> has no way to express a
+//     curve; or
+//   - a <path> whose `d` tokenizes (see tokenizePathD) into ONLY
+//     M/L/H/V/Q/A commands, starts with a straight (L/H/V) run right after
+//     its one leading M, and ends with a straight run. That shape
+//     requirement is what excludes decorative curved <path>s that were
+//     never connectors at all — e.g. a smiley-mouth glyph drawn as bare
+//     "M...Q..." (kubernetes' Tester actor icon) or a database-cylinder
+//     icon drawn as "M...A...Z" (microservices-c4): a real orthogonal
+//     connector's first and last leg is always a straight run departing/
+//     arriving at a box edge (rule 2), never a bare curve at either end.
+// A <path> this tool can't reduce to that shape — lowercase/relative
+// commands, a C/S bezier (already rule 4's job), a second subpath (a
+// second M), or a curve with no adjoining straight run — is silently
+// excluded from this check rather than guessed at, same posture as rule
+// 9's marker-tip heuristic.
+function tokenizePathD(d) {
+  if (!d) return null;
+  const commandCharsOnly = d.replace(/-?\d*\.?\d+(?:[eE][-+]?\d+)?/g, '').replace(/[,\s]/g, '');
+  if (commandCharsOnly === '' || !/^[MLHVQAZ]*$/.test(commandCharsOnly)) return null;
+  const re = /([MLHVQAZ])([^MLHVQAZ]*)/g;
+  const cmds = [];
+  let m;
+  while ((m = re.exec(d))) {
+    const args = (m[2].match(/-?\d*\.?\d+(?:[eE][-+]?\d+)?/g) || []).map(Number);
+    cmds.push({ cmd: m[1], args });
+  }
+  return cmds.length > 0 ? cmds : null;
+}
+
+// Walks a tokenized path (see tokenizePathD) into {type: 'straight'|'arc',
+// radius?} segments and classifies its bends. Returns null when the shape
+// isn't a connector this heuristic can classify (see checkRule3a's doc
+// comment). For a Q command, the radius is the distance from the point
+// reached by the PRECEDING straight run to the Q's control point — exact
+// by construction for the "trim each leg by r, curve through the original
+// sharp vertex" technique this tool's own converter uses (see
+// scratchpad/round-connectors.mjs in the branch that added rule 3a). For
+// an A command, the radius is read directly off its rx parameter.
+function classifyConnectorPathSegments(cmds) {
+  if (!cmds || cmds[0].cmd !== 'M' || cmds[0].args.length < 2) return null;
+  let cur = [cmds[0].args[0], cmds[0].args[1]];
+  const segs = [];
+  for (let i = 1; i < cmds.length; i += 1) {
+    const { cmd, args } = cmds[i];
+    if (cmd === 'M') return null; // a second subpath -- not a simple connector shape
+    if (cmd === 'L') {
+      if (args.length < 2) return null;
+      segs.push({ type: 'straight' });
+      cur = [args[0], args[1]];
+    } else if (cmd === 'H') {
+      if (args.length < 1) return null;
+      segs.push({ type: 'straight' });
+      cur = [args[0], cur[1]];
+    } else if (cmd === 'V') {
+      if (args.length < 1) return null;
+      segs.push({ type: 'straight' });
+      cur = [cur[0], args[0]];
+    } else if (cmd === 'Q') {
+      if (args.length < 4) return null;
+      const radius = Math.hypot(args[0] - cur[0], args[1] - cur[1]);
+      segs.push({ type: 'arc', radius });
+      cur = [args[2], args[3]];
+    } else if (cmd === 'A') {
+      if (args.length < 7) return null;
+      segs.push({ type: 'arc', radius: args[0] });
+      cur = [args[5], args[6]];
+    } else if (cmd === 'Z') {
+      segs.push({ type: 'straight' });
+    } else {
+      return null;
+    }
+  }
+  if (segs.length === 0) return null;
+  if (segs[0].type !== 'straight' || segs[segs.length - 1].type !== 'straight') return null;
+
+  let sharpBends = 0;
+  let roundedBends = 0;
+  const radii = [];
+  for (const s of segs) {
+    if (s.type === 'arc') {
+      roundedBends += 1;
+      radii.push(s.radius);
+    }
+  }
+  for (let i = 0; i + 1 < segs.length; i += 1) {
+    if (segs[i].type === 'straight' && segs[i + 1].type === 'straight') sharpBends += 1;
+  }
+  return { sharpBends, roundedBends, radii };
+}
+
+// A <polyline> interior vertex is a real bend only if it actually turns —
+// a redundant collinear waypoint (e.g. a 3-way fan-out's straight-through
+// branch repeating the shared fan vertex as its own middle point) is not
+// one, and has nothing to round.
+function polylineHasRealBend(pts) {
+  for (let i = 1; i < pts.length - 1; i += 1) {
+    const [px, py] = pts[i - 1];
+    const [vx, vy] = pts[i];
+    const [nx, ny] = pts[i + 1];
+    const cross = (vx - px) * (ny - vy) - (vy - py) * (nx - vx);
+    if (Math.abs(cross) > 1e-6) return true;
+  }
+  return false;
+}
+
+function checkRule3a(root) {
+  const elements = [];
+
+  for (const p of collectAll(root, 'polyline')) {
+    if (isInsideDefsOrMarker(p)) continue;
+    const pts = parsePoints(p.attrs.points);
+    if (pts.length < 3 || !polylineHasRealBend(pts)) continue;
+    elements.push({ node: p, kind: 'sharp', radii: [] });
+  }
+
+  const mixedElementOffenders = [];
+  for (const p of collectAll(root, 'path')) {
+    if (isInsideDefsOrMarker(p)) continue;
+    const classified = classifyConnectorPathSegments(tokenizePathD(p.attrs.d));
+    if (!classified) continue; // not a connector shape this heuristic understands
+    const { sharpBends, roundedBends, radii } = classified;
+    if (sharpBends === 0 && roundedBends === 0) continue; // no bend (single straight run)
+    if (sharpBends > 0 && roundedBends > 0) {
+      mixedElementOffenders.push(p);
+      continue;
+    }
+    elements.push({ node: p, kind: roundedBends > 0 ? 'rounded' : 'sharp', radii });
+  }
+
+  if (mixedElementOffenders.length > 0) {
+    return {
+      status: 'FAIL',
+      message: `${mixedElementOffenders.length} connector(s) mix sharp and rounded bends within the SAME element (rule 3a requires one uniform radius for every bend)`,
+      snippet: truncate(mixedElementOffenders[0].raw),
+    };
+  }
+
+  const sharpEls = elements.filter((e) => e.kind === 'sharp');
+  const roundedEls = elements.filter((e) => e.kind === 'rounded');
+
+  if (roundedEls.length === 0 && sharpEls.length === 0) {
+    return { status: 'NOT-CHECKABLE', message: 'no connector bends found (nothing to round)' };
+  }
+  if (roundedEls.length === 0) {
+    return {
+      status: 'WARN',
+      message: `rule 3a adopted 2026-08-24; ${sharpEls.length} connector(s) with sharp (unrounded) bends predate it — not hard-failed`,
+    };
+  }
+  if (sharpEls.length > 0) {
+    return {
+      status: 'FAIL',
+      message: `mixed corner treatment: ${roundedEls.length} connector(s) use rounded bends, ${sharpEls.length} are still sharp (rule 3a requires ALL bends rounded once any are)`,
+      snippet: truncate(sharpEls[0].node.raw),
+    };
+  }
+
+  const allRadii = roundedEls.flatMap((e) => e.radii);
+  const uniqueRadii = [];
+  for (const r of allRadii) {
+    if (!uniqueRadii.some((u) => Math.abs(u - r) < 0.05)) uniqueRadii.push(r);
+  }
+  if (uniqueRadii.length > 1) {
+    return {
+      status: 'FAIL',
+      message: `${roundedEls.length} rounded connector(s) use ${uniqueRadii.length} different corner radii: ${uniqueRadii.map((r) => round(r, 2)).join(', ')}`,
+      snippet: truncate(roundedEls[0].node.raw),
+    };
+  }
+  return {
+    status: 'PASS',
+    message: `${roundedEls.length} rounded connector(s), ${allRadii.length} bend(s) total, all one uniform radius ${round(uniqueRadii[0], 2)}`,
   };
 }
 
@@ -374,16 +577,24 @@ function checkRule7(root) {
   };
 }
 
-// rule 8: every connector (<polyline>/<line>) shares one stroke-width.
+// rule 8: every connector shares one stroke-width. Connectors are
+// <polyline>/<line> plus marker-ended <path> (the rule-3a rounded-corner
+// form) — without the <path> arm, converting a polyline to a rounded path
+// would silently drop it from this check's coverage.
 // stroke-width is resolved with SVG inheritance (own attribute, else
 // nearest ancestor's) since several examples set it once on a wrapping
 // <g> rather than per-element; falls back to the SVG default of 1.
 function checkRule8(root) {
-  const connectors = [...collectAll(root, 'polyline'), ...collectAll(root, 'line')].filter(
-    (c) => !isInsideDefsOrMarker(c),
-  );
+  const connectors = [
+    ...collectAll(root, 'polyline'),
+    ...collectAll(root, 'line'),
+    ...collectAll(root, 'path').filter((p) => hasMarkerRef(p.attrs)),
+  ].filter((c) => !isInsideDefsOrMarker(c));
   if (connectors.length === 0) {
-    return { status: 'NOT-CHECKABLE', message: 'no <polyline>/<line> connector elements found' };
+    return {
+      status: 'NOT-CHECKABLE',
+      message: 'no <polyline>/<line>/marker-ended <path> connector elements found',
+    };
   }
   const groups = new Map();
   for (const c of connectors) {
@@ -1495,6 +1706,7 @@ function lintSource(text, label, crossLayer = {}) {
 
   const checkResults = new Map([
     ['4', checkRule4(root)],
+    ['3a', checkRule3a(root)],
     ['7', checkRule7(root)],
     ['8', checkRule8(root)],
     ['9', checkRule9(root)],
@@ -1579,6 +1791,7 @@ function lintSource(text, label, crossLayer = {}) {
 // which is fine — order here is cosmetic, not meaningful.
 function ruleSortKey(id) {
   if (/^\d+$/.test(id)) return Number.parseInt(id, 10);
+  if (id === '3a') return 3.5;
   return 1000 + id.charCodeAt(0) * 10 + (id.includes('-lite') ? 0.5 : 0);
 }
 

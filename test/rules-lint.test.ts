@@ -28,6 +28,39 @@ const bezierConnectorFixture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox=
 </svg>
 `;
 
+// Rule 3a fixtures: two marker-ended <path> connectors, each a single
+// straight-Q-straight bend (no consecutive straight commands, so neither
+// element itself trips the "mixed sharp+rounded within one element" FAIL
+// branch — see checkRule3a's doc comment in rules-lint.mjs). The radius
+// checkRule3a reads off a Q bend is the distance from the point reached by
+// the preceding straight command to the Q's control point (which is always
+// the original sharp corner, by construction — see round-connectors.mjs).
+// mixedRadii's two connectors use radius 5 and radius 8; uniformRadii's use
+// radius 5 on both.
+const mixedRadiiConnectorFixture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 100" width="220" height="100">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#FF0000"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="220" height="100" fill="#ffffff"/>
+<path d="M10,10 H45 Q50,10 50,15 V90" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+<path d="M100,10 V42 Q100,50 108,50 H190" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+</svg>
+`;
+
+const uniformRadiiConnectorFixture = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 100" width="220" height="100">
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto">
+    <path d="M0,0 L10,5 L0,10 Z" fill="#FF0000"/>
+  </marker>
+</defs>
+<rect x="0" y="0" width="220" height="100" fill="#ffffff"/>
+<path d="M10,10 H45 Q50,10 50,15 V90" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+<path d="M100,10 V45 Q100,50 105,50 H190" stroke="#FF0000" fill="none" marker-end="url(#arrow)"/>
+</svg>
+`;
+
 describe('tools/rules-lint.mjs', () => {
   it('finds the five showcase directories (sanity check on the fixture list)', () => {
     expect(showcaseSvgs.length).toBe(5);
@@ -65,6 +98,41 @@ describe('tools/rules-lint.mjs', () => {
     expect(rule4).toBeDefined();
     expect(rule4?.status).toBe('FAIL');
     expect(rule4?.message).toMatch(/bezier/i);
+  });
+
+  it('rule 3a: FAILs when rounded connector bends use different corner radii', async () => {
+    const fixturePath = path.join(
+      os.tmpdir(),
+      `rules-lint-3a-mixed-radii-fixture-${Date.now()}.svg`,
+    );
+    fs.writeFileSync(fixturePath, mixedRadiiConnectorFixture);
+
+    const result = await runCli([fixturePath, '--format', 'json']);
+    expect(result.exitCode).toBe(1);
+    const [report] = JSON.parse(result.stdout) as Array<{
+      checks: Array<{ id: string; status: string; message: string }>;
+    }>;
+    const rule3a = report.checks.find((c) => c.id === '3a');
+    expect(rule3a).toBeDefined();
+    expect(rule3a?.status).toBe('FAIL');
+    expect(rule3a?.message).toMatch(/different corner radii/i);
+  });
+
+  it('rule 3a: PASSes when every rounded connector bend shares one uniform corner radius', async () => {
+    const fixturePath = path.join(
+      os.tmpdir(),
+      `rules-lint-3a-uniform-radii-fixture-${Date.now()}.svg`,
+    );
+    fs.writeFileSync(fixturePath, uniformRadiiConnectorFixture);
+
+    const result = await runCli([fixturePath, '--format', 'json']);
+    const [report] = JSON.parse(result.stdout) as Array<{
+      checks: Array<{ id: string; status: string; message: string }>;
+    }>;
+    const rule3a = report.checks.find((c) => c.id === '3a');
+    expect(rule3a).toBeDefined();
+    expect(rule3a?.status).toBe('PASS');
+    expect(rule3a?.message).toMatch(/radius 5/);
   });
 
   it('exits 2 with usage text when no files are given', async () => {

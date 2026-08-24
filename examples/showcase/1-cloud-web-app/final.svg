@@ -168,10 +168,10 @@
   <polyline points="110,460 110,420" stroke="#15803D" marker-end="url(#arrow-storage)"/>
 
   <!-- web-elb -> web-instance-{1..4} (diverging fan-out bus, separate arrowheads) -->
-  <polyline points="684,560 684,540 320,540 320,490" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
-  <polyline points="684,560 684,540 500,540 500,490" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
-  <polyline points="684,560 684,540 868,540 868,490" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
-  <polyline points="684,560 684,540 1048,540 1048,490" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
+  <path d="M 684,560 V 545 Q 684,540 679,540 H 325 Q 320,540 320,535 V 490" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
+  <path d="M 684,560 V 545 Q 684,540 679,540 H 505 Q 500,540 500,535 V 490" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
+  <path d="M 684,560 V 545 Q 684,540 689,540 H 863 Q 868,540 868,535 V 490" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
+  <path d="M 684,560 V 545 Q 684,540 689,540 H 1043 Q 1048,540 1048,535 V 490" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
 
   <!-- web-instance-{1..4} -> app-elb (CONVERGING: risers + one merged trunk, one arrowhead, rule 11).
        Merge bus sits at y=380, centered in the 360-400 gap: 20px clear of app-elb's
@@ -184,10 +184,10 @@
   <polyline points="684,380 684,360" stroke="#B7791F" marker-end="url(#arrow-routing)"/>
 
   <!-- app-elb -> app-instance-{1..4} (diverging fan-out bus) -->
-  <polyline points="684,300 684,280 320,280 320,230" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
-  <polyline points="684,300 684,280 500,280 500,230" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
-  <polyline points="684,300 684,280 868,280 868,230" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
-  <polyline points="684,300 684,280 1048,280 1048,230" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
+  <path d="M 684,300 V 285 Q 684,280 679,280 H 325 Q 320,280 320,275 V 230" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
+  <path d="M 684,300 V 285 Q 684,280 679,280 H 505 Q 500,280 500,275 V 230" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
+  <path d="M 684,300 V 285 Q 684,280 689,280 H 863 Q 868,280 868,275 V 230" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
+  <path d="M 684,300 V 285 Q 684,280 689,280 H 1043 Q 1048,280 1048,275 V 230" stroke="#C2410C" marker-end="url(#arrow-compute)"/>
 
   <!-- app-instance-{1..4} -> rds-master (CONVERGING: risers + one merged trunk, one arrowhead).
        Merge bus at y=120, centered in the 100-140 gap for the same reason as above. -->
@@ -213,12 +213,12 @@
      connectors <g> they came from, since that inherited styling doesn't
      travel with them). -->
 <g data-relationship="user-cdn" fill="none" stroke-width="1.5">
-  <polyline points="414,660 414,640 110,640 110,620" stroke="#6B46C1" marker-end="url(#arrow-ingress)"/>
+  <path d="M 414,660 V 645 Q 414,640 409,640 H 115 Q 110,640 110,635 V 620" stroke="#6B46C1" marker-end="url(#arrow-ingress)"/>
   <circle cx="262" cy="640" r="11" fill="#FFFFFF"/>
   <use href="#icon-security-ssl-padlock" x="253" y="631" width="18" height="18"/>
 </g>
 <g data-relationship="user-web-elb" fill="none" stroke-width="1.5">
-  <polyline points="474,660 474,640 684,640 684,620" stroke="#B7791F" marker-end="url(#arrow-routing)"/>
+  <path d="M 474,660 V 645 Q 474,640 479,640 H 679 Q 684,640 684,635 V 620" stroke="#B7791F" marker-end="url(#arrow-routing)"/>
   <circle cx="579" cy="640" r="11" fill="#FFFFFF"/>
   <use href="#icon-security-ssl-padlock" x="570" y="631" width="18" height="18"/>
 </g>

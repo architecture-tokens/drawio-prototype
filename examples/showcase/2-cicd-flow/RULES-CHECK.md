@@ -17,8 +17,18 @@ this genre is exactly the case both connector buckets (1-3/11 orthogonal-only,
    distributed evenly (y = 1/3 and 2/3 of the edge, not stacked at the
    midpoint) since the two arrows mean different things (rule 11's own
    converse).
-3. Orthogonal polylines only, no curves — PASS. Every connector is a
-   `<polyline>` with only horizontal/vertical segments.
+3. Orthogonal polylines only, no curves — PASS. Every connector routes in
+   horizontal/vertical segments; single-segment straight connectors stay
+   `<polyline>`, and the 10 connectors with a bend are `<path>` (M/L/H/V
+   plus the rule-3a corner arc — see below), never a smooth bezier route.
+   3a. Uniform small corner-rounding radius — PASS (rule adopted 2026-08-24).
+   All 10 bent connectors (16 bends: the 6 fan-out elbows into
+   build/test/deploy, and the 5+5 stage-transition merge legs) were
+   converted from sharp `<polyline>` elbows to `<path>` with a 5-unit `Q`
+   arc at every bend, one radius uniform across the file (`rules-lint`
+   rule 3a: 10 rounded connectors, 16 bends, radius 5, PASS). Re-rendered
+   and cropped a fan-out elbow and a stage-transition merge bend at 3x
+   zoom: both smooth, arrowheads still land exactly on the box edge.
 4. Arrowhead follows the final segment, no kink — PASS. Every arrowhead's
    last segment is horizontal, arriving perpendicular into a left-facing
    box edge.
@@ -31,8 +41,9 @@ this genre is exactly the case both connector buckets (1-3/11 orthogonal-only,
 7. All arrowheads one fixed absolute size, markerUnits="userSpaceOnUse" —
    PASS. Three markers (`arrow-build/test/deploy`), each `markerWidth`/
    `markerHeight`=9, `markerUnits="userSpaceOnUse"`.
-8. Uniform connector stroke-width — PASS. Every `<polyline>` is
-   `stroke-width="1"`, independent of the box border-width (2).
+8. Uniform connector stroke-width — PASS. Every connector (`<polyline>` and
+   the rule-3a `<path>`s alike) is `stroke-width="1"`, independent of the
+   box border-width (2).Coverage note resolved 2026-08-24: rule 8 scans `<polyline>`/`<line>` AND marker-ended `<path>` connectors, so the rule-3a rounded paths stay inside its uniform-stroke-width guarantee.
 9. Arrowhead tip lands AT the edge, not overshooting — PASS. `refX="10"`
    on a `M0,0 L10,5 L0,10` triangle in a `0 0 10 10` viewBox = tip at the
    line endpoint, matching the rule's own worked example.
@@ -131,7 +142,10 @@ the PNG directly (not just the SVG source) before and after tightening
 the B2 gap, plus 2x cropped close-ups of the build-stage fan-out and of
 BOTH stage-transition merge points (build→test and test→deploy) to
 confirm arrowhead placement, merge-trunk shape, and border clearance at
-pixel level.
+pixel level. Re-rendered again after the rule-3a corner-rounding pass and
+re-cropped the same two spots at 3x zoom: smooth corners, no arrowhead
+distortion.
 
-**26 PASS, 4 N/A, 0 FAIL.** (Connectors: 10 PASS, 2 N/A [5, 12]. Boxes: 8
-PASS, 2 N/A [B5, B6]. Colors: 5 PASS. Text: 3 PASS.)
+**27 PASS, 4 N/A, 0 FAIL.** (Connectors: 11 PASS [rule 3a added], 2 N/A
+[5, 12]. Boxes: 8 PASS, 2 N/A [B5, B6]. Colors: 5 PASS. Text: 3 PASS.)
+`node tools/rules-lint.mjs final.svg` exits 0.

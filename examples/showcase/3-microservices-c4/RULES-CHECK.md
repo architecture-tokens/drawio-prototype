@@ -18,8 +18,15 @@ iteration log.
    which carries two edges (`email_system→customer` arriving, `customer→web_app`
    departing) and is deliberately split to y=169/y=199 (±15 from the true midpoint 184)
    per the rule's "distribute evenly" exception.
-3. **PASS** — all 10 edges are `<polyline>` with only horizontal/vertical segments; no
-   curves.
+3. **PASS** — all 10 edges route in horizontal/vertical segments only; the 6 straight,
+   single-segment edges stay `<polyline>`, and the 4 edges with a bend are now `<path>`
+   (M/L/H/V plus the rule-3a corner arc — see below); no smooth bezier route anywhere.
+   3a. **PASS** (rule adopted 2026-08-24) — the 4 bent edges (4 bends total: `customer→web_app`,
+   `backend_api→email_system`, the merge trunk's `(1170,604)→(1170,624)→(850,624)` bend, and
+   `backend_api→banking_system`) were converted from sharp `<polyline>` elbows to `<path>`
+   with a 5-unit `Q` arc at every bend, one radius uniform across the file (`rules-lint`
+   rule 3a: 4 rounded connectors, 4 bends, radius 5, PASS). Re-rendered and cropped the
+   `backend_api→email_system` bend at 3x zoom: smooth corner, no distortion.
 4. **PASS** — every arrowhead points along its final segment's direction (verified per
    edge; markers use `orient="auto-start-reverse"` so this is structural, not manual).
 5. **N/A** — no badges/number chips are used anywhere in this diagram (see README
@@ -32,8 +39,9 @@ iteration log.
    (`viewBox="0 0 10 10"`, `markerWidth=markerHeight=16`, `markerUnits="userSpaceOnUse"`),
    differing only in fill — one canonical size/shape (the rule's intent), three colors to
    satisfy C2.
-8. **PASS** — every connector polyline uses `stroke-width="2"`, uniformly; box borders
-   (3, or 2.5 dashed for the boundary) are a separate, consistently-applied value.
+8. **PASS** — every connector (`<polyline>` and the rule-3a `<path>`s alike) uses
+   `stroke-width="2"`, uniformly; box borders (3, or 2.5 dashed for the boundary) are a
+   separate, consistently-applied value.Coverage note resolved 2026-08-24: rule 8 scans `<polyline>`/`<line>` AND marker-ended `<path>` connectors, so the rule-3a rounded paths stay inside its uniform-stroke-width guarantee.
 9. **PASS** — `refX="10"` on a `M0,0 L10,5 L0,10` triangle places the reference point at
    the tip, so the arrowhead stops at the edge instead of overshooting into the box.
 10. **PASS** — all 10 connectors are solid. The boundary's dashed border is a box style
@@ -123,6 +131,9 @@ iteration log.
 `"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless --screenshot=final.png --window-size=1700,1108 --force-device-scale-factor=2 file://final.svg`,
 inspected the full image and 8+ targeted crops, found and fixed 4 label/line collisions
 (customer→web_app, backend_api→email_system, backend_api→banking_system, and the
-spa/mobile_app merge cluster), re-rendered, and re-inspected clean.
+spa/mobile_app merge cluster), re-rendered, and re-inspected clean. Re-rendered again after
+the rule-3a corner-rounding pass and re-cropped the `backend_api→email_system` bend at 3x
+zoom: smooth corner, arrowhead still lands on the box edge.
 
-**Summary: 30 PASS, 2 N/A, 0 FAIL.**
+**Summary: 31 PASS, 2 N/A, 0 FAIL.** (+1 PASS vs. the previous iteration for the new rule
+3a.) `node tools/rules-lint.mjs final.svg` exits 0.
