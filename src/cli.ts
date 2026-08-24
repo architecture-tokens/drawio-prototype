@@ -141,7 +141,7 @@ export async function run(argv: string[], planner?: Planner): Promise<RunResult>
       return { exitCode: 4, stdout: '', stderr: `${formatReport(layoutReport, 'human')}\n` };
   }
   try {
-    writeAtomic(options.out!, renderDrawio(loaded.model, layout as any));
+    writeAtomic(options.out!, renderDrawio(loaded.model, layout as any, view));
   } catch (cause) {
     return {
       exitCode: 5,
