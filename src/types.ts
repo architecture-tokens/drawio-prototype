@@ -14,6 +14,42 @@ export type Layout = {
   nodes: LayoutNode[];
   edges: LayoutEdge[];
 };
+export type ViewAnchor =
+  | 'top-left'
+  | 'top-center'
+  | 'top-right'
+  | 'middle-left'
+  | 'middle-center'
+  | 'middle-right'
+  | 'bottom-left'
+  | 'bottom-center'
+  | 'bottom-right'
+  | 'edge-start'
+  | 'edge-midpoint'
+  | 'edge-end';
+export type ViewAttachment = {
+  icon: string;
+  anchor: ViewAnchor;
+  offset?: { dx: number; dy: number };
+};
+export type ArchitectureView = {
+  kind: 'view';
+  version: '0.1.0';
+  id: string;
+  model: string;
+  mode: 'reproduce' | 'restyle';
+  reason?: string;
+  flow: { direction: 'up' | 'down' | 'left' | 'right' | 'mixed' };
+  components: Record<string, ViewAttachment[]>;
+  relationships: Record<string, ViewAttachment[]>;
+  visualElements: Array<{
+    id: string;
+    kind?: string;
+    label?: string;
+    members: string[];
+    attachments?: ViewAttachment[];
+  }>;
+};
 export type Diagnostic = {
   severity: 'error' | 'warning';
   code: string;
@@ -27,6 +63,7 @@ export type Diagnostic = {
 export type Report = { valid: boolean; diagnostics: Diagnostic[] };
 export type PlannerRequest = {
   architecture: unknown;
+  view?: ArchitectureView;
   schema: object;
   previousLayout?: unknown;
   errors?: Array<Pick<Diagnostic, 'code' | 'message'>>;

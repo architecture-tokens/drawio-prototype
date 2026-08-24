@@ -29,6 +29,7 @@
 # authored ON TOP of them, same as every reproduce-mode file needs to do
 # for rule 3/3a).
 mode: reproduce
+version: 0.1.0
 reason: >
   Canonical mermaid C4Container docs example; its declaration-order stacked
   layout is the renderer's own deliberate output. Coordinator brief assigns

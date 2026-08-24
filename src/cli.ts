@@ -4,6 +4,7 @@ import { validateLayout } from './layout.js';
 import { defaultLayoutSchema, OpenAIPlanner, resolveModel } from './planner.js';
 import type { Planner, Report, RunResult } from './types.js';
 import { loadAndValidate } from './validate.js';
+import { loadAndValidateView } from './view.js';
 
 type Options = {
   libraries: string[];
@@ -11,9 +12,10 @@ type Options = {
   format: 'human' | 'json';
   out?: string;
   aiModel?: string;
+  view?: string;
 };
 const usage =
-  'Usage:\n  archtokens validate <model.yaml|json> [--library file] [--policy file] [--format human|json]\n  archtokens generate <model.yaml|json> --out <diagram.drawio> [--library file] [--policy file] [--format human|json] [--ai-model name]';
+  'Usage:\n  archtokens validate <model.yaml|json> [--library file] [--policy file] [--format human|json]\n  archtokens generate <model.yaml|json> --out <diagram.drawio> [--view view.yaml|json] [--library file] [--policy file] [--format human|json] [--ai-model name]';
 const formatReport = (report: Report, format: Options['format']) =>
   format === 'json'
     ? JSON.stringify(report, null, 2)
@@ -47,6 +49,9 @@ function parse(argv: string[]): {
     } else if (flag === '--ai-model' && value) {
       options.aiModel = value;
       i += 1;
+    } else if (flag === '--view' && value) {
+      options.view = value;
+      i += 1;
     } else if (flag === '--format' && (value === 'human' || value === 'json')) {
       options.format = value;
       i += 1;
@@ -55,7 +60,8 @@ function parse(argv: string[]): {
   if (
     !['validate', 'generate'].includes(command ?? '') ||
     !model ||
-    (command === 'generate' && !options.out)
+    (command === 'generate' && !options.out) ||
+    (command === 'validate' && options.view !== undefined)
   )
     return { command, model, options, error: usage };
   return { command, model, options };
@@ -85,11 +91,25 @@ export async function run(argv: string[], planner?: Planner): Promise<RunResult>
           : 'Validation passed.\n',
       stderr: '',
     };
+  let view;
+  if (options.view) {
+    const loadedView = loadAndValidateView(options.view, model, loaded.model);
+    if (!loadedView.report.valid) {
+      const inputError = loadedView.report.diagnostics.some((d) => d.code === 'VIEW_INPUT_IO');
+      return {
+        exitCode: inputError ? 2 : 1,
+        stdout: options.format === 'json' ? `${formatReport(loadedView.report, 'json')}\n` : '',
+        stderr: options.format === 'human' ? `${formatReport(loadedView.report, 'human')}\n` : '',
+      };
+    }
+    view = loadedView.view;
+  }
   const activePlanner = planner ?? new OpenAIPlanner(resolveModel(options.aiModel));
   let layout: unknown;
   try {
     layout = await activePlanner.plan({
       architecture: loaded.normalized,
+      ...(view ? { view } : {}),
       schema: defaultLayoutSchema,
     });
   } catch {
@@ -104,6 +124,7 @@ export async function run(argv: string[], planner?: Planner): Promise<RunResult>
     try {
       layout = await activePlanner.plan({
         architecture: loaded.normalized,
+        ...(view ? { view } : {}),
         schema: defaultLayoutSchema,
         previousLayout: layout,
         errors: layoutReport.diagnostics.map(({ code, message }) => ({ code, message })),

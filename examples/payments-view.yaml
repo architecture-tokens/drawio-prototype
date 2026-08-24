@@ -1,0 +1,25 @@
+kind: view
+version: 0.1.0
+id: payments-default
+model: payments.yaml
+mode: restyle
+reason: Present the payment request from API to ledger.
+flow:
+  direction: right
+components:
+  api:
+    - icon: api
+      anchor: middle-left
+  ledger:
+    - icon: database
+      anchor: middle-right
+relationships:
+  api-ledger:
+    - icon: encrypted-link
+      anchor: edge-midpoint
+      offset: { dx: 0, dy: -8 }
+visualElements:
+  - id: production-boundary
+    kind: environment-band
+    label: Production
+    members: [api, ledger]

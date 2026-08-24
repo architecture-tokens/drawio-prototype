@@ -19,6 +19,7 @@
 # model/census (nothing here changed) rather than deleted, per "one model
 # may carry both views" -- but reproduce.yaml is primary; see README.md.
 mode: restyle
+version: 0.1.0
 reason: >
   Predates the reproduce/restyle mode split; kept as the Diagram-rules
   re-layout alternative to view-reproduce.yaml's faithful redraw. Not the

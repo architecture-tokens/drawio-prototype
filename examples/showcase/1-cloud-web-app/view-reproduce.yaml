@@ -17,6 +17,7 @@
 # does in restyle, because faithfully keeping the source's own instance
 # spacing is the point, not a violation to fix).
 mode: reproduce
+version: 0.1.0
 reason: >
   Source already conveys deliberate structure (a well-known AWS reference
   architecture); target is a faithful redraw, not a rules-authored

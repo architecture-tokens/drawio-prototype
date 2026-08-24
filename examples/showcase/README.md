@@ -95,7 +95,9 @@ not a review comment.
 ### Layer boundaries: model vs view
 
 `model.yaml` stays semantics-only. Everything about how THIS diagram shows the model
-lives in `view.yaml` (the view layer contract prototype):
+lives in `view.yaml` (the strict Architecture View v0.1 contract). `archtokens generate
+--view view.yaml` validates this layer and every model reference before the planner is
+called:
 
 - `flow.direction` — the direction arrows point on canvas (`up/down/left/right/mixed`).
   Determined from the SOURCE mechanically: the dominant axis-aligned projection of edge

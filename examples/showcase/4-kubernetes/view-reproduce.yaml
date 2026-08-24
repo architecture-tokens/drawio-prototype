@@ -15,6 +15,7 @@
 # one disclosed exemption, B1, for the same "different box families have
 # different natural sizes" reason example 1 documents).
 mode: reproduce
+version: 0.1.0
 reason: >
   Source is a clean, deliberately laid-out GCP reference-architecture
   template (one horizontal grid, axis-aligned connectors, no crossed

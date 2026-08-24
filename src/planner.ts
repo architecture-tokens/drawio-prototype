@@ -24,12 +24,14 @@ export class OpenAIPlanner implements Planner {
       ? {
           task: 'Repair the layout. Return only JSON matching the schema.',
           architecture: request.architecture,
+          ...(request.view ? { view: request.view } : {}),
           previousLayout: request.previousLayout,
           errors: request.errors ?? [],
         }
       : {
           task: 'Place all architecture components and relationships. Return only JSON matching the schema.',
           architecture: request.architecture,
+          ...(request.view ? { view: request.view } : {}),
         };
     const response = await this.clientFactory(this.apiKey).responses.create({
       model: this.model,
