@@ -84,32 +84,28 @@
 <text x="426.5" y="526" font-size="12" font-weight="600" fill="#D86613" text-anchor="middle">Scaling</text>
 
 <!-- ============ CONNECTORS ============ -->
-<!-- Flow reads BOTTOM-UP (view-reproduce.yaml flow.direction: up), preserving the source's own direction. Converging fans (4 instances -> 1 LB/RDS) merge to one shared bus + one trunk + one arrowhead (matches source.png and restyle's rule-11 idiom); diverging fans (1 LB -> 4 instances) stay as 4 separate arrowheads, also matching source. -->
+<!-- Flow reads BOTTOM-UP (view-reproduce.yaml flow.direction: up), preserving the source's own direction. Every logical turn is authored as one path with a 5-unit Q corner; buses and straight trunks remain separate only at true T-junctions, never at an elbow. Converging fans (4 instances -> 1 LB/RDS) visually merge to one shared bus + one trunk + one arrowhead (matches source.png and restyle's rule-11 idiom); diverging fans (1 LB -> 4 instances) stay as 4 separate arrowheads, also matching source. -->
 <g fill="none" stroke-width="1.5">
-  <polyline points="236.5,191 236.5,150" stroke="#505863"/>
-  <polyline points="334.5,191 334.5,150" stroke="#505863"/>
-  <polyline points="547.5,191 547.5,150" stroke="#505863"/>
-  <polyline points="641.5,191 641.5,150" stroke="#505863"/>
-  <polyline points="236.5,150 641.5,150" stroke="#505863"/>
+  <path d="M 236.5,191 V 155 Q 236.5,150 241.5,150 H 405.5" stroke="#505863"/>
+  <path d="M 334.5,191 V 155 Q 334.5,150 339.5,150 H 405.5" stroke="#505863"/>
+  <path d="M 547.5,191 V 155 Q 547.5,150 542.5,150 H 405.5" stroke="#505863"/>
+  <path d="M 641.5,191 V 155 Q 641.5,150 636.5,150 H 405.5" stroke="#505863"/>
   <polyline points="405.5,150 405.5,109" stroke="#505863" marker-end="url(#arrow-neutral)"/>
   <polyline points="426.5,319 426.5,284" stroke="#505863"/>
-  <polyline points="236.5,284 641.5,284" stroke="#505863"/>
-  <polyline points="236.5,284 236.5,249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
-  <polyline points="334.5,284 334.5,249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
-  <polyline points="547.5,284 547.5,249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
-  <polyline points="641.5,284 641.5,249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
-  <polyline points="236.5,472 236.5,431" stroke="#505863"/>
-  <polyline points="334.5,472 334.5,431" stroke="#505863"/>
-  <polyline points="517.5,472 517.5,431" stroke="#505863"/>
-  <polyline points="611.5,472 611.5,431" stroke="#505863"/>
-  <polyline points="236.5,431 611.5,431" stroke="#505863"/>
+  <path d="M 426.5,284 H 241.5 Q 236.5,284 236.5,279 V 249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,284 H 339.5 Q 334.5,284 334.5,279 V 249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,284 H 542.5 Q 547.5,284 547.5,279 V 249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,284 H 636.5 Q 641.5,284 641.5,279 V 249" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 236.5,472 V 436 Q 236.5,431 241.5,431 H 426.5" stroke="#505863"/>
+  <path d="M 334.5,472 V 436 Q 334.5,431 339.5,431 H 426.5" stroke="#505863"/>
+  <path d="M 517.5,472 V 436 Q 517.5,431 512.5,431 H 426.5" stroke="#505863"/>
+  <path d="M 611.5,472 V 436 Q 611.5,431 606.5,431 H 426.5" stroke="#505863"/>
   <polyline points="426.5,431 426.5,391" stroke="#505863" marker-end="url(#arrow-neutral)"/>
   <polyline points="426.5,656 426.5,593" stroke="#505863"/>
-  <polyline points="236.5,593 611.5,593" stroke="#505863"/>
-  <polyline points="236.5,593 236.5,530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
-  <polyline points="334.5,593 334.5,530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
-  <polyline points="517.5,593 517.5,530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
-  <polyline points="611.5,593 611.5,530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,593 H 241.5 Q 236.5,593 236.5,588 V 530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,593 H 339.5 Q 334.5,593 334.5,588 V 530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,593 H 512.5 Q 517.5,593 517.5,588 V 530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
+  <path d="M 426.5,593 H 606.5 Q 611.5,593 611.5,588 V 530" stroke="#505863" marker-end="url(#arrow-neutral)"/>
   <polyline points="74.5,446 74.5,385" stroke="#505863" marker-end="url(#arrow-neutral)"/>
   <polyline points="74.5,316 74.5,257" stroke="#505863" marker-end="url(#arrow-neutral)"/>
   <polyline points="190,697.5 103,694.5" stroke="#505863" marker-end="url(#arrow-neutral)"/>

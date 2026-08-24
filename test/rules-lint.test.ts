@@ -290,6 +290,9 @@ describe('tools/rules-lint.mjs cross-layer checks', () => {
     ]);
     expect(result.exitCode).toBe(0);
     expect(reports[0].summary.FAIL).toBe(0);
+    const corners = reports[0].checks.find((c) => c.id === '3a');
+    expect(corners?.status).toBe('PASS');
+    expect(corners?.message).toMatch(/18 rounded connector.*21 bend/);
   });
 
   it('treats an iconless view as a decisive --full PASS for both attachment checks', async () => {

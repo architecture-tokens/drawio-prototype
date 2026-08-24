@@ -291,8 +291,8 @@ extracted, not chosen.
 Mechanically re-verified by `node tools/rules-lint.mjs final-reproduce.svg`
 (see "Verification" below for the exact run): rules 4/7/8/9/10 all PASS —
 one marker (`#505863`, matching every single edge color in `source.xml` —
-grepped, confirmed no other edge stroke color exists), all 30 connectors
-share `stroke-width="1.5"`, one dashed class (RDS replication + the two
+grepped, confirmed no other edge stroke color exists), every connector
+uses `stroke-width="1.5"`, one dashed class (RDS replication + the two
 Availability-Zone/Autoscaling-Group band borders — rule 10 requires the
 word "dash" appear in a documenting comment; the palette comment does).
 
@@ -305,16 +305,18 @@ applies).** `source.xml`'s connectors are all sharp-cornered, so
 (promoted from a scratchpad script to a checked-in tool by this same
 task) at the diagram's uniform radius, 5 — matching `final.svg`'s restyle
 pass exactly, per the amended rule's "one radius for the whole diagram"
-requirement spanning both modes. 2 of the file's 30 connectors are
-multi-bend (the two SSL-badge edges, which share their `user->padlock`
-first hop): `user->cdn`'s bend gets the full 5-unit radius (its legs — 69.5
-and 137.5 — are both well over 2x5=10), but `user->web-elb` has a genuine
+requirement spanning both modes. The initial pass only rounded the two
+SSL-badge paths: it missed 16 visible fan elbows because each was encoded
+as two separate one-segment polylines meeting at a shared bus. The revised
+SVG keeps separate elements only at true T-junctions and expresses each
+turn as one rounded path. `user->cdn`'s bends get the full 5-unit radius,
+but `user->web-elb` has a genuine
 micro-jog in the extracted geometry (`259.5,697.5 -> 259.5,692`, a
 5.5-unit vertical leg, under 2x5=10), so rule 3a's clamp clause applies to
 BOTH of that bend pair: r_eff = min(5, 5.5/2) = 2.75 at each, not the
 diagram's full 5. `rules-lint` accepts this mechanically as PASS, not
 FAIL, and reports the clamp count in its message (`node
-tools/rules-lint.mjs final-reproduce.svg`: `3a: 2 rounded connector(s), 5
+tools/rules-lint.mjs final-reproduce.svg`: `3a: 18 rounded connector(s), 21
 bend(s) total, all one uniform radius 5, 2 bend(s) clamped below 5 for a
 short adjacent segment (rule 3a clamp clause)`) — the clamp is accepted
 because rule 3a's own text ties it to a mechanical constraint (an
@@ -323,27 +325,19 @@ radius, and `rules-lint`'s check reconstructs that original 5.5-unit leg
 from the rounded path's own geometry to verify the clamp is exact, not
 merely "some smaller number."
 
-Re-rendered `final-reproduce.png` (headless Chrome, `--window-size=899,809
---force-device-scale-factor=2`, matching the SVG's own `viewBox`/
-`width`/`height`) and looked at the converted region. Both bends sit
-directly under the SSL-padlock badge mask (a 16-radius white disc + icon,
-part of the source's own design, masking the two edges' shared first hop)
-— the exact corner curvature is therefore not itself visible, by design,
-same as before this change. What IS visible and was checked: both
-connectors enter and exit the badge cleanly with no doubled lines, no
-visible kink or offset where the clamped bend sits, and the arrowhead
-landing on `Web ELB` (the clamped connector's destination) is a clean,
-undistorted triangle exactly on the box edge — the clamp introduces no
-visible defect. `git diff` on this change touches exactly the file's 2
-bent `<polyline>` elements (now rule-3a `<path>`s) and nothing else — no
-other connector, box, icon, or color changed.
+Re-rendered `final-reproduce.png` in headless Chrome at 2x and compared a
+1200x1050 crop before/after. All four fan regions now visibly ease through
+their 90-degree turns; buses remain straight, genuine T-junctions remain
+T-junctions, shared trunks do not double in weight, and every arrowhead
+still lands on the same box edge. The SSL badge routes remain clean and
+their mechanically clamped micro-jog remains hidden under the badge mask.
 
 Rules 1/2/3/5/6/11/12 are the render-dependent/semantic-judgement ones
 `rules-lint` marks NOT-CHECKABLE for every file (restyle included);
 checked here the same way restyle's check documents (render → crop →
 look): every connector routes in axis-aligned horizontal/vertical
-segments (rule 3) — 28 single-segment `<polyline>`s plus the 2 bent
-connectors now rounded to `<path>`s per rule 3a above, never a smooth
+segments (rule 3) — straight trunks stay `<polyline>` while all 18 bent
+connectors are rounded `<path>`s per rule 3a above, never a smooth
 bezier route. Converging fans (4
 instances → 1 LB/RDS, rule 11) merge to one shared bus + one trunk + one
 arrowhead, diverging fans (1 LB → 4 instances) stay as 4 separate
@@ -477,4 +471,4 @@ target:
 
 ## Summary
 
-**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 14 PASS, 0 FAIL, 1 WARN (unused decorative `<symbol>`, non-blocking), 23 NOT-CHECKABLE. Rule 3a is now among the 14 PASS (previously a 2-connector WARN under the since-removed reproduce-mode exemption — see "Connectors" above for the clamp-clause application that made this a real, non-exempted conversion, not a documentation call). Two documented, disclosed reproduce-mode exemptions remain (B1's size quantization, C2's arrow-color-by-domain) — both are documentation-only calls; no `rules-lint.mjs` code changed to accommodate either, since both checks are already `NOT-CHECKABLE` for every file regardless of mode.
+**`node tools/rules-lint.mjs final-reproduce.svg --full --model model.yaml --view view-reproduce.yaml --census census.yaml --layout layout-reproduce.json` exits 0**: 14 PASS, 0 FAIL, 1 WARN (unused decorative `<symbol>`, non-blocking), 23 NOT-CHECKABLE. Rule 3a reports 18 rounded connectors / 21 bends, including the 16 fan elbows missed by the first visual pass. Two documented, disclosed reproduce-mode exemptions remain (B1's size quantization, C2's arrow-color-by-domain) — both are documentation-only calls; no `rules-lint.mjs` code changed to accommodate either, since both checks are already `NOT-CHECKABLE` for every file regardless of mode.

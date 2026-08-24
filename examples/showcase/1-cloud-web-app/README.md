@@ -490,18 +490,21 @@ What differs, and why:
   2026-08-24: corner-rounding is line treatment, not content, so it is
   now normative in both conversion modes — see `examples/showcase/
 README.md`'s "Conversion modes" and `RULES-CHECK.md`'s "Connectors"
-  section for the mechanics). `tools/round-connectors.mjs` converted the
-  file's 2 multi-bend connectors (the two SSL-badge edges) to the same
-  5-unit radius `final.svg`'s restyle pass uses. One of those two
-  connectors (`user->web-elb`) has a genuine 5.5-unit micro-jog in the
+  section for the mechanics). The first pass converted only the 2
+  SSL-badge paths and missed 16 fan-in/fan-out elbows because those routes
+  were encoded as separate one-segment polylines meeting at a bus. That
+  static-lint blind spot was caught by visual review. The fan routes now
+  keep separate elements only at genuine T-junctions; every logical turn
+  is one path with the same 5-unit `Q` corner used by the restyle. One SSL
+  connector (`user->web-elb`) has a genuine 5.5-unit micro-jog in the
   extracted geometry (`259.5,697.5 -> 259.5,692`), shorter than 2x the
   diagram's 5-unit radius — so BOTH of its bends (the two Q arcs flanking
   that short segment) clamp per rule 3a's clamp clause, each to
   r_eff = min(5, 5.5/2) = 2.75, rather than the full 5-unit radius. The
-  other connector (`user->cdn`) has ordinary long legs and keeps the full
-  radius unclamped. This is a mechanical constraint of the short segment,
-  not a second chosen radius. Everything else in the file is byte-for-byte
-  unchanged.
+  other connector (`user->cdn`) and all 16 fan elbows keep the full radius
+  unclamped. This is a mechanical constraint of the short segment, not a
+  second chosen radius. Node, icon, container, label, and edge endpoint
+  geometry remains unchanged.
 - **Connector color**: uniform `#505863` grey, matching every single edge
   in `source.xml` (grepped: the only other `strokeColor` values present are
   box borders `#5A6C86`/`#D86613`/`#ffffff`, none on an edge) — including
